@@ -4,7 +4,6 @@ use std::io::{self, BufRead, BufReader, Write};
 
 use dfps_core::staging::StgSrCodeExploded;
 use dfps_mapping::{explain_staging_code, map_staging_codes};
-use serde_json::json;
 
 #[derive(Clone, Copy)]
 struct Config {

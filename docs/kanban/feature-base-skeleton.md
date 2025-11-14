@@ -14,11 +14,6 @@
 
 Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
-* [ ] **OBS-01 – Structured logging hooks**
-
-  * Add optional logging (feature-flagged) emitting ingestion + mapping summary metrics (counts per mapping state, number of errors).
-  * Document how to enable logging for local debugging.
-
 * [ ] **OBS-02 – Metrics snapshot test**
 
   * In `dfps_test_suite`, run a seeded mini-batch (fake FHIR) end-to-end and assert on resulting metrics (counts per mapping state).
@@ -47,7 +42,9 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 
 ### Observability & ergonomics
 
-* [x] (placeholder for future items)
+* [x] **OBS-01 – Structured logging hooks**
+
+  * Added `dfps_observability` crate plus `map_bundles` logging/metrics so CLI runs emit counts per mapping state.
 
 ---
 

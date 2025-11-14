@@ -17,16 +17,6 @@
   - [ ] `docs/system-design/ncit/models/class-model.md`
 - [ ] Document thresholds & states (AutoMapped / NeedsReview / NoMatch)
 
-### MAP-10 – Unknown code handling
-- [x] Define behavior for codes not covered by mock tables or low-scoring rankers.
-- [x] Emit `NoMatch` + provenance, ensure CLI/pipeline surfaces it cleanly.
-- [x] Regression tests with synthetic “unknown” codes.
-
-### MAP-11 – Mapping explainability helpers
-- [x] Add helper APIs (and docs) to inspect top-N candidates + contributing rankers.
-- [x] CLI option or debug output summarizing why a code mapped to a given NCIt.
-- [x] Short doc snippet walking through the CPT 78815 example.
-
 ---
 
 ## DOING
@@ -94,6 +84,16 @@
 ### MAP-08 – Workspace & CI
 - [x] Add `"lib/mapping"` to workspace members
 - [x] Ensure CI runs tests for mapping crate
+
+### MAP-10 – Unknown code handling
+- [x] Define behavior for codes not covered by mock tables or low-scoring rankers.
+- [x] Emit `NoMatch` + provenance, ensure CLI/pipeline surfaces it cleanly.
+- [x] Regression tests with synthetic “unknown” codes.
+
+### MAP-11 – Mapping explainability helpers
+- [x] Add helper APIs (and docs) to inspect top-N candidates + contributing rankers.
+- [x] CLI option or debug output summarizing why a code mapped to a given NCIt.
+- [x] Short doc snippet walking through the CPT 78815 example.
 
 ---
 

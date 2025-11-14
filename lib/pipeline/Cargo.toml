@@ -7,6 +7,9 @@ edition.workspace = true
 dfps_core = { path = "../core" }
 dfps_ingestion = { path = "../ingestion" }
 dfps_mapping = { path = "../mapping" }
+dfps_observability = { path = "../observability" }
 serde.workspace = true
 serde_json.workspace = true
-thiserror = "1.0"
+thiserror = "2.0.17"
+env_logger = "0.11"
+log = "0.4"

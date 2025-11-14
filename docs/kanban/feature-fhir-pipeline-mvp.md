@@ -10,22 +10,6 @@
 
 ## TODO
 
-### E2E-01 – Bundle → mapped concepts facade
-- [x] Add a public entrypoint (new crate `dfps_pipeline` or module in `dfps_mapping`) that composes `bundle_to_staging` and `map_staging_codes`:
-  - [x] `bundle_to_mapped_sr(bundle) -> (Vec<StgServiceRequestFlat>, Vec<MappingResult>, Vec<DimNCITConcept>)`
-  - [x] Return structured errors for ingestion/mapping failures.
-
-### E2E-02 – End-to-end test: FHIR → staging → NCIt
-- [x] In `dfps_test_suite`, load the regression bundle fixture, run the facade, and assert:
-  - [x] Flat/exploded counts match the staging invariants.
-  - [x] PET codes resolve to the expected NCIt IDs and mapping states.
-  - [x] Mapping state distribution (AutoMapped / NeedsReview / NoMatch) is stable.
-
-### E2E-03 – Pipeline CLI
-- [x] Add a binary (e.g. `dfps_pipeline::bin::map_bundles`) that:
-  - [x] Reads NDJSON FHIR Bundles.
-  - [x] Emits NDJSON staging rows, mapping results, and NCIt dims.
-  - [x] Supports deterministic seeds / sample data for demos.
 
 ### FP-07 – FHIR validation & error handling
 - [ ] Extend `IngestionError` coverage (missing `resourceType`, malformed `Reference`, bad `status/intents`).
@@ -100,6 +84,24 @@
   - [x] `docs/system-design/fhir/models/data-model-er.md`
   - [x] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [x] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
+
+### E2E-01 – Bundle → mapped concepts facade
+- [x] Add a public entrypoint (new crate `dfps_pipeline` or module in `dfps_mapping`) that composes `bundle_to_staging` and `map_staging_codes`:
+  - [x] `bundle_to_mapped_sr(bundle) -> (Vec<StgServiceRequestFlat>, Vec<MappingResult>, Vec<DimNCITConcept>)`
+  - [x] Return structured errors for ingestion/mapping failures.
+
+### E2E-02 – End-to-end test: FHIR → staging → NCIt
+- [x] In `dfps_test_suite`, load the regression bundle fixture, run the facade, and assert:
+  - [x] Flat/exploded counts match the staging invariants.
+  - [x] PET codes resolve to the expected NCIt IDs and mapping states.
+  - [x] Mapping state distribution (AutoMapped / NeedsReview / NoMatch) is stable.
+
+### E2E-03 – Pipeline CLI
+- [x] Add a binary (e.g. `dfps_pipeline::bin::map_bundles`) that:
+  - [x] Reads NDJSON FHIR Bundles.
+  - [x] Emits NDJSON staging rows, mapping results, and NCIt dims.
+  - [x] Supports deterministic seeds / sample data for demos.
+
 
 ---
 
