@@ -75,10 +75,10 @@ _Working branch: `feature/app/web/frontend-mvp`_
 _Working branch: `feature/app/web/backend-mvp`_
 
 #### WEB-BE-04 – Tests & CI for backend
-- [ ] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
-  - [ ] Spin up the server in-process (no external port binding).
-  - [ ] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
-  - [ ] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
+- [x] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
+  - [x] Spin up the server in-process (no external port binding).
+  - [x] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
+  - [x] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
 - [ ] Add a CI smoke test that:
   - [ ] Starts the server.
   - [ ] Runs `GET /health` and a minimal `POST /api/map-bundles`.

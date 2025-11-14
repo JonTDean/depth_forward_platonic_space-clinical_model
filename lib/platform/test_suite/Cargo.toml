@@ -4,6 +4,11 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+axum.workspace = true
+tokio.workspace = true
+http-body-util = "0.1"
+tower = "0.5"
+dfps_api = { path = "../../app/web/backend/api" }
 dfps_core = { path = "../../domain/core" }
 dfps_fake_data = { path = "../../domain/fake_data" }
 dfps_ingestion = { path = "../../domain/ingestion" }

@@ -5,12 +5,12 @@ use std::{
 };
 
 use axum::{
-    Json, Router,
     body::Bytes,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
+    Json, Router,
 };
 use dfps_core::{
     fhir::Bundle,
@@ -74,15 +74,21 @@ pub enum ServerError {
 }
 
 #[derive(Clone)]
-struct AppState {
+pub struct ApiState {
     metrics: Arc<Mutex<PipelineMetrics>>,
 }
 
-impl Default for AppState {
-    fn default() -> Self {
+impl ApiState {
+    pub fn new() -> Self {
         Self {
             metrics: Arc::new(Mutex::new(PipelineMetrics::default())),
         }
+    }
+}
+
+impl Default for ApiState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -96,7 +102,7 @@ pub async fn run(config: ApiServerConfig) -> Result<(), ServerError> {
         .await
         .map_err(|source| ServerError::Bind { addr, source })?;
 
-    let router = build_router(AppState::default());
+    let router = router(ApiState::default());
 
     axum::serve(listener, router.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
@@ -107,7 +113,7 @@ pub async fn run(config: ApiServerConfig) -> Result<(), ServerError> {
     Ok(())
 }
 
-fn build_router(state: AppState) -> Router {
+pub fn router(state: ApiState) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/metrics/summary", get(metrics_summary))
@@ -121,7 +127,7 @@ async fn health() -> impl IntoResponse {
     Json(json!({ "status": "ok" }))
 }
 
-async fn metrics_summary(State(state): State<AppState>) -> impl IntoResponse {
+async fn metrics_summary(State(state): State<ApiState>) -> impl IntoResponse {
     let request_id = Uuid::new_v4();
     let metrics = state.metrics.lock().await.clone();
     info!(
@@ -133,7 +139,7 @@ async fn metrics_summary(State(state): State<AppState>) -> impl IntoResponse {
     Json(metrics)
 }
 
-async fn map_bundles(State(state): State<AppState>, body: Bytes) -> Result<Response, ApiError> {
+async fn map_bundles(State(state): State<ApiState>, body: Bytes) -> Result<Response, ApiError> {
     let request_id = Uuid::new_v4();
     let bundles = parse_bundles(&body, request_id)?;
     if bundles.is_empty() {

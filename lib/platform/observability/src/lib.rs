@@ -8,9 +8,9 @@ use dfps_core::{
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
 use log::{info, warn};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Default, Serialize, Clone, PartialEq)]
+#[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PipelineMetrics {
     pub bundle_count: usize,
     pub flats_count: usize,
