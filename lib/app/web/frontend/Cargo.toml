@@ -1,0 +1,8 @@
+[package]
+name = "dfps_frontend"
+version.workspace = true
+edition.workspace = true
+
+[lib]
+name = "dfps_frontend"
+path = "src/lib.rs"
