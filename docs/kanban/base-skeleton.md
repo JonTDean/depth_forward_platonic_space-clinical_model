@@ -76,7 +76,7 @@
 
 Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
-* [ ] **DM-01 – Define core bounded contexts / modules**
+* [x] **DM-01 – Define core bounded contexts / modules**
 
   * Decide module layout in `lib/core/src/lib.rs`, e.g.:
 
@@ -88,7 +88,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
     ```
   * Each module should reflect a clear domain concept, not just “tables”.
 
-* [ ] **DM-02 – Introduce value objects & newtypes**
+* [x] **DM-02 – Introduce value objects & newtypes**
 
   * Define strongly typed IDs & primitives, e.g.:
 
@@ -101,7 +101,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
     ```
   * Use `struct` and `enum` ADTs to encode valid states and invariants (e.g. `OrderStatus`, `Intent`). ([Xebia][4])
 
-* [ ] **DM-03 – Model core entities using ADTs + serde**
+* [x] **DM-03 – Model core entities using ADTs + serde**
 
   * For each main domain type (Patient, Encounter, ServiceRequest):
 
@@ -117,7 +117,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
       ````
   * Only expose invariants via constructors / smart constructors where needed (e.g. `ServiceRequest::new(...)` ensuring status+intent combos are valid).
 
-* [ ] **DM-04 – JSON round-trip tests (unit tests)**
+* [x] **DM-04 – JSON round-trip tests (unit tests)**
 
   * In `lib/core/src/lib.rs` or `tests/serde_roundtrip.rs`:
 

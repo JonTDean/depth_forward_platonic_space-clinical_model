@@ -8,7 +8,7 @@ edition.workspace = true
 members = [
     "lib/core",
     "lib/fake_data",
-    "lib/test-suite",
+    "lib/test_suite",
 ]
 
 # Explicit resolver, recommended with edition 2021/2024 workspaces
