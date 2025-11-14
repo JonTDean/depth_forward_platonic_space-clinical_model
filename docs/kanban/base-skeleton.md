@@ -65,7 +65,7 @@
     proptest = "1" # optional, if you want property-based tests
     ```
 
-* [ ] **WS-03 – Basic compilation sanity check**
+* [x] **WS-03 – Basic compilation sanity check**
 
   * Add minimal `src/lib.rs` files in all three crates (even empty `pub mod` stub).
   * Run `cargo check` at workspace root and make sure all three crates compile.
