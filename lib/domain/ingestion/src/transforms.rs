@@ -13,7 +13,10 @@ use crate::reference;
 pub enum IngestionError {
     MissingField(&'static str),
     InvalidReference(&'static str),
-    InvalidResourceType { expected: &'static str, found: String },
+    InvalidResourceType {
+        expected: &'static str,
+        found: String,
+    },
     InvalidStatus(String),
     InvalidIntent(String),
     Decode(SerdeError),
@@ -24,10 +27,9 @@ impl std::fmt::Display for IngestionError {
         match self {
             Self::MissingField(field) => write!(f, "missing required field: {field}"),
             Self::InvalidReference(field) => write!(f, "invalid reference format for {field}"),
-            Self::InvalidResourceType { expected, found } => write!(
-                f,
-                "invalid resourceType '{found}', expected '{expected}'"
-            ),
+            Self::InvalidResourceType { expected, found } => {
+                write!(f, "invalid resourceType '{found}', expected '{expected}'")
+            }
             Self::InvalidStatus(value) => write!(f, "invalid status value '{value}'"),
             Self::InvalidIntent(value) => write!(f, "invalid intent value '{value}'"),
             Self::Decode(err) => write!(f, "failed to decode resource: {err}"),
@@ -121,7 +123,7 @@ pub fn sr_to_domain(sr: &fhir::ServiceRequest) -> Result<order::ServiceRequest, 
     };
 
     let (_, status) = parse_status(sr.status.as_deref())?;
-    let (_, intent) = parse_intent(sr.intent.as_deref(), status);
+    let (_, intent) = parse_intent(sr.intent.as_deref(), status)?;
     let description = description_from_sr(sr);
 
     Ok(order::ServiceRequest::new(
@@ -175,9 +177,7 @@ fn description_from_sr(sr: &fhir::ServiceRequest) -> String {
         .unwrap_or_else(|| "unspecified service request".to_string())
 }
 
-fn parse_status(
-    value: Option<&str>,
-) -> Result<(String, ServiceRequestStatus), IngestionError> {
+fn parse_status(value: Option<&str>) -> Result<(String, ServiceRequestStatus), IngestionError> {
     let raw = value.ok_or(IngestionError::MissingField("ServiceRequest.status"))?;
     let normalized = raw.to_ascii_lowercase();
     let status = match normalized.as_str() {
@@ -272,7 +272,10 @@ mod tests {
         let err = sr_to_staging(&sr).expect_err("expected resourceType error");
         matches!(
             err,
-            IngestionError::InvalidResourceType { expected: "ServiceRequest", .. }
+            IngestionError::InvalidResourceType {
+                expected: "ServiceRequest",
+                ..
+            }
         );
     }
 

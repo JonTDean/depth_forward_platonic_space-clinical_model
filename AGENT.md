@@ -17,7 +17,7 @@ All paths are relative to the `code/` directory.
 
 ### 1.1 Kanban boards
 
-- `docs/kanban/*.md`
+- `docs/kanban/**/*.md`
 
 ### 1.2 Reference terminology
 

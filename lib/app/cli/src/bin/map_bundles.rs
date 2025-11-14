@@ -5,13 +5,16 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use dfps_core::fhir::Bundle;
-use dfps_observability::{log_no_match, log_pipeline_output, PipelineMetrics};
+use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::bundle_to_mapped_sr;
-use log::{info, LevelFilter};
+use log::{LevelFilter, info};
 use serde::Serialize;
 
 #[derive(Parser)]
-#[command(name = "map_bundles", about = "Ingest FHIR bundles and emit staging + mapping rows")]
+#[command(
+    name = "map_bundles",
+    about = "Ingest FHIR bundles and emit staging + mapping rows"
+)]
 struct Args {
     /// NDJSON file containing FHIR Bundles (defaults to stdin)
     #[arg(value_name = "INPUT")]
