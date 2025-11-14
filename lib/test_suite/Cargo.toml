@@ -8,3 +8,4 @@ dfps_core = { path = "../core" }
 dfps_fake_data = { path = "../fake_data" }
 serde_json.workspace = true
 proptest.workspace = true
+serde.workspace = true

@@ -1,11 +1,21 @@
 //! Fake data generators for DFPS domain model.
 //!
-//! This crate will provide helpers to generate coherent fake data
-//! for the types defined in `dfps_core`.
+//! This crate exposes helpers to synthesize coherent patients, encounters,
+//! service requests, and composite scenarios for tests and local tooling.
 
-/// Simple placeholder function to prove the crate is wired correctly.
-///
-/// Later this will return real fake domain objects (patients, encounters, etc.).
+pub mod value;
+pub mod patient;
+pub mod encounter;
+pub mod order;
+pub mod scenarios;
+
+pub use encounter::*;
+pub use order::*;
+pub use patient::*;
+pub use scenarios::*;
+pub use value::*;
+
+/// Simple placeholder so downstream crates can confirm the crate is wired.
 pub fn ping() -> &'static str {
     "fake-data-ready"
 }

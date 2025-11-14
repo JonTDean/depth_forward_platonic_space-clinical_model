@@ -3,6 +3,11 @@ name = "dfps_core"
 version.workspace = true
 edition.workspace = true
 
+[features]
+# Enable Dummy derives for domain types when the "dummy" feature is active.
+dummy = ["fake"]
+
 [dependencies]
 serde.workspace = true
 serde_json.workspace = true
+fake = { workspace = true, optional = true }

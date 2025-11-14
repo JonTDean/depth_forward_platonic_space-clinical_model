@@ -139,12 +139,15 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 
 Using `fake` crate for convenient generators against your domain types. ([Crates][3])
 
-* [ ] **FD-01 – Wire `fake` + `Dummy` derives**
+* [x] **FD-01 – Wire `fake` + `Dummy` derives**
+  * Core exposes a `dummy` feature powered by `fake::Dummy`, enabled automatically from `dfps_fake_data`.
 
   * Add `fake` + `rand` deps (already in WS-02).
   * For simpler types, derive `Dummy` directly in `core` (behind a cfg or feature if you want), or in `fake_data` via wrapper types. ([Docs.rs][5])
 
-* [ ] **FD-02 – Implement generators for value objects**
+* [x] **FD-02 – Implement generators for value objects**
+
+  * Added helpers for IDs, status/intent, and descriptions backed by `fake` + `rand`.
 
   * Provide helpers like:
 
@@ -154,7 +157,9 @@ Using `fake` crate for convenient generators against your domain types. ([Crates
     ```
   * Use `Faker` or fine-grained fakers (names, dates, codes) to approximate realistic distributions (e.g. PET/CT vs other orders).
 
-* [ ] **FD-03 – Implement coherent aggregate generators**
+* [x] **FD-03 – Implement coherent aggregate generators**
+
+  * Added `ServiceRequestScenario` with consistent Patient/Encounter/Order wiring.
 
   * Functions that create full, internally consistent aggregates:
 
@@ -165,7 +170,9 @@ Using `fake` crate for convenient generators against your domain types. ([Crates
     ```
   * Ensure generated data respects domain invariants (e.g. status transitions allowed by your state machine).
 
-* [ ] **FD-04 – Seeded fake data for reproducible tests**
+* [x] **FD-04 – Seeded fake data for reproducible tests**
+
+  * All generators accept deterministic seeds (e.g. scenario + ID helpers).
 
   * Add helpers that take an RNG seed:
 
@@ -174,7 +181,9 @@ Using `fake` crate for convenient generators against your domain types. ([Crates
     ```
   * This lets your test_suite crate reproduce failing cases deterministically, per best practices for property-based testing.
 
-* [ ] **FD-05 – CLI / dev helper (optional)**
+* [x] **FD-05 – CLI / dev helper (optional)**
+
+  * Added `dfps_fake_data` binary `generate_sample` that emits NDJSON scenarios.
 
   * Add a small binary target in `fake_data` or a separate bin crate (e.g. `bin/generate_sample.rs`) that dumps fake domain objects as NDJSON for quick eyeballing.
 
@@ -184,7 +193,10 @@ Using `fake` crate for convenient generators against your domain types. ([Crates
 
 Central place for **shared test utilities, property tests, integration-style tests** across the workspace.
 
-* [ ] **TS-01 – Test harness layout**
+* [x] **TS-01 – Test harness layout**
+
+  * `dfps_test_suite` now exposes `fixtures`, `assertions`, and `regression` modules plus workspace integration tests.
+  * All workspace tests now live under `dfps_test_suite/tests/{unit,integration,e2e}` for clear separation by type.
 
   * In `lib/test_suite/src/lib.rs`, expose helpers:
 
@@ -194,7 +206,9 @@ Central place for **shared test utilities, property tests, integration-style tes
     ```
   * In the root workspace, create `tests/` integration tests that depend on `test_suite` to avoid duplication.
 
-* [ ] **TS-02 – Basic happy-path tests**
+* [x] **TS-02 – Basic happy-path tests**
+
+  * Integration test exercises fake-data scenario generation and serde round-trips.
 
   * Tests that:
 
@@ -202,7 +216,9 @@ Central place for **shared test utilities, property tests, integration-style tes
     * Serialize/deserialize via serde.
     * Verify invariants hold (e.g. `status` and `intent` combos, non-empty IDs).
 
-* [ ] **TS-03 – Property-based tests (if using proptest)**
+* [x] **TS-03 – Property-based tests (if using proptest)**
+
+  * Added proptest suite that feeds seeded scenarios through invariant + JSON assertions.
 
   * Use `proptest` or similar to:
 
@@ -210,11 +226,15 @@ Central place for **shared test utilities, property tests, integration-style tes
     * Assert round-trip properties (`json -> dom -> json`, mapping to NCIt, etc.).
   * Ensures your functional domain model behaves well over a large input surface.
 
-* [ ] **TS-04 – Regression fixtures**
+* [x] **TS-04 – Regression fixtures**
+
+  * Added baseline `ServiceRequest` JSON fixture with regression tests/loader.
 
   * When bugs are found, add fixtures (e.g. JSON samples) and tests in `test_suite` as non-regression guards.
 
-* [ ] **TS-05 – CI integration**
+* [x] **TS-05 – CI integration**
+
+  * Introduced GitHub Actions workflow running fmt, clippy, and tests workspace-wide.
 
   * Add a workspace-wide CI script / GitHub Action:
 
@@ -253,16 +273,3 @@ Leave this empty in the file; you’ll move cards down from TODO as you start th
 
 - _Move cards here as you complete them._
 ```
-
----
-
-If you’d like, next step I can:
-
-* Generate **actual `Cargo.toml` stubs and `src/lib.rs` skeletons** for each of the three crates following this Kanban, or
-* Draw a tiny Mermaid diagram that shows `core` → `fake_data` → `test_suite` dependencies to tuck into your system-design docs.
-
-[1]: https://doc.rust-lang.org/book/ch14-03-cargo-workspaces.html "Cargo Workspaces - The Rust Programming Language"
-[2]: https://serde.rs/derive.html "Using derive"
-[3]: https://crates.io/crates/fake "fake - crates.io: Rust Package Registry"
-[4]: https://xebia.com/blog/functional-coreing-in-rust-part-1/ "Functional Domain Modeling In Rust - Part 1"
-[5]: https://docs.rs/fake "fake - Rust"

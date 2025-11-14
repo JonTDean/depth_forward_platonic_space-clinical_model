@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-dfps_core = { path = "../core" }
+dfps_core = { path = "../core", features = ["dummy"] }
 fake.workspace = true
 rand.workspace = true
 serde.workspace = true

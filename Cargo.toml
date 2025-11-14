@@ -29,3 +29,6 @@ proptest = "1.9.0"
 [dependencies]
 # root-package-specific dependencies go here (if any), e.g.:
 # domain crates, CLIs, etc.
+
+[dev-dependencies]
+dfps_test_suite = { path = "lib/test_suite" }

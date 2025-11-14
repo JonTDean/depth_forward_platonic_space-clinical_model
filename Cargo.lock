@@ -72,6 +72,9 @@ dependencies = [
 [[package]]
 name = "depth_forward_platonic_space_clinical_model"
 version = "0.1.0"
+dependencies = [
+ "dfps_test_suite",
+]
 
 [[package]]
 name = "deunicode"
@@ -83,6 +86,7 @@ checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
 name = "dfps_core"
 version = "0.1.0"
 dependencies = [
+ "fake",
  "serde",
  "serde_json",
 ]
@@ -105,6 +109,7 @@ dependencies = [
  "dfps_core",
  "dfps_fake_data",
  "proptest",
+ "serde",
  "serde_json",
 ]
 

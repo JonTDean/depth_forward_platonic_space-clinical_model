@@ -2,9 +2,13 @@ use serde::{Deserialize, Serialize};
 
 use crate::value::{EncounterId, PatientId, ServiceRequestId};
 
+#[cfg(feature = "dummy")]
+use fake::Dummy;
+
 /// Status of a service request (order).
 ///
 /// Modeled loosely on FHIR `request-status`.
+#[cfg_attr(feature = "dummy", derive(Dummy))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ServiceRequestStatus {
@@ -20,6 +24,7 @@ pub enum ServiceRequestStatus {
 /// Intent of the service request.
 ///
 /// Modeled loosely on FHIR `request-intent`.
+#[cfg_attr(feature = "dummy", derive(Dummy))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ServiceRequestIntent {
@@ -32,6 +37,7 @@ pub enum ServiceRequestIntent {
 }
 
 /// Core "order" aggregate in DFPS, similar to a FHIR ServiceRequest.
+#[cfg_attr(feature = "dummy", derive(Dummy))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServiceRequest {
     pub id: ServiceRequestId,
