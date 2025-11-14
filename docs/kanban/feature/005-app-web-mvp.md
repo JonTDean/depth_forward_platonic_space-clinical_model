@@ -1,8 +1,8 @@
 # Kanban — feature/app/web-mvp
 
 **Epic:** Web surface for the FHIR → NCIt pipeline, implemented as:
-- Backend API: `feature/app-web/backend-mvp`
-- Frontend UI: `feature/app-web/frontend-mvp`
+- Backend API: `feature/app/web/backend-mvp`
+- Frontend UI: `feature/app/web/frontend-mvp`
 
 ### Columns
 * **TODO** – Not started yet  
@@ -14,48 +14,8 @@
 
 ## TODO
 
-### Backend – HTTP API gateway (`dfps_api`)
-
-#### WEB-BE-01 – Scaffold web backend crate
-- [ ] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.
-- [ ] Add the crate to the root `[workspace].members` under the `app` section.
-- [ ] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
-
-#### WEB-BE-02 – Core FHIR → NCIt HTTP API
-- [ ] Add dependencies on `dfps_pipeline` and `dfps_observability`.
-- [ ] Implement `POST /api/map-bundles`:
-  - [ ] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
-  - [ ] For each bundle, call `bundle_to_mapped_sr`.
-  - [ ] Return JSON containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
-- [ ] Define clear error responses for:
-  - [ ] Invalid JSON.
-  - [ ] Invalid FHIR (surfacing `IngestionError` information).
-  - [ ] Internal errors (500 with correlation ID).
-
-#### WEB-BE-03 – Health & metrics endpoints
-- [ ] Add `GET /health` for basic liveness.
-- [ ] Add `GET /metrics/summary` that:
-  - [ ] Computes or aggregates `PipelineMetrics` for recent runs.
-  - [ ] Returns counts per `MappingState` to support dashboards.
-- [ ] Ensure structured logs include a request ID / correlation ID for each call.
-
-#### WEB-BE-04 – Tests & CI for backend
-- [ ] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
-  - [ ] Spin up the server in-process (no external port binding).
-  - [ ] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
-  - [ ] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
-- [ ] Add a CI smoke test that:
-  - [ ] Starts the server.
-  - [ ] Runs `GET /health` and a minimal `POST /api/map-bundles`.
-
-#### WEB-BE-05 – Directory-architecture alignment (backend)
-- [ ] Update `docs/system-design/base/directory-architecture.md` to:
-  - [ ] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
-  - [ ] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
-
----
-
 ### Frontend – Web UI (`dfps_web_frontend` or external app)
+_Working branch: `feature/app/web/frontend-mvp`_
 
 #### WEB-FE-01 – Frontend project scaffold
 - [ ] Create a frontend project (e.g., `code/app/web/frontend`) using HTMX.
@@ -110,7 +70,46 @@
 ---
 
 ## DOING
-- _Empty_
+
+### Backend – HTTP API gateway (`dfps_api`)
+_Working branch: `feature/app/web/backend-mvp`_
+
+#### WEB-BE-01 – Scaffold web backend crate
+- [x] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.
+- [x] Add the crate to the root `[workspace].members` under the `app` section.
+- [x] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
+
+#### WEB-BE-02 – Core FHIR → NCIt HTTP API
+- [ ] Add dependencies on `dfps_pipeline` and `dfps_observability`.
+- [ ] Implement `POST /api/map-bundles`:
+  - [ ] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
+  - [ ] For each bundle, call `bundle_to_mapped_sr`.
+  - [ ] Return JSON containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
+- [ ] Define clear error responses for:
+  - [ ] Invalid JSON.
+  - [ ] Invalid FHIR (surfacing `IngestionError` information).
+  - [ ] Internal errors (500 with correlation ID).
+
+#### WEB-BE-03 – Health & metrics endpoints
+- [ ] Add `GET /health` for basic liveness.
+- [ ] Add `GET /metrics/summary` that:
+  - [ ] Computes or aggregates `PipelineMetrics` for recent runs.
+  - [ ] Returns counts per `MappingState` to support dashboards.
+- [ ] Ensure structured logs include a request ID / correlation ID for each call.
+
+#### WEB-BE-04 – Tests & CI for backend
+- [ ] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
+  - [ ] Spin up the server in-process (no external port binding).
+  - [ ] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
+  - [ ] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
+- [ ] Add a CI smoke test that:
+  - [ ] Starts the server.
+  - [ ] Runs `GET /health` and a minimal `POST /api/map-bundles`.
+
+#### WEB-BE-05 – Directory-architecture alignment (backend)
+- [ ] Update `docs/system-design/base/directory-architecture.md` to:
+  - [ ] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
+  - [ ] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
 
 ---
 
