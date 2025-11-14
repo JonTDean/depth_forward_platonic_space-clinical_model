@@ -1,0 +1,325 @@
+domains:
+  relational:
+    parent: null
+    description: "Any -nym that describes a relationship between words, names, or expressions."
+  semantic:
+    parent: relational
+    description: "Meaning-based lexical relations: similarity, opposition, inclusion, part–whole, etc."
+  formal:
+    parent: relational
+    description: "Form-based relations: spelling, sound, capitalization, structure (length, repetition, segments)."
+  onomastic:
+    parent: relational
+    description: "Types of proper names and naming practices (people, places, taxa, groups, code names, etc.)."
+  meta:
+    parent: null
+    description: "Metalinguistic labels used to talk about words, names, and lexical relations themselves."
+
+terms:
+  acronym:
+    definition: "Word formed from the initial letters or parts of a multi-word expression and pronounced as a word (e.g. NATO)."
+    primary_domain: formal
+    domains: [formal, relational, meta]
+    aliases: ["protogram", "initialism (overlapping sense)"]
+    see_also: ["bacronym", "retronyn"]
+
+  allonym:
+    definition: "Assumed author name that actually belongs to another real person; also, a work published under such a name."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: []
+    see_also: ["pseudonym", "autonym"]
+
+  ananym:
+    definition: "Name or word created by reversing the letters of another name or word, often used as a pseudonym."
+    primary_domain: formal
+    domains: [formal, onomastic, relational, meta]
+    aliases: []
+    see_also: ["pseudonym"]
+
+  anonym:
+    definition: "Assumed or fictitious name, or an anonymous person or publication."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: []
+    see_also: ["pseudonym"]
+
+  antonym:
+    definition: "Word whose meaning is opposite or nearly opposite to that of another word."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["synonym", "autoantonym"]
+
+  aptronym:
+    definition: "Personal name that especially suits its bearer's occupation, role, or character."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: ["aptonym"]
+    see_also: ["euonym"]
+
+  autoantonym:
+    definition: "Single word that can take two opposite or contradictory meanings in different contexts."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: ["contranym", "contronym", "antagonym", "antilogy", "enantiodrome", "Janus word"]
+    see_also: ["antonym", "synonym"]
+
+  autonym:
+    definition: "Self-name: a word that names itself, or the authentic name of a person or group as used by that person or group."
+    primary_domain: meta
+    domains: [meta, onomastic, semantic, relational]
+    aliases: ["self-referential word"]
+    see_also: ["pseudonym", "allonym", "exonym"]
+
+  bacronym:
+    definition: "Phrase invented after the fact to fit an existing word or sequence of letters by treating them as initials."
+    primary_domain: formal
+    domains: [formal, relational, meta]
+    aliases: ["backronym"]
+    see_also: ["acronym"]
+
+  caconym:
+    definition: "Name considered linguistically bad, objectionable, or poorly formed, especially in taxonomy."
+    primary_domain: onomastic
+    domains: [onomastic, meta]
+    aliases: []
+    see_also: ["euonym"]
+
+  capitonym:
+    definition: "Word whose meaning and sometimes pronunciation change when the initial letter is capitalized (e.g. polish/Polish)."
+    primary_domain: formal
+    domains: [formal, semantic, relational, meta]
+    aliases: []
+    see_also: ["heteronym", "homonym"]
+
+  cohyponym:
+    definition: "Word that shares the same hypernym with another word; a coordinate term at the same level of specificity."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: ["coordinate term"]
+    see_also: ["hyponym", "hypernym"]
+
+  contranym:
+    definition: "Alias of autoantonym (word with two opposite meanings)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["autoantonym"]
+
+  contronym:
+    definition: "Alias of autoantonym (word with two opposite meanings)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["autoantonym"]
+
+  cryptonym:
+    definition: "Secret or code name used to refer covertly to a person, place, operation, or thing."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: []
+    see_also: ["pseudonym"]
+
+  dionym:
+    definition: "Name consisting of two terms; especially a binomial scientific name at the rank of species."
+    primary_domain: formal
+    domains: [formal, onomastic, meta]
+    aliases: []
+    see_also: ["trionym", "tautonym"]
+
+  eponym:
+    definition: "Name of a person from whom another name or word is derived, or the thing that bears that person's name."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: []
+    see_also: ["toponym", "euonym"]
+
+  euonym:
+    definition: "Name felt to be especially apt or well suited to the person, place, or thing that bears it."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: []
+    see_also: ["aptronym", "caconym"]
+
+  euphonym:
+    definition: "Name whose sound is perceived as pleasant or harmonious."
+    primary_domain: onomastic
+    domains: [onomastic, formal, meta]
+    aliases: []
+    see_also: ["euonym"]
+
+  exonym:
+    definition: "Place or group name used by outsiders that differs from the name used by the local community (e.g. Germany vs. Deutschland)."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: []
+    see_also: ["toponym", "autonym"]
+
+  heteronym:
+    definition: "One of two or more words with the same spelling but different meanings and typically different pronunciations."
+    primary_domain: formal
+    domains: [formal, semantic, relational, meta]
+    aliases: []
+    see_also: ["homonym", "capitonym"]
+
+  holonym:
+    definition: "Word that names a whole of which other words name the parts (car is a holonym of wheel, door, etc.)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["meronym"]
+
+  homonym:
+    definition: "One of two or more words that share spelling or pronunciation (or both) but differ in meaning and often origin."
+    primary_domain: formal
+    domains: [formal, semantic, relational, meta]
+    aliases: []
+    see_also: ["heteronym", "paronym"]
+
+  hypernym:
+    definition: "More general term whose meaning includes that of one or more more-specific words (e.g. animal for dog, cat)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: ["hyperonym", "superordinate term", "generic term"]
+    see_also: ["hyponym", "cohyponym"]
+
+  hyperonym:
+    definition: "Alias of hypernym (superordinate term)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["hypernym"]
+
+  hyponym:
+    definition: "More specific term whose meaning is included within that of a more general word (e.g. dog as a hyponym of animal)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: ["subordinate term"]
+    see_also: ["hypernym", "cohyponym"]
+
+  isonym:
+    definition: "Name identical in form to another, especially a taxonomic name based on the same type or, more generally, a shared surname."
+    primary_domain: onomastic
+    domains: [onomastic, formal, meta]
+    aliases: []
+    see_also: ["homonym"]
+
+  meronym:
+    definition: "Word that names a part of something whose whole is named by another word (e.g. wheel of car)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["holonym", "hypernym", "hyponym"]
+
+  metonym:
+    definition: "Word that refers to something by naming a closely associated thing instead of the whole (e.g. the Crown for the monarchy)."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["synonym", "antonym"]
+
+  metronym:
+    definition: "Personal name derived from the name of one's mother or another female ancestor."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: []
+    see_also: ["patronym"]
+
+  oronym:
+    definition: "String of words that is homophonic with another string of words (e.g. 'ice cream' / 'I scream')."
+    primary_domain: formal
+    domains: [formal, semantic, relational, meta]
+    aliases: []
+    see_also: ["homonym"]
+
+  paedonym:
+    definition: "Name derived from one's child and used to identify a parent (e.g. 'mother of X', 'father of Y')."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: ["pedonym"]
+    see_also: ["teknonym"]
+
+  paranym:
+    definition: "Euphemistic synonym whose literal sense is milder or even contrary to the underlying reality."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["synonym", "antonym"]
+
+  paronym:
+    definition: "Word related to another by common root and similar form, often with related meaning; sometimes a near-homonym."
+    primary_domain: formal
+    domains: [formal, semantic, relational, meta]
+    aliases: []
+    see_also: ["homonym"]
+
+  patronym:
+    definition: "Name derived from the given name of one's father or another male ancestor."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: ["patronymic"]
+    see_also: ["metronym", "teknonym"]
+
+  poecilonym:
+    definition: "Rare term for a synonym: one of several alternative names for the same thing."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["synonym", "polyonym"]
+
+  polyonym:
+    definition: "Object or entity that has many different names, or (by extension) any of those names."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: []
+    see_also: ["synonym", "poecilonym"]
+
+  pseudonym:
+    definition: "Fictitious or assumed name used instead of a person's real name, especially by an author."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: ["pen name", "nom de plume"]
+    see_also: ["allonym", "autonym", "anonym", "cryptonym"]
+
+  retronym:
+    definition: "New compound or modified noun coined for an original concept after a newer contrasting form appears (e.g. 'acoustic guitar')."
+    primary_domain: meta
+    domains: [meta, formal, semantic, relational]
+    aliases: []
+    see_also: ["acronym"]
+
+  synonym:
+    definition: "Word whose meaning is the same as or very similar to that of another word in the same language."
+    primary_domain: semantic
+    domains: [semantic, relational, meta]
+    aliases: []
+    see_also: ["antonym", "poecilonym", "polyonym"]
+
+  tautonym:
+    definition: "Name or word composed of two identical parts, including taxonomic names with identical genus and species."
+    primary_domain: formal
+    domains: [formal, onomastic, relational, meta]
+    aliases: []
+    see_also: ["dionym", "trionym"]
+
+  teknonym:
+    definition: "Name that refers to a parent by way of a child's name (e.g. 'Abu Zayd' = 'father of Zayd')."
+    primary_domain: onomastic
+    domains: [onomastic, relational, meta]
+    aliases: []
+    see_also: ["paedonym"]
+
+  toponym:
+    definition: "Place name, or a word derived from a place name."
+    primary_domain: onomastic
+    domains: [onomastic, semantic, relational, meta]
+    aliases: []
+    see_also: ["exonym", "eponym"]
+
+  trionym:
+    definition: "Name consisting of three terms, especially a trinomial scientific or taxonomic name for a subspecies."
+    primary_domain: formal
+    domains: [formal, onomastic, meta]
+    aliases: []
+    see_also: ["dionym", "tautonym"]
