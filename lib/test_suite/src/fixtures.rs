@@ -30,14 +30,14 @@ pub fn standalone_service_request() -> ServiceRequest {
 
 pub fn mapping_cpt_code() -> StgSrCodeExploded {
     serde_json::from_str(include_str!(
-        "./fixtures/regression/mapping_cpt_78815.json"
+        "../fixtures/regression/mapping_cpt_78815.json"
     ))
     .expect("mapping CPT fixture should parse")
 }
 
 pub fn mapping_snomed_code() -> StgSrCodeExploded {
     serde_json::from_str(include_str!(
-        "./fixtures/regression/mapping_snomed_pet.json"
+        "../fixtures/regression/mapping_snomed_pet.json"
     ))
     .expect("mapping SNOMED fixture should parse")
 }
