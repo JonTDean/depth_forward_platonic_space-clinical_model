@@ -6,6 +6,7 @@ edition.workspace = true
 
 [workspace]
 members = [
+    "lib/app/cli",
     "lib/domain/core",
     "lib/domain/fake_data",
     "lib/domain/ingestion",

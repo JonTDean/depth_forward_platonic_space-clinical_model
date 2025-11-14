@@ -1,0 +1,22 @@
+[package]
+name = "dfps_cli"
+version.workspace = true
+edition.workspace = true
+
+[[bin]]
+name = "map_bundles"
+path = "src/bin/map_bundles.rs"
+
+[[bin]]
+name = "map_codes"
+path = "src/bin/map_codes.rs"
+
+[dependencies]
+dfps_core = { path = "../../domain/core" }
+dfps_pipeline = { path = "../../domain/pipeline" }
+dfps_observability = { path = "../../platform/observability" }
+dfps_mapping = { path = "../../domain/mapping" }
+serde.workspace = true
+serde_json.workspace = true
+env_logger = "0.11"
+log = "0.4"

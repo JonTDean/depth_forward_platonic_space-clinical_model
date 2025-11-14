@@ -57,7 +57,7 @@ assert_eq!(exploded.len(), mapped.exploded_codes.len());
 - Run the full ingestion + mapping pipeline:
 
   ```bash
-  cargo run -p dfps_pipeline --bin map_bundles bundles.ndjson > pipeline_output.ndjson
+  cargo run -p dfps_cli --bin map_bundles bundles.ndjson > pipeline_output.ndjson
   ```
 
 ### Observability & logging
@@ -66,7 +66,7 @@ assert_eq!(exploded.len(), mapped.exploded_codes.len());
 
   ```bash
   RUST_LOG=dfps_pipeline=info,dfps_mapping=warn \
-    cargo run -p dfps_pipeline --bin map_bundles bundles.ndjson
+  cargo run -p dfps_cli --bin map_bundles bundles.ndjson
   ```
 
   The CLI prints NDJSON outputs plus a final `metrics_summary` line with counts
