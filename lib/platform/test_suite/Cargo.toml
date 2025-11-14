@@ -9,6 +9,7 @@ tokio.workspace = true
 http-body-util = "0.1"
 tower = "0.5"
 dfps_api = { path = "../../app/web/backend/api" }
+reqwest.workspace = true
 dfps_core = { path = "../../domain/core" }
 dfps_fake_data = { path = "../../domain/fake_data" }
 dfps_ingestion = { path = "../../domain/ingestion" }

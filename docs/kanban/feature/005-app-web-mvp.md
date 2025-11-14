@@ -79,18 +79,21 @@ _Working branch: `feature/app/web/backend-mvp`_
   - [x] Spin up the server in-process (no external port binding).
   - [x] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
   - [x] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
-- [ ] Add a CI smoke test that:
-  - [ ] Starts the server.
-  - [ ] Runs `GET /health` and a minimal `POST /api/map-bundles`.
+- [x] Add a CI smoke test that:
+  - [x] Starts the server.
+  - [x] Runs `GET /health` and a minimal `POST /api/map-bundles`.
 
 #### WEB-BE-05 – Directory-architecture alignment (backend)
-- [ ] Update `docs/system-design/base/directory-architecture.md` to:
-  - [ ] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
-  - [ ] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
+- [x] Update `docs/system-design/base/directory-architecture.md` to:
+  - [x] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
+  - [x] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
 
 ---
 
 ## REVIEW
+
+### Backend – HTTP API gateway (`dfps_api`)
+_Working branch: `feature/app/web/backend-mvp`_
 
 #### WEB-BE-01 – Scaffold web backend crate
 - [x] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.

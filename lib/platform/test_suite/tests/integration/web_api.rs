@@ -1,19 +1,24 @@
 use axum::{
-    Router,
     body::Body,
     http::{Request, StatusCode},
+    Router,
 };
-use dfps_api::{ApiState, router as api_router};
+// Core
+use dfps_api::{router as api_router, ApiState};
 use dfps_core::{
     mapping::{DimNCITConcept, MappingResult, MappingState},
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
 use dfps_observability::PipelineMetrics;
 use dfps_test_suite::regression;
+
 use http_body_util::BodyExt;
-use serde::Deserialize;
 use serde::de::DeserializeOwned;
+use serde::Deserialize;
+use std::net::SocketAddr;
+use tokio::{net::TcpListener, sync::oneshot, task::JoinHandle};
 use tower::ServiceExt;
+use reqwest::StatusCode as ReqwestStatusCode;
 
 #[derive(Deserialize)]
 struct MapBundlesBody {
@@ -30,6 +35,29 @@ struct HealthResponse {
 
 fn app() -> Router {
     api_router(ApiState::default())
+}
+
+async fn spawn_http_server() -> (SocketAddr, oneshot::Sender<()>, JoinHandle<()>) {
+    let listener = TcpListener::bind("127.0.0.1:0")
+        .await
+        .expect("bind test server");
+    let addr = listener.local_addr().expect("server addr");
+    let router = api_router(ApiState::default());
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
+
+    let handle = tokio::spawn(async move {
+        let shutdown = async {
+            let _ = shutdown_rx.await;
+        };
+        if let Err(err) = axum::serve(listener, router.into_make_service())
+            .with_graceful_shutdown(shutdown)
+            .await
+        {
+            panic!("dfps_api server error: {err}");
+        }
+    });
+
+    (addr, shutdown_tx, handle)
 }
 
 async fn send_json<T>(app: &Router, request: Request<Body>) -> (StatusCode, T)
@@ -134,4 +162,44 @@ async fn metrics_summary_tracks_processed_bundles() {
         send_json(&app, health_request).await;
     assert_eq!(health_status, StatusCode::OK);
     assert_eq!(health.status, "ok");
+}
+
+#[tokio::test]
+async fn ci_smoke_server_runs_endpoints() {
+    let (addr, shutdown_tx, handle) = spawn_http_server().await;
+    let client = reqwest::Client::new();
+    let base = format!("http://{addr}");
+
+    let bundle = regression::baseline_fhir_bundle();
+    let map_resp = client
+        .post(format!("{base}/api/map-bundles"))
+        .json(&bundle)
+        .send()
+        .await
+        .expect("map-bundles response");
+    assert_eq!(map_resp.status(), ReqwestStatusCode::OK);
+    let body: MapBundlesBody = map_resp.json().await.expect("map body json");
+    assert_eq!(body.flats.len(), 1);
+    assert!(!body.mapping_results.is_empty());
+
+    let metrics_resp = client
+        .get(format!("{base}/metrics/summary"))
+        .send()
+        .await
+        .expect("metrics response");
+    assert_eq!(metrics_resp.status(), ReqwestStatusCode::OK);
+    let metrics: PipelineMetrics = metrics_resp.json().await.expect("metrics body");
+    assert!(metrics.bundle_count >= 1);
+
+    let health_resp = client
+        .get(format!("{base}/health"))
+        .send()
+        .await
+        .expect("health response");
+    assert_eq!(health_resp.status(), ReqwestStatusCode::OK);
+    let health: HealthResponse = health_resp.json().await.expect("health body");
+    assert_eq!(health.status, "ok");
+
+    let _ = shutdown_tx.send(());
+    handle.await.expect("server join");
 }

@@ -60,6 +60,9 @@ code/lib/app/
     cli/
     desktop/
     web/
+  web/
+    backend/
+      api/
 ```
 
 * `frontend/cli/`
@@ -78,6 +81,12 @@ code/lib/app/
 * `frontend/web/`
 
   * Web-facing UI or HTTP-gateway shells (e.g., web dashboards, admin panels).
+
+* `web/backend/api/`
+
+  * Crate: `dfps_api`.
+  * HTTP API gateway that exposes the DFPS pipeline over `/api/map-bundles`, `/health`, and `/metrics/summary`.
+  * Delegates ingestion/mapping work to `dfps_pipeline` and emits metrics via `dfps_observability`.
 
 **Principle:**
 No heavy business logic should live here. If you find complex logic in `app/`, move it into a `domain/` crate and import it.
