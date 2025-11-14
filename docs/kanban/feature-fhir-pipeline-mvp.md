@@ -9,7 +9,37 @@
 ---
 
 ## TODO
-- _Empty_
+
+### E2E-01 – Bundle → mapped concepts facade
+- [x] Add a public entrypoint (new crate `dfps_pipeline` or module in `dfps_mapping`) that composes `bundle_to_staging` and `map_staging_codes`:
+  - [x] `bundle_to_mapped_sr(bundle) -> (Vec<StgServiceRequestFlat>, Vec<MappingResult>, Vec<DimNCITConcept>)`
+  - [x] Return structured errors for ingestion/mapping failures.
+
+### E2E-02 – End-to-end test: FHIR → staging → NCIt
+- [x] In `dfps_test_suite`, load the regression bundle fixture, run the facade, and assert:
+  - [x] Flat/exploded counts match the staging invariants.
+  - [x] PET codes resolve to the expected NCIt IDs and mapping states.
+  - [x] Mapping state distribution (AutoMapped / NeedsReview / NoMatch) is stable.
+
+### E2E-03 – Pipeline CLI
+- [x] Add a binary (e.g. `dfps_pipeline::bin::map_bundles`) that:
+  - [x] Reads NDJSON FHIR Bundles.
+  - [x] Emits NDJSON staging rows, mapping results, and NCIt dims.
+  - [x] Supports deterministic seeds / sample data for demos.
+
+### FP-07 – FHIR validation & error handling
+- [ ] Extend `IngestionError` coverage (missing `resourceType`, malformed `Reference`, bad `status/intents`).
+- [ ] Decide behavior (skip vs. accumulate vs. fail) and expose structured errors.
+- [ ] Unit/property tests around each error scenario.
+
+### FP-08 – Messy FHIR regression fixtures
+- [ ] Add fixtures covering missing `subject`, extra codings, unknown systems, casing variants.
+- [ ] Regression tests asserting deterministic error/skip behavior.
+
+### FP-09 – Quickstart docs & CLI usage
+- [ ] Update `docs/system-design/fhir/index.md` (or crate README) with copy/paste snippets:
+  - [ ] Example: load bundle JSON → call `bundle_to_staging`.
+  - [ ] Document `generate_fhir_bundle` CLI usage for devs.
 
 ---
 

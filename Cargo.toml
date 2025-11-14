@@ -10,6 +10,7 @@ members = [
     "lib/fake_data",
     "lib/ingestion",
     "lib/mapping",
+    "lib/pipeline",
     "lib/test_suite",
 ]
 

@@ -1,0 +1,12 @@
+[package]
+name = "dfps_pipeline"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dfps_core = { path = "../core" }
+dfps_ingestion = { path = "../ingestion" }
+dfps_mapping = { path = "../mapping" }
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "1.0"

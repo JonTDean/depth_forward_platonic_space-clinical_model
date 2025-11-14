@@ -19,6 +19,23 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
   * Add module-level docs (`//!`) describing the domain model’s intent and invariants.
   * Sketch how this maps back to the FHIR/NCIt concepts you’ve already diagrammed.
 
+* [ ] **DM-06 – Domain examples + doctests**
+
+  * Add an `examples` module (or inline doctests) showing how to construct a `ServiceRequest`, go FHIR → domain via `sr_to_domain`, etc.
+  * Ensure snippets compile via `cargo test --doc` for up-to-date developer guidance.
+
+### Observability & ergonomics
+
+* [ ] **OBS-01 – Structured logging hooks**
+
+  * Add optional logging (feature-flagged) emitting ingestion + mapping summary metrics (counts per mapping state, number of errors).
+  * Document how to enable logging for local debugging.
+
+* [ ] **OBS-02 – Metrics snapshot test**
+
+  * In `dfps_test_suite`, run a seeded mini-batch (fake FHIR) end-to-end and assert on resulting metrics (counts per mapping state).
+  * Guards against silent behavior drift when heuristics change.
+
 ---
 
 ## DOING

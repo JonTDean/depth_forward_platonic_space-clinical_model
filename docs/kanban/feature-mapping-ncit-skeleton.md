@@ -21,6 +21,21 @@
 - [ ] Add `strategy`, `source_version`, `thresholds` notes to `MappingResult`
 - [ ] Configurable cutoffs: `AUTO_MAP >= 0.95`, `NEEDS_REVIEW >= 0.60`
 
+### MAP-09 – Mapping state machine
+- [ ] Introduce `MappingState` enum (`AutoMapped`, `NeedsReview`, `NoMatch`).
+- [ ] Wire thresholds from MAP-07 into `MappingResult` (state + reasoning).
+- [ ] Tests ensuring threshold tweaks move codes between states deterministically.
+
+### MAP-10 – Unknown code handling
+- [ ] Define behavior for codes not covered by mock tables or low-scoring rankers.
+- [ ] Emit `NoMatch` + provenance, ensure CLI/pipeline surfaces it cleanly.
+- [ ] Regression tests with synthetic “unknown” codes.
+
+### MAP-11 – Mapping explainability helpers
+- [ ] Add helper APIs (and docs) to inspect top-N candidates + contributing rankers.
+- [ ] CLI option or debug output summarizing why a code mapped to a given NCIt.
+- [ ] Short doc snippet walking through the CPT 78815 example.
+
 ---
 
 ## DOING
