@@ -9,28 +9,7 @@
 ---
 
 ## TODO
-
-### FP-05 – Workspace & CI wiring
-- [ ] Add `"lib/ingestion"` to root `[workspace].members`
-- [ ] Ensure CI runs `cargo fmt`, `clippy`, and `test` across all crates
-
-### FP-06 – Docs alignment
-- [ ] Cross-link modules to:
-  - [ ] `docs/system-design/fhir/architecture/system-architecture.md`
-  - [ ] `docs/system-design/fhir/models/data-model-er.md`
-  - [ ] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
-- [ ] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
-
-### FP-05 – Workspace & CI wiring
-- [ ] Add `"lib/ingestion"` to root `[workspace].members`
-- [ ] Ensure CI runs `cargo fmt`, `clippy`, and `test` across all crates
-
-### FP-06 – Docs alignment
-- [ ] Cross-link modules to:
-  - [ ] `docs/system-design/fhir/architecture/system-architecture.md`
-  - [ ] `docs/system-design/fhir/models/data-model-er.md`
-  - [ ] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
-- [ ] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
+- _Empty_
 
 ---
 
@@ -91,3 +70,15 @@
 
 ## Out of Scope (deferred)
 - NCIt/UMLS mapping, vector search, warehouse loads.
+- [x] Regression fixture: `fixtures/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
+
+### FP-05 – Workspace & CI wiring
+- [x] Add `"lib/ingestion"` to root `[workspace].members`
+- [x] Ensure CI runs `cargo fmt`, `clippy`, and `test` across all crates
+
+### FP-06 – Docs alignment
+- [x] Cross-link modules to:
+  - [x] `docs/system-design/fhir/architecture/system-architecture.md`
+  - [x] `docs/system-design/fhir/models/data-model-er.md`
+  - [x] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
+- [x] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`

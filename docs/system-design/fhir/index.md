@@ -17,3 +17,12 @@
   - [PET/CT user journey](./experience/user-journey-pet-ct.md)
 - Concepts
   - [Pipeline mindmap](./concepts/mindmap-pipeline.md)
+
+## Ingestion MVP
+
+The Rust modules `dfps_core::fhir` and `dfps_core::staging`, plus the
+`dfps_ingestion` crate, implement the ServiceRequest ingestion flow described in
+the [system architecture](./architecture/system-architecture.md),
+[ingestion ER model](./models/data-model-er.md), and
+[ServiceRequest sequence](./behavior/sequence-servicerequest.md) documents. This
+MVP powers the synthetic bundle generators and end-to-end ingestion tests.

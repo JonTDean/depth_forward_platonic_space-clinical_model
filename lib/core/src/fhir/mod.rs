@@ -1,10 +1,11 @@
 //! Minimal FHIR R4/R5 resource representations for the ingestion MVP.
 //!
 //! The structs in this module directly align with the ServiceRequest pipeline
-//! diagrams in `docs/system-design/fhir/architecture/system-architecture.md`
-//! and `docs/system-design/fhir/models/data-model-er.md`. They keep only the
-//! subset of fields required to parse raw Bundles and feed staging + domain
-//! models without committing to a full FHIR implementation.
+//! diagrams in `docs/system-design/fhir/architecture/system-architecture.md`,
+//! `docs/system-design/fhir/models/data-model-er.md`, and the sequence flow
+//! described in `docs/system-design/fhir/behavior/sequence-servicerequest.md`.
+//! They keep only the subset of fields required to parse raw Bundles and feed
+//! staging + domain models without committing to a full FHIR implementation.
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
