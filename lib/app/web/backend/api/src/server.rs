@@ -1,9 +1,30 @@
-use std::net::{IpAddr, SocketAddr};
+use std::{
+    collections::HashSet,
+    net::{IpAddr, SocketAddr},
+    sync::Arc,
+};
 
-use axum::Router;
-use log::{info, warn};
+use axum::{
+    Json, Router,
+    body::Bytes,
+    extract::State,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+    routing::{get, post},
+};
+use dfps_core::{
+    fhir::Bundle,
+    mapping::{DimNCITConcept, MappingResult, MappingState},
+    staging::{StgServiceRequestFlat, StgSrCodeExploded},
+};
+use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
+use dfps_pipeline::{PipelineError, bundle_to_mapped_sr};
+use log::{error, info, warn};
+use serde::Serialize;
+use serde_json::{Value, json};
 use thiserror::Error;
-use tokio::net::TcpListener;
+use tokio::{net::TcpListener, sync::Mutex};
+use uuid::Uuid;
 
 /// Runtime configuration for the HTTP server.
 #[derive(Debug, Clone)]
@@ -52,10 +73,22 @@ pub enum ServerError {
     Serve(#[source] std::io::Error),
 }
 
+#[derive(Clone)]
+struct AppState {
+    metrics: Arc<Mutex<PipelineMetrics>>,
+}
+
+impl Default for AppState {
+    fn default() -> Self {
+        Self {
+            metrics: Arc::new(Mutex::new(PipelineMetrics::default())),
+        }
+    }
+}
+
 /// Start the HTTP server using the provided configuration.
 ///
-/// The function builds a router (currently empty) and blocks until Ctrl+C or
-/// another shutdown signal is received.
+/// Builds the router, wires shared state, and blocks until Ctrl+C (or shutdown).
 pub async fn run(config: ApiServerConfig) -> Result<(), ServerError> {
     let addr = config.socket_addr()?;
     info!(target: "dfps_api", "starting web backend on {addr}");
@@ -63,7 +96,7 @@ pub async fn run(config: ApiServerConfig) -> Result<(), ServerError> {
         .await
         .map_err(|source| ServerError::Bind { addr, source })?;
 
-    let router = build_router();
+    let router = build_router(AppState::default());
 
     axum::serve(listener, router.into_make_service())
         .with_graceful_shutdown(shutdown_signal())
@@ -74,8 +107,104 @@ pub async fn run(config: ApiServerConfig) -> Result<(), ServerError> {
     Ok(())
 }
 
-fn build_router() -> Router {
+fn build_router(state: AppState) -> Router {
     Router::new()
+        .route("/health", get(health))
+        .route("/metrics/summary", get(metrics_summary))
+        .route("/api/map-bundles", post(map_bundles))
+        .with_state(state)
+}
+
+async fn health() -> impl IntoResponse {
+    let request_id = Uuid::new_v4();
+    info!(target: "dfps_api", "request_id={request_id} health");
+    Json(json!({ "status": "ok" }))
+}
+
+async fn metrics_summary(State(state): State<AppState>) -> impl IntoResponse {
+    let request_id = Uuid::new_v4();
+    let metrics = state.metrics.lock().await.clone();
+    info!(
+        target: "dfps_api",
+        "request_id={request_id} metrics_summary bundles={} mappings={}",
+        metrics.bundle_count,
+        metrics.mapping_count
+    );
+    Json(metrics)
+}
+
+async fn map_bundles(State(state): State<AppState>, body: Bytes) -> Result<Response, ApiError> {
+    let request_id = Uuid::new_v4();
+    let bundles = parse_bundles(&body, request_id)?;
+    if bundles.is_empty() {
+        return Err(ApiError::invalid_json(
+            "request body did not contain any Bundles",
+            request_id,
+        ));
+    }
+    info!(
+        target: "dfps_api",
+        "request_id={request_id} map_bundles start bundles={}",
+        bundles.len()
+    );
+
+    let mut response = MapBundlesResponse::default();
+    let mut dims_seen: HashSet<String> = HashSet::new();
+    let mut request_metrics = PipelineMetrics::default();
+
+    for bundle in bundles {
+        let output = bundle_to_mapped_sr(&bundle).map_err(|err| match err {
+            PipelineError::Ingestion(source) => {
+                ApiError::ingestion(source.to_string(), request_id)
+            }
+            other => ApiError::internal(other.to_string(), request_id),
+        })?;
+
+        log_pipeline_output(
+            &output.flats,
+            &output.exploded_codes,
+            &output.mapping_results,
+            &mut request_metrics,
+        );
+
+        response.flats.extend(output.flats);
+        response.exploded_codes.extend(output.exploded_codes);
+        for mapping in &output.mapping_results {
+            if matches!(mapping.state, MappingState::NoMatch) {
+                log_no_match(mapping);
+            }
+        }
+        response.mapping_results.extend(output.mapping_results);
+
+        for concept in output.dim_concepts {
+            if dims_seen.insert(concept.ncit_id.clone()) {
+                response.dim_concepts.push(concept);
+            }
+        }
+    }
+
+    {
+        let mut global = state.metrics.lock().await;
+        global.bundle_count += request_metrics.bundle_count;
+        global.flats_count += request_metrics.flats_count;
+        global.exploded_count += request_metrics.exploded_count;
+        global.mapping_count += request_metrics.mapping_count;
+        global.auto_mapped += request_metrics.auto_mapped;
+        global.needs_review += request_metrics.needs_review;
+        global.no_match += request_metrics.no_match;
+    }
+    info!(
+        target: "dfps_api",
+        "request_id={request_id} map_bundles complete bundles={} flats={} mappings={} automap={} needs_review={} no_match={}",
+        request_metrics.bundle_count,
+        response.flats.len(),
+        response.mapping_results.len(),
+        request_metrics.auto_mapped,
+        request_metrics.needs_review,
+        request_metrics.no_match
+    );
+
+    Ok(Json(response).into_response())
 }
 
 fn shutdown_signal() -> impl std::future::Future<Output = ()> {
@@ -84,5 +213,220 @@ fn shutdown_signal() -> impl std::future::Future<Output = ()> {
             Ok(()) => info!(target: "dfps_api", "received shutdown signal"),
             Err(err) => warn!(target: "dfps_api", "failed waiting for ctrl_c: {err}"),
         }
+    }
+}
+
+#[derive(Default, Serialize)]
+struct MapBundlesResponse {
+    flats: Vec<StgServiceRequestFlat>,
+    exploded_codes: Vec<StgSrCodeExploded>,
+    mapping_results: Vec<MappingResult>,
+    dim_concepts: Vec<DimNCITConcept>,
+}
+
+#[derive(Debug, Serialize)]
+struct ErrorResponse {
+    code: &'static str,
+    message: String,
+    request_id: Uuid,
+}
+
+#[derive(Debug)]
+enum ApiError {
+    InvalidJson { message: String, request_id: Uuid },
+    Ingestion { message: String, request_id: Uuid },
+    Internal { message: String, request_id: Uuid },
+}
+
+impl ApiError {
+    fn invalid_json(message: impl Into<String>, request_id: Uuid) -> Self {
+        let message = message.into();
+        warn!(
+            target: "dfps_api",
+            "request_id={request_id} invalid json: {message}"
+        );
+        Self::InvalidJson {
+            message,
+            request_id,
+        }
+    }
+
+    fn ingestion(message: impl Into<String>, request_id: Uuid) -> Self {
+        let message = message.into();
+        warn!(
+            target: "dfps_api",
+            "request_id={request_id} invalid fhir payload: {message}"
+        );
+        Self::Ingestion {
+            message,
+            request_id,
+        }
+    }
+
+    fn internal(message: impl Into<String>, request_id: Uuid) -> Self {
+        let message = message.into();
+        error!(
+            target: "dfps_api",
+            "request_id={request_id} internal error: {message}"
+        );
+        Self::Internal {
+            message,
+            request_id,
+        }
+    }
+}
+
+impl IntoResponse for ApiError {
+    fn into_response(self) -> Response {
+        match self {
+            ApiError::InvalidJson {
+                message,
+                request_id,
+            } => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    code: "invalid_json",
+                    message,
+                    request_id,
+                }),
+            )
+                .into_response(),
+            ApiError::Ingestion {
+                message,
+                request_id,
+            } => (
+                StatusCode::UNPROCESSABLE_ENTITY,
+                Json(ErrorResponse {
+                    code: "invalid_fhir",
+                    message,
+                    request_id,
+                }),
+            )
+                .into_response(),
+            ApiError::Internal {
+                message,
+                request_id,
+            } => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse {
+                    code: "internal_error",
+                    message,
+                    request_id,
+                }),
+            )
+                .into_response(),
+        }
+    }
+}
+
+fn parse_bundles(body: &[u8], request_id: Uuid) -> Result<Vec<Bundle>, ApiError> {
+    if body.iter().all(|byte| byte.is_ascii_whitespace()) {
+        return Err(ApiError::invalid_json("request body is empty", request_id));
+    }
+
+    match serde_json::from_slice::<Value>(body) {
+        Ok(Value::Object(map)) => {
+            let bundle: Bundle = serde_json::from_value(Value::Object(map))
+                .map_err(|err| ApiError::invalid_json(err.to_string(), request_id))?;
+            Ok(vec![bundle])
+        }
+        Ok(Value::Array(items)) => {
+            let mut bundles = Vec::with_capacity(items.len());
+            for item in items {
+                let bundle: Bundle = serde_json::from_value(item)
+                    .map_err(|err| ApiError::invalid_json(err.to_string(), request_id))?;
+                bundles.push(bundle);
+            }
+            Ok(bundles)
+        }
+        Ok(_) => Err(ApiError::invalid_json(
+            "expected a Bundle object or array of Bundles",
+            request_id,
+        )),
+        Err(_) => parse_ndjson(body, request_id),
+    }
+}
+
+fn parse_ndjson(body: &[u8], request_id: Uuid) -> Result<Vec<Bundle>, ApiError> {
+    let text = std::str::from_utf8(body)
+        .map_err(|err| ApiError::invalid_json(err.to_string(), request_id))?;
+    let mut bundles = Vec::new();
+
+    for (idx, line) in text.lines().enumerate() {
+        let trimmed = line.trim();
+        if trimmed.is_empty() {
+            continue;
+        }
+        let bundle: Bundle = serde_json::from_str(trimmed).map_err(|err| {
+            ApiError::invalid_json(format!("ndjson line {}: {}", idx + 1, err), request_id)
+        })?;
+        bundles.push(bundle);
+    }
+
+    if bundles.is_empty() {
+        Err(ApiError::invalid_json(
+            "request body did not contain Bundle entries",
+            request_id,
+        ))
+    } else {
+        Ok(bundles)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn sample_bundle_json(id: &str) -> String {
+        serde_json::json!({
+            "resourceType": "Bundle",
+            "type": "collection",
+            "entry": [{
+                "resource": {
+                    "resourceType": "ServiceRequest",
+                    "id": id,
+                    "status": "active",
+                    "intent": "order",
+                    "subject": { "reference": "Patient/p1" }
+                }
+            }]
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn parses_single_bundle_object() {
+        let body = sample_bundle_json("sr-1");
+        let bundles = parse_bundles(body.as_bytes(), Uuid::nil()).unwrap();
+        assert_eq!(bundles.len(), 1);
+        assert_eq!(bundles[0].resource_type, "Bundle");
+    }
+
+    #[test]
+    fn parses_array_of_bundles() {
+        let body = format!(
+            "[{},{}]",
+            sample_bundle_json("sr-1"),
+            sample_bundle_json("sr-2")
+        );
+        let bundles = parse_bundles(body.as_bytes(), Uuid::nil()).unwrap();
+        assert_eq!(bundles.len(), 2);
+    }
+
+    #[test]
+    fn parses_ndjson_payload() {
+        let body = format!(
+            "{}\n{}\n",
+            sample_bundle_json("sr-1"),
+            sample_bundle_json("sr-2")
+        );
+        let bundles = parse_bundles(body.as_bytes(), Uuid::nil()).unwrap();
+        assert_eq!(bundles.len(), 2);
+    }
+
+    #[test]
+    fn rejects_empty_payload() {
+        let err = parse_bundles(b"", Uuid::nil()).unwrap_err();
+        assert!(matches!(err, ApiError::InvalidJson { .. }));
     }
 }

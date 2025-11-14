@@ -74,29 +74,6 @@ _Working branch: `feature/app/web/frontend-mvp`_
 ### Backend – HTTP API gateway (`dfps_api`)
 _Working branch: `feature/app/web/backend-mvp`_
 
-#### WEB-BE-01 – Scaffold web backend crate
-- [x] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.
-- [x] Add the crate to the root `[workspace].members` under the `app` section.
-- [x] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
-
-#### WEB-BE-02 – Core FHIR → NCIt HTTP API
-- [ ] Add dependencies on `dfps_pipeline` and `dfps_observability`.
-- [ ] Implement `POST /api/map-bundles`:
-  - [ ] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
-  - [ ] For each bundle, call `bundle_to_mapped_sr`.
-  - [ ] Return JSON containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
-- [ ] Define clear error responses for:
-  - [ ] Invalid JSON.
-  - [ ] Invalid FHIR (surfacing `IngestionError` information).
-  - [ ] Internal errors (500 with correlation ID).
-
-#### WEB-BE-03 – Health & metrics endpoints
-- [ ] Add `GET /health` for basic liveness.
-- [ ] Add `GET /metrics/summary` that:
-  - [ ] Computes or aggregates `PipelineMetrics` for recent runs.
-  - [ ] Returns counts per `MappingState` to support dashboards.
-- [ ] Ensure structured logs include a request ID / correlation ID for each call.
-
 #### WEB-BE-04 – Tests & CI for backend
 - [ ] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
   - [ ] Spin up the server in-process (no external port binding).
@@ -114,7 +91,29 @@ _Working branch: `feature/app/web/backend-mvp`_
 ---
 
 ## REVIEW
-- _Empty_
+
+#### WEB-BE-01 – Scaffold web backend crate
+- [x] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.
+- [x] Add the crate to the root `[workspace].members` under the `app` section.
+- [x] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
+
+#### WEB-BE-02 – Core FHIR → NCIt HTTP API
+- [x] Add dependencies on `dfps_pipeline` and `dfps_observability`.
+- [x] Implement `POST /api/map-bundles`:
+  - [x] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
+  - [x] For each bundle, call `bundle_to_mapped_sr`.
+  - [x] Return JSON containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
+- [x] Define clear error responses for:
+  - [x] Invalid JSON.
+  - [x] Invalid FHIR (surfacing `IngestionError` information).
+  - [x] Internal errors (500 with correlation ID).
+
+#### WEB-BE-03 – Health & metrics endpoints
+- [x] Add `GET /health` for basic liveness.
+- [x] Add `GET /metrics/summary` that:
+  - [x] Computes or aggregates `PipelineMetrics` for recent runs.
+  - [x] Returns counts per `MappingState` to support dashboards.
+- [x] Ensure structured logs include a request ID / correlation ID for each call.
 
 ---
 
