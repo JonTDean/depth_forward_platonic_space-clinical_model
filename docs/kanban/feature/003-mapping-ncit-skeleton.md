@@ -10,12 +10,6 @@
 
 ## TODO
 
-### MAP-06 – Docs & diagrams
-- [ ] Update/expand:
-  - [ ] `docs/system-design/ncit/architecture.md`
-  - [ ] `docs/system-design/ncit/behavior/sequence-servicerequest.md`
-  - [ ] `docs/system-design/ncit/models/class-model.md`
-- [ ] Document thresholds & states (AutoMapped / NeedsReview / NoMatch)
 
 ---
 
@@ -80,6 +74,13 @@
 - [x] Introduce `MappingState` enum (`AutoMapped`, `NeedsReview`, `NoMatch`).
 - [x] Wire thresholds from MAP-07 into `MappingResult` (state + reasoning).
 - [x] Tests ensuring threshold tweaks move codes between states deterministically.
+
+### MAP-06 – Docs & diagrams
+- [x] Update/expand:
+  - [x] `docs/system-design/ncit/architecture.md`
+  - [x] `docs/system-design/ncit/behavior/sequence-servicerequest.md`
+  - [x] `docs/system-design/ncit/models/class-model.md`
+- [x] Document thresholds & states (AutoMapped / NeedsReview / NoMatch)
 
 ### MAP-08 – Workspace & CI
 - [x] Add `"lib/mapping"` to workspace members

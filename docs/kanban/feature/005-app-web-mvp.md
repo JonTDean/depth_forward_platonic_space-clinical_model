@@ -1,5 +1,9 @@
 # Kanban — feature/app/web-mvp
 
+**Epic:** Web surface for the FHIR → NCIt pipeline, implemented as:
+- Backend API: `feature/app-web/backend-mvp`
+- Frontend UI: `feature/app-web/frontend-mvp`
+
 ### Columns
 * **TODO** – Not started yet  
 * **DOING** – In progress  
@@ -10,44 +14,98 @@
 
 ## TODO
 
-### WEB-01 – Scaffold web gateway crate (`dfps_web`)
-- [ ] Create `code/lib/app/frontend/web/dfps_web` with `Cargo.toml` + `src/main.rs`.
-- [ ] Add the crate to `[workspace].members` under the `app/` section.
-- [ ] Pick an HTTP framework (e.g., Axum) and wrap it so the rest of the workspace only depends on `dfps_web`’s public API.
+### Backend – HTTP API gateway (`dfps_api`)
 
-### WEB-02 – HTTP API for FHIR → NCIt pipeline
-- [ ] Add dependency on `dfps_pipeline` and `dfps_observability`.
-- [ ] Implement a `POST /api/map-bundles` endpoint that:
-  - [ ] Accepts one `Bundle` or a list/NDJSON of `Bundle` payloads.
-  - [ ] Calls `bundle_to_mapped_sr` for each payload.
-  - [ ] Returns a JSON body containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
-- [ ] Define error responses for invalid JSON, invalid FHIR, and internal errors.
+#### WEB-BE-01 – Scaffold web backend crate
+- [ ] Create `code/lib/app/web/backend/api` (or similar) with `Cargo.toml` + `src/main.rs`.
+- [ ] Add the crate to the root `[workspace].members` under the `app` section.
+- [ ] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
 
-### WEB-03 – Status & health endpoints
+#### WEB-BE-02 – Core FHIR → NCIt HTTP API
+- [ ] Add dependencies on `dfps_pipeline` and `dfps_observability`.
+- [ ] Implement `POST /api/map-bundles`:
+  - [ ] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
+  - [ ] For each bundle, call `bundle_to_mapped_sr`.
+  - [ ] Return JSON containing `flats`, `exploded_codes`, `mapping_results`, and `dim_concepts`.
+- [ ] Define clear error responses for:
+  - [ ] Invalid JSON.
+  - [ ] Invalid FHIR (surfacing `IngestionError` information).
+  - [ ] Internal errors (500 with correlation ID).
+
+#### WEB-BE-03 – Health & metrics endpoints
 - [ ] Add `GET /health` for basic liveness.
 - [ ] Add `GET /metrics/summary` that:
-  - [ ] Aggregates `PipelineMetrics` snapshots (or calculates them per-request).
-  - [ ] Returns counts per mapping state to support dashboards.
-- [ ] Ensure logs include correlation/request IDs for tracing pipeline runs.
+  - [ ] Computes or aggregates `PipelineMetrics` for recent runs.
+  - [ ] Returns counts per `MappingState` to support dashboards.
+- [ ] Ensure structured logs include a request ID / correlation ID for each call.
 
-### WEB-04 – Minimal web UI / docs surface
-- [ ] Implement a very simple HTML/JSON UI (or static page) that:
-  - [ ] Describes the `/api/map-bundles` contract.
-  - [ ] Shows example `curl`/HTTPie invocations.
-- [ ] Optionally add a tiny “playground” form that lets a user paste a Bundle and see mappings.
-- [ ] Align terminology with `docs/system-design/clinical/fhir/*` and `docs/system-design/clinical/ncit/*` (same names for bundles, staging tables, mapping states).
+#### WEB-BE-04 – Tests & CI for backend
+- [ ] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
+  - [ ] Spin up the server in-process (no external port binding).
+  - [ ] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
+  - [ ] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
+- [ ] Add a CI smoke test that:
+  - [ ] Starts the server.
+  - [ ] Runs `GET /health` and a minimal `POST /api/map-bundles`.
 
-### WEB-05 – Tests & CI
-- [ ] Add integration tests (in `dfps_web` or `dfps_test_suite`) that:
-  - [ ] Spin up the HTTP server in-process.
-  - [ ] POST the baseline FHIR bundle and assert NCIt IDs and mapping states match expectations.
-  - [ ] POST a payload with unknown codes and assert `NoMatch` handling and HTTP status are correct.
-- [ ] Add a lightweight CI check that starts the server and runs a smoke test (e.g., `GET /health`, `POST /api/map-bundles` with 1 bundle).
-
-### WEB-06 – Directory-architecture doc updates
+#### WEB-BE-05 – Directory-architecture alignment (backend)
 - [ ] Update `docs/system-design/base/directory-architecture.md` to:
-  - [ ] Call out `dfps_web` under `lib/app/frontend/web` as the HTTP gateway / web surface.
-  - [ ] Briefly describe how it composes `dfps_pipeline` and the clinical slices.
+  - [ ] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
+  - [ ] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
+
+---
+
+### Frontend – Web UI (`dfps_web_frontend` or external app)
+
+#### WEB-FE-01 – Frontend project scaffold
+- [ ] Create a frontend project (e.g., `code/app/web/frontend`) using HTMX.
+- [ ] Document how it discovers the backend base URL (env var, config file, etc.).
+- [ ] Add a small “API client” layer that calls:
+  - [ ] `POST /api/map-bundles`
+  - [ ] `GET /metrics/summary`
+  - [ ] `GET /health`
+
+#### WEB-FE-02 – Bundle upload & mapping viewer
+- [ ] Implement a “Bundle upload” or “Paste JSON” screen:
+  - [ ] Let the user upload a Bundle JSON file or paste raw JSON.
+  - [ ] Call the backend `map-bundles` endpoint.
+- [ ] Render:
+  - [ ] A summary of SR flats (count, statuses/intents).
+  - [ ] A table of `MappingResult` rows (code, system, NCIt ID, state).
+  - [ ] A small badge or chips for `AutoMapped / NeedsReview / NoMatch`.
+
+#### WEB-FE-03 – Metrics & NoMatch explorer
+- [ ] Add a simple dashboard view that:
+  - [ ] Calls `GET /metrics/summary`.
+  - [ ] Shows counts by mapping state as cards or a bar chart.
+- [ ] Add a “NoMatch explorer” view that:
+  - [ ] Lists codes with `MappingState::NoMatch`.
+  - [ ] Displays their `reason` and basic code metadata for triage.
+
+#### WEB-FE-04 – UX polish & copy
+- [ ] Align terminology with `docs/system-design/clinical/fhir/*` and `docs/system-design/clinical/ncit/*` (Bundle, `stg_servicerequest_flat`, `stg_sr_code_exploded`, etc.).
+- [ ] Add basic help text / tooltips explaining:
+  - [ ] What AutoMapped/NeedsReview/NoMatch mean.
+  - [ ] How the mapping engine uses NCIt and mock UMLS xrefs.
+- [ ] Add sensible empty/error states for:
+  - [ ] No mappings returned.
+  - [ ] Backend unreachable or `health` failing.
+
+#### WEB-FE-05 – Frontend tests & wiring
+- [ ] Add unit/interaction tests (component tests or minimal e2e) for:
+  - [ ] Submitting a Bundle and rendering mappings.
+  - [ ] Rendering metrics and NoMatch lists.
+- [ ] Optional: add a small CI step that:
+  - [ ] Builds the frontend.
+  - [ ] Runs the critical tests.
+
+#### WEB-FE-06 – Docs & Quickstart (frontend)
+- [ ] Extend `docs/system-design/base/directory-architecture.md` or a new `docs/system-design/clinical/web-ui.md` to describe:
+  - [ ] Where the frontend lives in `code/`.
+  - [ ] How it interacts with the backend API.
+- [ ] Add Quickstart snippets:
+  - [ ] “Run backend server + frontend dev server.”
+  - [ ] Example curl/UI flows for mapping bundles.
 
 ---
 
