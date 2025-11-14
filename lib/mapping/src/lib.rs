@@ -114,6 +114,12 @@ pub struct MappingEngine<L, V> {
     rules: RuleReranker,
 }
 
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct MappingExplanation {
+    pub code_element: CodeElement,
+    pub candidates: Vec<MappingCandidate>,
+}
+
 impl<L, V> MappingEngine<L, V>
 where
     L: CandidateRanker,
@@ -143,6 +149,17 @@ where
     pub fn ranked_candidates(&self, code: &CodeElement) -> Vec<MappingCandidate> {
         self.collect_candidates(code)
     }
+
+    pub fn explain(&self, code: &CodeElement, top_n: usize) -> MappingExplanation {
+        let mut candidates = self.collect_candidates(code);
+        if candidates.len() > top_n {
+            candidates.truncate(top_n);
+        }
+        MappingExplanation {
+            code_element: code.clone(),
+            candidates,
+        }
+    }
 }
 
 impl<L, V> Mapper for MappingEngine<L, V>
@@ -165,6 +182,7 @@ where
             Some(normalize_ncit_code(&top.target_code)),
             top.score,
             MappingStrategy::Composite,
+            None,
         )
     }
 }
@@ -181,6 +199,15 @@ fn normalize_ncit_code(code: &str) -> String {
 
 pub fn default_engine() -> MappingEngine<LexicalRanker, VectorRankerMock> {
     MappingEngine::new(LexicalRanker, VectorRankerMock, RuleReranker)
+}
+
+pub fn explain_staging_code(
+    staging: &StgSrCodeExploded,
+    top_n: usize,
+) -> MappingExplanation {
+    let engine = default_engine();
+    let code = CodeElement::from(staging);
+    engine.explain(&code, top_n)
 }
 
 fn default_thresholds() -> MappingThresholds {
@@ -207,17 +234,27 @@ fn build_result_with_score(
     ncit_id: Option<String>,
     score: f32,
     strategy: MappingStrategy,
+    reason: Option<String>,
 ) -> MappingResult {
     let thresholds = default_thresholds();
+    let state = classify(score, &thresholds);
+    let mut final_ncit = ncit_id;
+    let final_reason = if state == MappingState::NoMatch {
+        final_ncit = None;
+        Some(reason.unwrap_or_else(|| "score_below_threshold".into()))
+    } else {
+        reason
+    };
     MappingResult {
         code_element_id: code.id.clone(),
         cui,
-        ncit_id,
+        ncit_id: final_ncit,
         score,
         strategy,
-        state: classify(score, &thresholds),
+        state,
         thresholds,
         source_version: source_versions(),
+        reason: final_reason,
     }
 }
 
@@ -240,10 +277,21 @@ where
 
     for staging in codes {
         let element = CodeElement::from(&staging);
-        let key = (
-            staging.system.clone().unwrap_or_default(),
-            staging.code.clone().unwrap_or_default(),
-        );
+        let system = staging.system.clone().unwrap_or_default();
+        let code_value = staging.code.clone().unwrap_or_default();
+        let key = (system.clone(), code_value.clone());
+
+        if system.is_empty() || code_value.is_empty() {
+            results.push(build_result_with_score(
+                &element,
+                None,
+                None,
+                0.0,
+                MappingStrategy::Unmapped,
+                Some("missing_system_or_code".into()),
+            ));
+            continue;
+        }
 
         let result = if let Some(xref) = xrefs.get(&key) {
             build_result_with_score(
@@ -252,6 +300,7 @@ where
                 Some(xref.ncit_id.clone()),
                 0.99,
                 MappingStrategy::Rule,
+                Some("umls_direct_xref".into()),
             )
         } else {
             engine.map(&element)

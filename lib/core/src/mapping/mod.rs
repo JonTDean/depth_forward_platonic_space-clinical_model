@@ -103,6 +103,7 @@ pub struct MappingResult {
     pub state: MappingState,
     pub thresholds: MappingThresholds,
     pub source_version: MappingSourceVersion,
+    pub reason: Option<String>,
 }
 
 /// Strategies used by the mapping engine. Keeps provenance readable.
@@ -114,6 +115,7 @@ pub enum MappingStrategy {
     Rule,
     Composite,
     Manual,
+    Unmapped,
 }
 
 /// State assigned to the mapping after thresholds are applied.

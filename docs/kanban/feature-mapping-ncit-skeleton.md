@@ -18,14 +18,14 @@
 - [ ] Document thresholds & states (AutoMapped / NeedsReview / NoMatch)
 
 ### MAP-10 – Unknown code handling
-- [ ] Define behavior for codes not covered by mock tables or low-scoring rankers.
-- [ ] Emit `NoMatch` + provenance, ensure CLI/pipeline surfaces it cleanly.
-- [ ] Regression tests with synthetic “unknown” codes.
+- [x] Define behavior for codes not covered by mock tables or low-scoring rankers.
+- [x] Emit `NoMatch` + provenance, ensure CLI/pipeline surfaces it cleanly.
+- [x] Regression tests with synthetic “unknown” codes.
 
 ### MAP-11 – Mapping explainability helpers
-- [ ] Add helper APIs (and docs) to inspect top-N candidates + contributing rankers.
-- [ ] CLI option or debug output summarizing why a code mapped to a given NCIt.
-- [ ] Short doc snippet walking through the CPT 78815 example.
+- [x] Add helper APIs (and docs) to inspect top-N candidates + contributing rankers.
+- [x] CLI option or debug output summarizing why a code mapped to a given NCIt.
+- [x] Short doc snippet walking through the CPT 78815 example.
 
 ---
 

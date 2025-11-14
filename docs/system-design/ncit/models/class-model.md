@@ -19,10 +19,11 @@ classDiagram
   class MappingResult {
     +code_element_id : string
     +cui : string
-    +ncit_id : string
+    +ncit_id : string?
     +score : float
     +strategy : string
     +state : MappingState
+    +reason : string?
   }
 
   class MappingEngine {
@@ -54,3 +55,5 @@ Implementation notes:
   logic (MAP-07) and explainability helpers (MAP-11).
 - The end-to-end façade `dfps_pipeline::bundle_to_mapped_sr` produces the
   `MappingResult`/`DimNCITConcept` pairs used by the warehouse layer.
+- When `state == NoMatch`, `reason` captures whether the engine fell below
+  thresholds or lacked required identifiers.

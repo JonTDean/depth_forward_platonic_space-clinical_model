@@ -76,8 +76,10 @@ The mapping engine emits a `MappingResult` per `CodeElement`, annotated with
 |--------------|--------------------------------------------|------------------------------------------------|
 | AutoMapped   | Score ≥ 0.95 (default)                     | Persist & link to NCIt without manual review   |
 | NeedsReview  | 0.60 ≤ score < 0.95                        | Surface to curation queue                      |
-| NoMatch      | Score < 0.60 or no viable candidates found | Track for analytics; downstream defaults/nulls |
+| NoMatch      | Score < 0.60 or missing identifiers        | Track with `reason` + provenance for triage    |
 
 These thresholds are configurable in `dfps_mapping` (see MAP-07) and referenced
-by the NCIt behavior diagrams. The explainability helpers (MAP-11) expose the
-ranked candidates so reviewers can understand why a state was chosen.
+by the NCIt behavior diagrams. When `state == NoMatch`, the `reason` field
+describes whether we fell below thresholds or lacked identifiers. The
+explainability helpers (MAP-11) and the `map_codes --explain` CLI flag expose
+the ranked candidates so reviewers can understand why a state was chosen.

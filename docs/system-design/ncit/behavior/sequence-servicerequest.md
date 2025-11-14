@@ -33,3 +33,5 @@ sequenceDiagram
   each Bundle.
 - Explainability helpers (MAP-11) expose the candidate list generated during the
   Vec/UMLS steps so reviewers can audit why a given state was produced.
+- The `map_codes --explain` CLI emits both the final `MappingResult` and a JSON
+  explanation containing the ranked candidates for each staging code.

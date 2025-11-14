@@ -38,3 +38,10 @@ pub fn mapping_snomed_code() -> StgSrCodeExploded {
     ))
     .expect("mapping SNOMED fixture should parse")
 }
+
+pub fn mapping_unknown_code() -> StgSrCodeExploded {
+    serde_json::from_str(include_str!(
+        "../fixtures/regression/mapping_unknown.json"
+    ))
+    .expect("mapping unknown fixture should parse")
+}

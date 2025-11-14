@@ -458,4 +458,145 @@ The agent should:
 
    * Move `MAP-09` to **REVIEW** or **DONE**, with a brief note of changes.
 
+
+## 8. Branching & Commit Conventions
+
+This section defines how a coding agent should create branches and write commits so that work stays tightly coupled to kanban cards and system-design docs.
+
+---
+
+### 8.1 Branching strategy
+
+**Base branch:** `main` (assume all feature work branches off `main` unless specified otherwise).
+
+**General rules:**
+
+1. **One logical unit of work per branch**
+   - Prefer 1 kanban card → 1 feature branch.
+   - If a change spans multiple small cards that are tightly related, list all card IDs in the branch name.
+
+2. **Branch naming convention**
+
+Use:
+
+```text
+<kind>/<card-id>-kebab-summary
+````
+
+Where:
+
+* `<kind>` ∈ `feature`, `bugfix`, `chore`, `docs`, `spike`
+* `<card-id>` is the primary kanban ID (e.g. `FP-07`, `MAP-05`, `DM-06`).
+* `kebab-summary` is a short, descriptive summary in kebab-case.
+
+**Examples:**
+
+* `feature/FP-07-ingestion-error-surface`
+* `feature/MAP-05-ncit-golden-tests`
+* `feature/DM-06-domain-examples-module`
+* `bugfix/MAP-03-fix-ncit-concept-id`
+* `docs/FP-06-align-fhir-docs`
+* `spike/vector-search-prototype` (for exploratory work not tied to a kanban card yet)
+
+3. **Branch creation workflow (agent)**
+
+When starting work on a card:
+
+1. Move the card from **TODO** → **DOING** in the relevant kanban file.
+2. Create a new branch from `main` using the naming convention above.
+3. Implement code + tests + docs on that branch.
+4. When ready for review:
+
+   * Ensure all checks pass (fmt, clippy, tests).
+   * Move the card to **REVIEW**.
+5. When the change is fully approved/completed:
+
+   * Merge the branch back into `main`.
+   * Move the card to **DONE**.
+
+---
+
+### 8.2 Commit message conventions
+
+Commits should be **small, focused, and traceable** back to kanban cards and docs.
+
+**Format:**
+
+```text
+<type>(<card-id>[:<scope>]): short imperative summary
+```
+
+Where:
+
+* `<type>` ∈ `feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci`
+* `<card-id>` is the primary kanban ID (e.g. `FP-07`, `MAP-05`, `DM-05`).
+* `<scope>` (optional) is a short lowercase scope (e.g. `core`, `ingestion`, `mapping`, `pipeline`, `docs`).
+
+**Examples:**
+
+```text
+feat(FP-07:ingestion): add IngestionError enum and error mapping
+fix(MAP-05:mapping): correct NCIT concept id for PET code 78815
+docs(DM-05): document core domain model and invariants
+refactor(FD-03:fake_data): simplify ServiceRequestScenario generator wiring
+test(TS-04:e2e): add regression fixture for messy FHIR bundles
+chore(CI-01): tighten clippy flags in workspace CI
+```
+
+**Commit body guidelines:**
+
+* Use bullet points to briefly describe changes, especially cross-cutting ones.
+* Explicitly mention any updated docs, diagrams, or fixtures.
+* Add a `Tests:` line describing what was run.
+
+**Example commit body:**
+
+```text
+feat(FP-07:ingestion): add IngestionError enum and error mapping
+
+- introduce IngestionError in lib/ingestion/src/transforms.rs
+- propagate errors to bundle_to_staging and bundle_to_domain
+- add regression fixture for malformed Reference in test_suite
+- update FHIR error semantics in docs/system-design/fhir/behavior/sequence-servicerequest.md
+
+Tests: cargo test --all
+```
+
+**Rules:**
+
+1. **Always reference at least one card ID** in the commit header.
+2. **Group related changes** into a single commit:
+
+   * Code change + corresponding tests + minor doc tweak can be one commit.
+3. If a commit is **docs-only**:
+
+   * Use `docs(<card-id>)` and mention which docs were updated.
+4. If a commit is **tests-only** (e.g. adding missing coverage):
+
+   * Use `test(<card-id>)`.
+
+---
+
+### 8.3 Mapping work to commits & branches
+
+When performing work as an agent:
+
+1. **Before coding**
+
+   * Identify the relevant kanban card ID.
+   * Ensure there is a branch for it (or create one per §8.1).
+2. **While coding**
+
+   * Make small, logically coherent commits.
+   * Keep each commit’s summary aligned with what actually changed.
+3. **After coding**
+
+   * Ensure the final commit(s) mention:
+
+     * Updated system-design docs
+     * Updated `semantic-relationships.yaml` (if semantics changed)
+     * New/updated fixtures or tests in `lib/test_suite/**`
+
+This ensures a future human (or agent) can read the history and understand exactly how each card, doc, and code change relate to one another.
+
 Following this `AGENT.md` keeps code, docs, terminology, and kanban all in lockstep.
