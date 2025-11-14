@@ -1,8 +1,24 @@
 [package]
-name = "dfps_frontend"
+name = "dfps_web_frontend"
 version.workspace = true
 edition.workspace = true
 
 [lib]
-name = "dfps_frontend"
 path = "src/lib.rs"
+
+[[bin]]
+name = "dfps_web_frontend"
+path = "src/main.rs"
+
+[dependencies]
+actix-multipart.workspace = true
+actix-web.workspace = true
+bytes.workspace = true
+dfps_core = { path = "../../../domain/core" }
+dfps_observability = { path = "../../../platform/observability" }
+futures-util.workspace = true
+maud.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror = "2.0.17"

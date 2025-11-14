@@ -82,6 +82,10 @@ code/lib/app/
 * `frontend/web/`
 
   * Web-facing UI or HTTP-gateway shells (e.g., web dashboards, admin panels).
+  * Crate: `dfps_web_frontend`.
+  * Actix-web UI that renders a Tailwind/HTMX dashboard for bundle uploads and mapping review.
+  * Reads `DFPS_API_BASE_URL` to reach the backend API, `DFPS_FRONTEND_LISTEN_ADDR` for its bind address, and `DFPS_API_CLIENT_TIMEOUT_SECS` for the reqwest client timeout.
+  * Exposes an HTML form for paste/upload workflows and calls `/api/map-bundles`, `/metrics/summary`, and `/health` via an internal API client.
 
 * `web/backend/api/`
 

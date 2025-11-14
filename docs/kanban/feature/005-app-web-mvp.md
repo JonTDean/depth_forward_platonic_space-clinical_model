@@ -18,7 +18,7 @@
 _Working branch: `feature/app/web/frontend-mvp`_
 
 #### WEB-FE-01 – Frontend project scaffold
-- [ ] Create a frontend project (e.g., `code/app/web/frontend`) using HTMX.
+- [ ] Create a frontend project (e.g., `code/app/web/frontend`) using HTMX + Tailwind.
 - [ ] Document how it discovers the backend base URL (env var, config file, etc.).
 - [ ] Add a small “API client” layer that calls:
   - [ ] `POST /api/map-bundles`
@@ -74,7 +74,27 @@ _Working branch: `feature/app/web/frontend-mvp`_
 ### Backend – HTTP API gateway (`dfps_api`)
 _Working branch: `feature/app/web/backend-mvp`_
 
+---
 
+### Frontend – Web UI (`dfps_web_frontend`)
+_Working branch: `feature/app/web/frontend-mvp`_
+
+#### WEB-FE-01 – Frontend project scaffold
+- [x] Create a frontend project (e.g., `code/app/web/frontend`) using actix-web.
+- [x] Document how it discovers the backend base URL (env var, config file, etc.).
+- [x] Add a small “API client” layer that calls:
+  - [x] `POST /api/map-bundles`
+  - [x] `GET /metrics/summary`
+  - [x] `GET /health`
+
+#### WEB-FE-02 – Bundle upload & mapping viewer
+- [x] Implement a “Bundle upload” or “Paste JSON” screen:
+  - [x] Let the user upload a Bundle JSON file or paste raw JSON.
+  - [x] Call the backend `map-bundles` endpoint.
+- [x] Render:
+  - [x] A summary of SR flats (count, statuses/intents).
+  - [x] A table of `MappingResult` rows (code, system, NCIt ID, state).
+  - [x] A small badge or chips for `AutoMapped / NeedsReview / NoMatch`.
 
 ---
 
@@ -119,7 +139,7 @@ _Working branch: `feature/app/web/backend-mvp`_
 - [x] Update `docs/system-design/base/directory-architecture.md` to:
   - [x] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
   - [x] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
-  
+
 ---
 
 ## DONE

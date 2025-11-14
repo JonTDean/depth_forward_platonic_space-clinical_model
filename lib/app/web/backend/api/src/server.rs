@@ -236,9 +236,19 @@ struct ErrorResponse {
 
 #[derive(Debug)]
 enum ApiError {
-    InvalidJson { message: String, request_id: Uuid },
-    Ingestion { message: String, request_id: Uuid },
-    Internal { message: String, request_id: Uuid },
+    InvalidJson {
+        message: String,
+        request_id: Uuid,
+    },
+    Ingestion {
+        message: String,
+        request_id: Uuid,
+    },
+    #[allow(dead_code)]
+    Internal {
+        message: String,
+        request_id: Uuid,
+    },
 }
 
 impl ApiError {
@@ -266,6 +276,7 @@ impl ApiError {
         }
     }
 
+    #[allow(dead_code)]
     fn internal(message: impl Into<String>, request_id: Uuid) -> Self {
         let message = message.into();
         error!(
