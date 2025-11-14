@@ -14,11 +14,6 @@
 
 Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
-* [ ] **OBS-02 – Metrics snapshot test**
-
-  * In `dfps_test_suite`, run a seeded mini-batch (fake FHIR) end-to-end and assert on resulting metrics (counts per mapping state).
-  * Guards against silent behavior drift when heuristics change.
-
 ### Observability & ergonomics
 
 * [ ] **OBS-03 – CLI ergonomics & docs**
@@ -45,6 +40,10 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 * [x] **OBS-01 – Structured logging hooks**
 
   * Added `dfps_observability` crate plus `map_bundles` logging/metrics so CLI runs emit counts per mapping state.
+
+* [x] **OBS-02 – Metrics snapshot test**
+
+  * Added an end-to-end test (`observability_metrics.rs`) that asserts metrics from a seeded bundle match the pipeline output counts.
 
 ---
 

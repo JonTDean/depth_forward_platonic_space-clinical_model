@@ -6,13 +6,13 @@ edition.workspace = true
 
 [workspace]
 members = [
-    "lib/core",
-    "lib/fake_data",
-    "lib/ingestion",
-    "lib/mapping",
-    "lib/observability",
-    "lib/pipeline",
-    "lib/test_suite",
+    "lib/domain/core",
+    "lib/domain/fake_data",
+    "lib/domain/ingestion",
+    "lib/domain/mapping",
+    "lib/domain/pipeline",
+    "lib/platform/observability",
+    "lib/platform/test_suite",
 ]
 
 # Explicit resolver, recommended with edition 2021/2024 workspaces
@@ -35,4 +35,4 @@ proptest = "1.9.0"
 # domain crates, CLIs, etc.
 
 [dev-dependencies]
-dfps_test_suite = { path = "lib/test_suite" }
+dfps_test_suite = { path = "lib/platform/test_suite" }

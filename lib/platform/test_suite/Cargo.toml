@@ -1,0 +1,15 @@
+[package]
+name = "dfps_test_suite"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dfps_core = { path = "../domain/core" }
+dfps_fake_data = { path = "../domain/fake_data" }
+dfps_ingestion = { path = "../domain/ingestion" }
+dfps_mapping = { path = "../domain/mapping" }
+dfps_pipeline = { path = "../domain/pipeline" }
+dfps_observability = { path = "../observability" }
+serde_json.workspace = true
+proptest.workspace = true
+serde.workspace = true
