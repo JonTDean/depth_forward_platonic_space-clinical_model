@@ -5,6 +5,7 @@
 
 pub mod encounter;
 pub mod fhir;
+pub mod mapping;
 pub mod order;
 pub mod patient;
 pub mod staging;

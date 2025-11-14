@@ -7,6 +7,7 @@ edition.workspace = true
 dfps_core = { path = "../core" }
 dfps_fake_data = { path = "../fake_data" }
 dfps_ingestion = { path = "../ingestion" }
+dfps_mapping = { path = "../mapping" }
 serde_json.workspace = true
 proptest.workspace = true
 serde.workspace = true
