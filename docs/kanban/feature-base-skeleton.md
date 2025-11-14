@@ -14,18 +14,6 @@
 
 Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
-* [ ] **DM-05 – Documentation for domain model**
-
-  * Add module-level docs (`//!`) describing the domain model’s intent and invariants.
-  * Sketch how this maps back to the FHIR/NCIt concepts you’ve already diagrammed.
-
-* [ ] **DM-06 – Domain examples + doctests**
-
-  * Add an `examples` module (or inline doctests) showing how to construct a `ServiceRequest`, go FHIR → domain via `sr_to_domain`, etc.
-  * Ensure snippets compile via `cargo test --doc` for up-to-date developer guidance.
-
-### Observability & ergonomics
-
 * [ ] **OBS-01 – Structured logging hooks**
 
   * Add optional logging (feature-flagged) emitting ingestion + mapping summary metrics (counts per mapping state, number of errors).
@@ -35,6 +23,31 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 
   * In `dfps_test_suite`, run a seeded mini-batch (fake FHIR) end-to-end and assert on resulting metrics (counts per mapping state).
   * Guards against silent behavior drift when heuristics change.
+
+### Observability & ergonomics
+
+* [ ] **OBS-03 – CLI ergonomics & docs**
+
+  * Ensure `map_bundles` and `generate_fhir_bundle` expose `--help`, sample commands, and log levels in the README / design docs.
+  * Add notes on env vars/seeds for reproducibility.
+
+---
+
+## DONE
+
+### Domain model crate (`lib/core`)
+
+* [x] **DM-05 – Documentation for domain model**
+
+  * Module-level docs now describe the domain model’s intent and reference the FHIR/NCIt diagrams.
+
+* [x] **DM-06 – Domain examples + doctests**
+
+  * Added doctest snippets showing how to construct a `ServiceRequest` aligned with the ingestion diagrams.
+
+### Observability & ergonomics
+
+* [x] (placeholder for future items)
 
 ---
 

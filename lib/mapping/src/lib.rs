@@ -8,7 +8,10 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 use dfps_core::{
-    mapping::{CodeElement, DimNCITConcept, MappingCandidate, MappingResult, MappingStrategy},
+    mapping::{
+        CodeElement, DimNCITConcept, MappingCandidate, MappingResult, MappingSourceVersion,
+        MappingState, MappingStrategy, MappingThresholds,
+    },
     staging::StgSrCodeExploded,
 };
 
@@ -156,13 +159,13 @@ where
             score: 0.0,
         });
 
-        MappingResult {
-            code_element_id: code.id.clone(),
-            cui: top.cui.clone(),
-            ncit_id: Some(normalize_ncit_code(&top.target_code)),
-            score: top.score,
-            strategy: MappingStrategy::Composite,
-        }
+        build_result_with_score(
+            code,
+            top.cui.clone(),
+            Some(normalize_ncit_code(&top.target_code)),
+            top.score,
+            MappingStrategy::Composite,
+        )
     }
 }
 
@@ -178,6 +181,44 @@ fn normalize_ncit_code(code: &str) -> String {
 
 pub fn default_engine() -> MappingEngine<LexicalRanker, VectorRankerMock> {
     MappingEngine::new(LexicalRanker, VectorRankerMock, RuleReranker)
+}
+
+fn default_thresholds() -> MappingThresholds {
+    MappingThresholds::default()
+}
+
+fn classify(score: f32, thresholds: &MappingThresholds) -> MappingState {
+    if score >= thresholds.auto_map_min {
+        MappingState::AutoMapped
+    } else if score >= thresholds.needs_review_min {
+        MappingState::NeedsReview
+    } else {
+        MappingState::NoMatch
+    }
+}
+
+fn source_versions() -> MappingSourceVersion {
+    MappingSourceVersion::new(NCIT_DATA_VERSION, UMLS_DATA_VERSION)
+}
+
+fn build_result_with_score(
+    code: &CodeElement,
+    cui: Option<String>,
+    ncit_id: Option<String>,
+    score: f32,
+    strategy: MappingStrategy,
+) -> MappingResult {
+    let thresholds = default_thresholds();
+    MappingResult {
+        code_element_id: code.id.clone(),
+        cui,
+        ncit_id,
+        score,
+        strategy,
+        state: classify(score, &thresholds),
+        thresholds,
+        source_version: source_versions(),
+    }
 }
 
 pub fn map_staging_codes<I>(codes: I) -> (Vec<MappingResult>, Vec<DimNCITConcept>)
@@ -205,13 +246,13 @@ where
         );
 
         let result = if let Some(xref) = xrefs.get(&key) {
-            MappingResult {
-                code_element_id: element.id.clone(),
-                cui: Some(xref.cui.clone()),
-                ncit_id: Some(xref.ncit_id.clone()),
-                score: 0.99,
-                strategy: MappingStrategy::Rule,
-            }
+            build_result_with_score(
+                &element,
+                Some(xref.cui.clone()),
+                Some(xref.ncit_id.clone()),
+                0.99,
+                MappingStrategy::Rule,
+            )
         } else {
             engine.map(&element)
         };
@@ -241,5 +282,6 @@ mod tests {
         let result = engine.map(&code);
         assert!(result.score > 0.5);
         assert!(result.ncit_id.unwrap().starts_with("NCIT:"));
+        assert_ne!(result.state, MappingState::NoMatch);
     }
 }

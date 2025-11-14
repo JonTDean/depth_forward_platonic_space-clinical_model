@@ -100,6 +100,9 @@ pub struct MappingResult {
     pub ncit_id: Option<String>,
     pub score: f32,
     pub strategy: MappingStrategy,
+    pub state: MappingState,
+    pub thresholds: MappingThresholds,
+    pub source_version: MappingSourceVersion,
 }
 
 /// Strategies used by the mapping engine. Keeps provenance readable.
@@ -111,6 +114,47 @@ pub enum MappingStrategy {
     Rule,
     Composite,
     Manual,
+}
+
+/// State assigned to the mapping after thresholds are applied.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum MappingState {
+    AutoMapped,
+    NeedsReview,
+    NoMatch,
+}
+
+/// Threshold configuration used to derive the `MappingState`.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct MappingThresholds {
+    pub auto_map_min: f32,
+    pub needs_review_min: f32,
+}
+
+impl Default for MappingThresholds {
+    fn default() -> Self {
+        Self {
+            auto_map_min: 0.95,
+            needs_review_min: 0.60,
+        }
+    }
+}
+
+/// Versions of the vocabularies involved in mapping decisions.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MappingSourceVersion {
+    pub ncit: String,
+    pub umls: String,
+}
+
+impl MappingSourceVersion {
+    pub fn new(ncit: impl Into<String>, umls: impl Into<String>) -> Self {
+        Self {
+            ncit: ncit.into(),
+            umls: umls.into(),
+        }
+    }
 }
 
 /// NCIt concept metadata required for analytics + downstream linking.
