@@ -8,6 +8,7 @@ edition.workspace = true
 members = [
     "lib/core",
     "lib/fake_data",
+    "lib/ingestion",
     "lib/test_suite",
 ]
 
