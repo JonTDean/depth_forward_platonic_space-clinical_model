@@ -39,11 +39,7 @@ fn bundle_to_domain_normalizes_ids_and_status() {
         .expect("fake ServiceRequest has id");
     assert_eq!(&order.id.0, sr_id);
 
-    let patient_id = scenario
-        .patient
-        .id
-        .as_ref()
-        .expect("fake patient has id");
+    let patient_id = scenario.patient.id.as_ref().expect("fake patient has id");
     assert_eq!(&order.patient_id.0, patient_id);
 
     let encounter_id = scenario
@@ -51,7 +47,10 @@ fn bundle_to_domain_normalizes_ids_and_status() {
         .id
         .as_ref()
         .expect("fake encounter has id");
-    assert_eq!(order.encounter_id.as_ref().map(|id| &id.0), Some(encounter_id));
+    assert_eq!(
+        order.encounter_id.as_ref().map(|id| &id.0),
+        Some(encounter_id)
+    );
 
     assert_eq!(order.description, "PET/CT order from fake data");
 }

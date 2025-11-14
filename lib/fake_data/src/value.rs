@@ -3,12 +3,7 @@ use dfps_core::{
     value::{EncounterId, PatientId, ServiceRequestId},
 };
 use fake::{Fake, Faker};
-use rand::{
-    rngs::StdRng,
-    prelude::IndexedRandom,
-    rng,
-    Rng, SeedableRng,
-};
+use rand::{Rng, SeedableRng, prelude::IndexedRandom, rng, rngs::StdRng};
 
 const ORDER_DESCRIPTIONS: &[&str] = &[
     "PET/CT for staging",
@@ -79,9 +74,7 @@ pub fn fake_service_request_status_with_seed(seed: u64) -> ServiceRequestStatus 
     fake_service_request_status_with_rng(&mut rng)
 }
 
-pub fn fake_service_request_status_with_rng<R: Rng + ?Sized>(
-    rng: &mut R,
-) -> ServiceRequestStatus {
+pub fn fake_service_request_status_with_rng<R: Rng + ?Sized>(rng: &mut R) -> ServiceRequestStatus {
     Faker.fake_with_rng(rng)
 }
 
@@ -95,9 +88,7 @@ pub fn fake_service_request_intent_with_seed(seed: u64) -> ServiceRequestIntent 
     fake_service_request_intent_with_rng(&mut rng)
 }
 
-pub fn fake_service_request_intent_with_rng<R: Rng + ?Sized>(
-    rng: &mut R,
-) -> ServiceRequestIntent {
+pub fn fake_service_request_intent_with_rng<R: Rng + ?Sized>(rng: &mut R) -> ServiceRequestIntent {
     Faker.fake_with_rng(rng)
 }
 

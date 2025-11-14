@@ -1,8 +1,7 @@
 use dfps_core::order::ServiceRequest;
 use dfps_fake_data::{
-    fake_service_request_for,
+    ServiceRequestScenario, fake_service_request_for,
     scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed},
-    ServiceRequestScenario,
 };
 
 pub fn service_request_scenario() -> ServiceRequestScenario {

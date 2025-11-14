@@ -1,6 +1,6 @@
 use crate::value::fake_encounter_id_with_rng;
 use dfps_core::{encounter::Encounter, value::PatientId};
-use rand::{rngs::StdRng, rng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rng, rngs::StdRng};
 
 pub fn fake_encounter_for_patient(patient_id: &PatientId) -> Encounter {
     let mut rng = rng();

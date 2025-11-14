@@ -99,10 +99,7 @@ pub fn fake_fhir_encounter_for(patient: &fhir::Patient) -> fhir::Encounter {
     fake_fhir_encounter_for_with_rng(patient, &mut rng)
 }
 
-pub fn fake_fhir_encounter_for_with_seed(
-    seed: u64,
-    patient: &fhir::Patient,
-) -> fhir::Encounter {
+pub fn fake_fhir_encounter_for_with_seed(seed: u64, patient: &fhir::Patient) -> fhir::Encounter {
     let mut rng = StdRng::seed_from_u64(seed);
     fake_fhir_encounter_for_with_rng(patient, &mut rng)
 }
@@ -155,19 +152,14 @@ fn fake_fhir_servicerequest_with_rng<R: Rng + ?Sized>(
         status: Some(status_to_fhir(status).into()),
         intent: Some(intent_to_fhir(intent).into()),
         subject: Some(fhir::Reference {
-            reference: patient
-                .id
-                .as_ref()
-                .map(|id| format!("Patient/{id}")),
+            reference: patient.id.as_ref().map(|id| format!("Patient/{id}")),
             display: None,
         }),
         encounter: encounter.and_then(|enc| {
-            enc.id
-                .as_ref()
-                .map(|id| fhir::Reference {
-                    reference: Some(format!("Encounter/{id}")),
-                    display: None,
-                })
+            enc.id.as_ref().map(|id| fhir::Reference {
+                reference: Some(format!("Encounter/{id}")),
+                display: None,
+            })
         }),
         requester: None,
         supporting_info: vec![],
@@ -226,10 +218,8 @@ fn to_entry(resource: &impl serde::Serialize) -> fhir::BundleEntry {
 }
 
 fn sample_procedure_codings<R: Rng + ?Sized>(rng: &mut R) -> Vec<fhir::Coding> {
-    let mut entries: Vec<fhir::Coding> = vec![
-        pick_code(SNOMED_CODES, rng),
-        pick_code(CPT_CODES, rng),
-    ];
+    let mut entries: Vec<fhir::Coding> =
+        vec![pick_code(SNOMED_CODES, rng), pick_code(CPT_CODES, rng)];
 
     if rng.random_range(0..=1) == 1 {
         entries.push(pick_code(LOINC_CODES, rng));

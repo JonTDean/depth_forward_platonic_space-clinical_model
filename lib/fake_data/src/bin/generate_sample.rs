@@ -1,4 +1,6 @@
-use dfps_fake_data::scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed};
+use dfps_fake_data::scenarios::{
+    fake_service_request_scenario, fake_service_request_scenario_with_seed,
+};
 use serde_json::to_string;
 use std::env;
 

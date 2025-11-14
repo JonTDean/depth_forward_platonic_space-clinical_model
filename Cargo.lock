@@ -103,11 +103,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "dfps_ingestion"
+version = "0.1.0"
+dependencies = [
+ "dfps_core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dfps_test_suite"
 version = "0.1.0"
 dependencies = [
  "dfps_core",
  "dfps_fake_data",
+ "dfps_ingestion",
  "proptest",
  "serde",
  "serde_json",

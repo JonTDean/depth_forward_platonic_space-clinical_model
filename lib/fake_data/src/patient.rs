@@ -1,6 +1,6 @@
 use crate::value::fake_patient_id_with_rng;
 use dfps_core::patient::Patient;
-use rand::{rngs::StdRng, rng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rng, rngs::StdRng};
 
 pub fn fake_patient() -> Patient {
     let mut rng = rng();

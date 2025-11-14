@@ -6,7 +6,7 @@ use dfps_core::{
     order::{ServiceRequest, ServiceRequestIntent, ServiceRequestStatus},
     value::{EncounterId, PatientId},
 };
-use rand::{rngs::StdRng, rng, Rng, SeedableRng};
+use rand::{Rng, SeedableRng, rng, rngs::StdRng};
 
 pub fn fake_service_request_for(
     patient_id: &PatientId,

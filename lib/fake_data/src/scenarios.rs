@@ -1,14 +1,9 @@
 use crate::{
-    encounter::fake_encounter_for_patient_with_rng,
-    order::fake_service_request_for_with_rng,
+    encounter::fake_encounter_for_patient_with_rng, order::fake_service_request_for_with_rng,
     patient::fake_patient_with_rng,
 };
-use dfps_core::{
-    encounter::Encounter,
-    order::ServiceRequest,
-    patient::Patient,
-};
-use rand::{rngs::StdRng, rng, Rng, SeedableRng};
+use dfps_core::{encounter::Encounter, order::ServiceRequest, patient::Patient};
+use rand::{Rng, SeedableRng, rng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -33,8 +28,7 @@ pub fn fake_service_request_scenario_with_rng<R: Rng + ?Sized>(
 ) -> ServiceRequestScenario {
     let patient = fake_patient_with_rng(rng);
     let encounter = fake_encounter_for_patient_with_rng(&patient.id, rng);
-    let service_request =
-        fake_service_request_for_with_rng(&patient.id, Some(&encounter.id), rng);
+    let service_request = fake_service_request_for_with_rng(&patient.id, Some(&encounter.id), rng);
 
     ServiceRequestScenario {
         patient,

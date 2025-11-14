@@ -9,5 +9,5 @@ mod transforms;
 
 pub use reference::{reference_id, reference_id_from_str};
 pub use transforms::{
-    bundle_to_domain, bundle_to_staging, sr_to_domain, sr_to_staging, IngestionError,
+    IngestionError, bundle_to_domain, bundle_to_staging, sr_to_domain, sr_to_staging,
 };

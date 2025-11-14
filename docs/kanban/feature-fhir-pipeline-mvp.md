@@ -60,18 +60,6 @@
 - [x] Property test: for random seeds, `exploded.len() == sum(coding.len())`
 - [x] Regression fixture: `fixtures/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
 
----
-
-## Acceptance Criteria
-- `cargo test --all` passes.
-- `dfps_fake_data::generate_fhir_bundle` prints valid FHIR `Bundle` NDJSON.
-- `bundle_to_staging` yields exactly one flat row per SR and one exploded row per `code.coding[]`.
-- Domain aggregate fields (IDs, status, intent, description) match the source FHIR semantics.
-
-## Out of Scope (deferred)
-- NCIt/UMLS mapping, vector search, warehouse loads.
-- [x] Regression fixture: `fixtures/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
-
 ### FP-05 – Workspace & CI wiring
 - [x] Add `"lib/ingestion"` to root `[workspace].members`
 - [x] Ensure CI runs `cargo fmt`, `clippy`, and `test` across all crates
@@ -82,3 +70,14 @@
   - [x] `docs/system-design/fhir/models/data-model-er.md`
   - [x] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [x] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
+
+---
+
+## Acceptance Criteria
+- `cargo test --all` passes.
+- `dfps_fake_data::generate_fhir_bundle` prints valid FHIR `Bundle` NDJSON.
+- `bundle_to_staging` yields exactly one flat row per SR and one exploded row per `code.coding[]`.
+- Domain aggregate fields (IDs, status, intent, description) match the source FHIR semantics.
+
+## Out of Scope (deferred)
+- NCIt/UMLS mapping, vector search, warehouse loads.

@@ -1,6 +1,4 @@
-use dfps_fake_data::raw_fhir::{
-    fake_fhir_bundle_scenario, fake_fhir_bundle_scenario_with_seed,
-};
+use dfps_fake_data::raw_fhir::{fake_fhir_bundle_scenario, fake_fhir_bundle_scenario_with_seed};
 use serde_json::to_string;
 use std::env;
 

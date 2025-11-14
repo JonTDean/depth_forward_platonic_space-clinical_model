@@ -49,7 +49,6 @@ pub struct ServiceRequest {
 
     /// A human-readable label or code display.
     pub description: String,
-
     // Future: coding(s), categories, reason codes, supportingInfo, etc.
 }
 

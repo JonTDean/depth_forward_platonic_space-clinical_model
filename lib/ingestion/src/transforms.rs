@@ -47,18 +47,14 @@ pub fn sr_to_staging(
         .subject
         .as_ref()
         .ok_or(IngestionError::MissingField("ServiceRequest.subject"))?;
-    let patient_id = reference::reference_id(patient_id)
-        .ok_or(IngestionError::InvalidReference(
-            "ServiceRequest.subject.reference",
-        ))?;
+    let patient_id = reference::reference_id(patient_id).ok_or(
+        IngestionError::InvalidReference("ServiceRequest.subject.reference"),
+    )?;
 
     let encounter_id = match sr.encounter.as_ref() {
-        Some(reference) => Some(
-            reference::reference_id(reference)
-                .ok_or(IngestionError::InvalidReference(
-                    "ServiceRequest.encounter.reference",
-                ))?,
-        ),
+        Some(reference) => Some(reference::reference_id(reference).ok_or(
+            IngestionError::InvalidReference("ServiceRequest.encounter.reference"),
+        )?),
         None => None,
     };
 
@@ -102,18 +98,14 @@ pub fn sr_to_domain(sr: &fhir::ServiceRequest) -> Result<order::ServiceRequest, 
         .subject
         .as_ref()
         .ok_or(IngestionError::MissingField("ServiceRequest.subject"))?;
-    let patient_id = reference::reference_id(patient_reference)
-        .ok_or(IngestionError::InvalidReference(
-            "ServiceRequest.subject.reference",
-        ))?;
+    let patient_id = reference::reference_id(patient_reference).ok_or(
+        IngestionError::InvalidReference("ServiceRequest.subject.reference"),
+    )?;
 
     let encounter_id = match sr.encounter.as_ref() {
-        Some(reference) => Some(EncounterId(
-            reference::reference_id(reference)
-                .ok_or(IngestionError::InvalidReference(
-                    "ServiceRequest.encounter.reference",
-                ))?,
-        )),
+        Some(reference) => Some(EncounterId(reference::reference_id(reference).ok_or(
+            IngestionError::InvalidReference("ServiceRequest.encounter.reference"),
+        )?)),
         None => None,
     };
 
@@ -165,7 +157,8 @@ fn description_from_sr(sr: &fhir::ServiceRequest) -> String {
         .clone()
         .or_else(|| sr.code.as_ref().and_then(|code| code.text.clone()))
         .or_else(|| {
-            sr.code.as_ref()
+            sr.code
+                .as_ref()
                 .and_then(|code| code.coding.iter().find_map(|coding| coding.display.clone()))
         })
         .unwrap_or_else(|| "unspecified service request".to_string())
