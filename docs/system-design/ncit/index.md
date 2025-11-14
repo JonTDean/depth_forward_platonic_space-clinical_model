@@ -1,4 +1,6 @@
-# Basic FHIR System Design
+# NCIm / NCIt Mapping & Analytics Design
+
+This folder documents the NCIm / NCIt mapping layer, ontology integration, and the NCIt-aware analytics mart.
 
 ## Contents
 
@@ -14,6 +16,6 @@
 - Requirements
   - [Ingestion requirements](./requirements/ingestion-requirements.md)
 - Experience
-  - [PET/CT user journey](./experience/user-journey-pet-ct.md)
+  - [Mapping user journey](./experience/user-journey-pet-ct.md)
 - Concepts
   - [Pipeline mindmap](./concepts/mindmap-pipeline.md)
