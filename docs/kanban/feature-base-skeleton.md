@@ -14,13 +14,6 @@
 
 Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
-### Observability & ergonomics
-
-* [ ] **OBS-03 – CLI ergonomics & docs**
-
-  * Ensure `map_bundles` and `generate_fhir_bundle` expose `--help`, sample commands, and log levels in the README / design docs.
-  * Add notes on env vars/seeds for reproducibility.
-
 ---
 
 ## DONE
@@ -44,6 +37,10 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 * [x] **OBS-02 – Metrics snapshot test**
 
   * Added an end-to-end test (`observability_metrics.rs`) that asserts metrics from a seeded bundle match the pipeline output counts.
+
+* [x] **OBS-03 – CLI ergonomics & docs**
+
+  * The consolidated CLI crate exposes `--help`, log-level selection, and documented sample commands (including deterministic seeds for `generate_fhir_bundle`).
 
 ---
 

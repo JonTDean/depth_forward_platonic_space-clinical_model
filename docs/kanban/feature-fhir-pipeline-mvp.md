@@ -10,20 +10,7 @@
 
 ## TODO
 
-
-### FP-07 – FHIR validation & error handling
-- [ ] Extend `IngestionError` coverage (missing `resourceType`, malformed `Reference`, bad `status/intents`).
-- [ ] Decide behavior (skip vs. accumulate vs. fail) and expose structured errors.
-- [ ] Unit/property tests around each error scenario.
-
-### FP-08 – Messy FHIR regression fixtures
-- [ ] Add fixtures covering missing `subject`, extra codings, unknown systems, casing variants.
-- [ ] Regression tests asserting deterministic error/skip behavior.
-
-### FP-09 – Quickstart docs & CLI usage
-- [ ] Update `docs/system-design/fhir/index.md` (or crate README) with copy/paste snippets:
-  - [ ] Example: load bundle JSON → call `bundle_to_staging`.
-  - [ ] Document `generate_fhir_bundle` CLI usage for devs.
+- _Empty_
 
 ---
 
@@ -113,3 +100,18 @@
 
 ## Out of Scope (deferred)
 - NCIt/UMLS mapping, vector search, warehouse loads.
+- [x] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
+
+### FP-07 – FHIR validation & error handling
+- [x] Extend `IngestionError` coverage (missing `resourceType`, malformed `Reference`, bad `status/intents`).
+- [x] Decide behavior (skip vs. accumulate vs. fail) and expose structured errors.
+- [x] Unit/property tests around each error scenario.
+
+### FP-08 – Messy FHIR regression fixtures
+- [x] Add fixtures covering missing `subject`, extra codings, unknown systems, casing variants.
+- [x] Regression tests asserting deterministic error/skip behavior.
+
+### FP-09 – Quickstart docs & CLI usage
+- [x] Update `docs/system-design/fhir/index.md` (or crate README) with copy/paste snippets:
+  - [x] Example: load bundle JSON → call `bundle_to_staging`.
+  - [x] Document `generate_fhir_bundle` CLI usage for devs.

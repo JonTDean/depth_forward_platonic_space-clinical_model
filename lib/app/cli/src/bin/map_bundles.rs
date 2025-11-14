@@ -1,13 +1,25 @@
 use std::collections::HashSet;
-use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
+use std::path::PathBuf;
 
+use clap::Parser;
 use dfps_core::fhir::Bundle;
-use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
+use dfps_observability::{log_no_match, log_pipeline_output, PipelineMetrics};
 use dfps_pipeline::bundle_to_mapped_sr;
-use log::info;
+use log::{info, LevelFilter};
 use serde::Serialize;
+
+#[derive(Parser)]
+#[command(name = "map_bundles", about = "Ingest FHIR bundles and emit staging + mapping rows")]
+struct Args {
+    /// NDJSON file containing FHIR Bundles (defaults to stdin)
+    #[arg(value_name = "INPUT")]
+    input: Option<PathBuf>,
+    /// Log level for env_logger (error,warn,info,debug,trace)
+    #[arg(long, value_name = "LEVEL", default_value = "info")]
+    log_level: String,
+}
 
 #[derive(Serialize)]
 struct OutputRecord<'a, T> {
@@ -17,9 +29,9 @@ struct OutputRecord<'a, T> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    env_logger::init();
-    let input_path = env::args().nth(1);
-    let reader: Box<dyn BufRead> = match input_path {
+    let args = Args::parse();
+    init_logging(&args.log_level)?;
+    let reader: Box<dyn BufRead> = match &args.input {
         Some(path) => Box::new(BufReader::new(File::open(path)?)),
         None => Box::new(BufReader::new(io::stdin())),
     };
@@ -73,6 +85,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     );
     write_json(&mut handle, "metrics_summary", &metrics)?;
 
+    Ok(())
+}
+
+fn init_logging(level: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let filter = level
+        .parse::<LevelFilter>()
+        .map_err(|_| format!("invalid log level '{level}'"))?;
+    env_logger::Builder::from_default_env()
+        .filter_level(filter)
+        .try_init()?;
     Ok(())
 }
 

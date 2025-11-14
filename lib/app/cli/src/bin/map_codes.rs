@@ -1,19 +1,28 @@
-use std::env;
 use std::fs::File;
 use std::io::{self, BufRead, BufReader, Write};
+use std::path::PathBuf;
 
+use clap::Parser;
 use dfps_core::staging::StgSrCodeExploded;
 use dfps_mapping::{explain_staging_code, map_staging_codes};
 
-#[derive(Clone, Copy)]
-struct Config {
+#[derive(Parser)]
+#[command(name = "map_codes", about = "Map staging codes to NCIt concepts")]
+struct Args {
+    /// NDJSON file containing staging codes (defaults to stdin)
+    #[arg(value_name = "INPUT")]
+    input: Option<PathBuf>,
+    /// Emit explanation rows (top-N candidates) after each mapping
+    #[arg(long)]
     explain: bool,
+    /// Number of candidates to include when explaining mappings
+    #[arg(long, default_value_t = 5)]
     explain_top: usize,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let (config, input_path) = parse_args(env::args().skip(1));
-    let reader: Box<dyn BufRead> = match input_path {
+    let args = Args::parse();
+    let reader: Box<dyn BufRead> = match &args.input {
         Some(path) => Box::new(BufReader::new(File::open(path)?)),
         None => Box::new(BufReader::new(io::stdin())),
     };
@@ -36,9 +45,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         writeln!(handle, "{}", serde_json::to_string(&result)?)?;
     }
 
-    if config.explain {
+    if args.explain {
         for code in &codes {
-            let explanation = explain_staging_code(code, config.explain_top);
+            let explanation = explain_staging_code(code, args.explain_top);
             writeln!(
                 handle,
                 "{}",
@@ -51,33 +60,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-fn parse_args<I>(args: I) -> (Config, Option<String>)
-where
-    I: IntoIterator<Item = String>,
-{
-    let mut explain = false;
-    let mut explain_top = 5;
-    let mut input = None;
-    for arg in args {
-        if arg == "--explain" {
-            explain = true;
-        } else if let Some(rest) = arg.strip_prefix("--explain-top=") {
-            if let Ok(value) = rest.parse::<usize>() {
-                explain_top = value.max(1);
-                explain = true;
-            }
-        } else if input.is_none() {
-            input = Some(arg);
-        }
-    }
-
-    (
-        Config {
-            explain,
-            explain_top,
-        },
-        input,
-    )
 }

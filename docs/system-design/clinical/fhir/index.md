@@ -51,7 +51,7 @@ assert_eq!(exploded.len(), mapped.exploded_codes.len());
 - Generate sample NDJSON Bundles:
 
   ```bash
-  cargo run -p dfps_fake_data --bin generate_fhir_bundle 5 42 > bundles.ndjson
+  cargo run -p dfps_fake_data --bin generate_fhir_bundle -- --count 5 --seed 42 > bundles.ndjson
   ```
 
 - Run the full ingestion + mapping pipeline:
@@ -60,13 +60,20 @@ assert_eq!(exploded.len(), mapped.exploded_codes.len());
   cargo run -p dfps_cli --bin map_bundles bundles.ndjson > pipeline_output.ndjson
   ```
 
+- Show CLI help:
+
+  ```bash
+  cargo run -p dfps_cli --bin map_bundles -- --help
+  cargo run -p dfps_fake_data --bin generate_fhir_bundle -- --help
+  ```
+
 ### Observability & logging
 
 - Enable structured logs + metrics summary:
 
   ```bash
   RUST_LOG=dfps_pipeline=info,dfps_mapping=warn \
-  cargo run -p dfps_cli --bin map_bundles bundles.ndjson
+    cargo run -p dfps_cli --bin map_bundles -- --log-level debug bundles.ndjson
   ```
 
   The CLI prints NDJSON outputs plus a final `metrics_summary` line with counts

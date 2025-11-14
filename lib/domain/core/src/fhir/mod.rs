@@ -65,7 +65,7 @@ fn encounter_resource_type() -> String {
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ServiceRequest {
-    #[serde(rename = "resourceType", default = "servicerequest_resource_type")]
+    #[serde(rename = "resourceType")]
     pub resource_type: String,
     pub id: Option<String>,
 
@@ -82,10 +82,6 @@ pub struct ServiceRequest {
     #[serde(default)]
     pub category: Vec<CodeableConcept>,
     pub description: Option<String>,
-}
-
-fn servicerequest_resource_type() -> String {
-    "ServiceRequest".to_string()
 }
 
 /// Bundle entry that stores passthrough JSON resources.

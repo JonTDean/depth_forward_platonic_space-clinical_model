@@ -1,19 +1,27 @@
+use clap::Parser;
 use dfps_fake_data::raw_fhir::{fake_fhir_bundle_scenario, fake_fhir_bundle_scenario_with_seed};
 use serde_json::to_string;
-use std::env;
+
+#[derive(Parser)]
+#[command(
+    name = "generate_fhir_bundle",
+    about = "Emit fake FHIR Bundles as NDJSON for local testing"
+)]
+struct Args {
+    /// Number of bundles to emit
+    #[arg(short, long, default_value_t = 1)]
+    count: usize,
+    /// Seed for reproducible bundles
+    #[arg(short, long)]
+    seed: Option<u64>,
+}
 
 fn main() {
-    let mut args = env::args().skip(1);
-    let count = args
-        .next()
-        .and_then(|value| value.parse::<usize>().ok())
-        .unwrap_or(1);
-    let seed = args.next().and_then(|value| value.parse::<u64>().ok());
-
-    if let Some(seed) = seed {
-        emit_seeded(count, seed);
+    let args = Args::parse();
+    if let Some(seed) = args.seed {
+        emit_seeded(args.count, seed);
     } else {
-        emit_random(count);
+        emit_random(args.count);
     }
 }
 
