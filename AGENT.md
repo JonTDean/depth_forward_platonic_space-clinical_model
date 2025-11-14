@@ -1,6 +1,3 @@
-Nice, this structure is *chef’s kiss*. Here’s an updated `code/AGENT.md` that matches your new tree and leans hard into “always sync code ↔ docs ↔ kanban”.
-
-````markdown
 # AGENT.md — Workspace Rules for Coding Agents
 
 This document defines how an automated coding agent (e.g. OpenAI Codex / GPT) should work in this repository.
@@ -30,6 +27,12 @@ Use this file to define and maintain semantic relationships (e.g. synonym, hyper
 Any time you introduce or rely on a new semantic relationship type in code or docs, you MUST reflect it here.
 
 ### 1.3 System design docs
+
+#### Base / workspace layout
+
+- `docs/system-design/base/directory-architecture.md`  
+  - **Read this first** when you’re unsure where a crate or module should live.  
+  - Defines the high-level `app/`, `domain/`, and `platform/` buckets and how `lib/` is organized.
 
 #### FHIR system
 
@@ -72,6 +75,10 @@ Any time you introduce or rely on a new semantic relationship type in code or do
   - `docs/system-design/ncit/index.md`
 
 ### 1.4 Rust crates
+
+> **Crate layout note:** For the high-level `app/domain/platform` bucket structure under `lib/`, always refer to  
+> `docs/system-design/base/directory-architecture.md`.  
+> The list below provides a more detailed, module-level map.
 
 - `lib/core`
   - Domain model, FHIR types, staging types, mapping types, value objects.
@@ -147,6 +154,7 @@ When asked to implement a feature, refactor, or bugfix, you MUST:
 2. **Read the relevant system-design docs first**
    - FHIR-related work → `docs/system-design/fhir/**`
    - NCIt mapping-related work → `docs/system-design/ncit/**`
+   - Workspace layout / crate placement → `docs/system-design/base/directory-architecture.md`
    - If semantics or relationships are involved, also read:
      - `docs/reference-terminology/semantic-relationships.yaml`
 
@@ -437,6 +445,7 @@ The agent should:
 
    * `docs/system-design/ncit/behavior/state-servicerequest.md`
    * `docs/reference-terminology/semantic-relationships.yaml`
+   * `docs/system-design/base/directory-architecture.md` (to confirm crate placement)
 3. Modify:
 
    * `lib/core/src/mapping/mod.rs` (add new enum variant, etc.)
@@ -458,12 +467,11 @@ The agent should:
 
    * Move `MAP-09` to **REVIEW** or **DONE**, with a brief note of changes.
 
+---
 
 ## 8. Branching & Commit Conventions
 
 This section defines how a coding agent should create branches and write commits so that work stays tightly coupled to kanban cards and system-design docs.
-
----
 
 ### 8.1 Branching strategy
 
@@ -472,8 +480,9 @@ This section defines how a coding agent should create branches and write commits
 **General rules:**
 
 1. **One logical unit of work per branch**
-   - Prefer 1 kanban card → 1 feature branch.
-   - If a change spans multiple small cards that are tightly related, list all card IDs in the branch name.
+
+   * Prefer 1 kanban card → 1 feature branch.
+   * If a change spans multiple small cards that are tightly related, list all card IDs in the branch name.
 
 2. **Branch naming convention**
 
@@ -481,7 +490,7 @@ Use:
 
 ```text
 <kind>/<card-id>-kebab-summary
-````
+```
 
 Where:
 
@@ -513,8 +522,6 @@ When starting work on a card:
 
    * Merge the branch back into `main`.
    * Move the card to **DONE**.
-
----
 
 ### 8.2 Commit message conventions
 
@@ -575,8 +582,6 @@ Tests: cargo test --all
 
    * Use `test(<card-id>)`.
 
----
-
 ### 8.3 Mapping work to commits & branches
 
 When performing work as an agent:
@@ -599,4 +604,4 @@ When performing work as an agent:
 
 This ensures a future human (or agent) can read the history and understand exactly how each card, doc, and code change relate to one another.
 
-Following this `AGENT.md` keeps code, docs, terminology, and kanban all in lockstep.
+Following this `AGENT.md` keeps code, docs, terminology, kanban, **and directory architecture** all in lockstep.

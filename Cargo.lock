@@ -218,6 +218,7 @@ dependencies = [
  "dfps_fake_data",
  "dfps_ingestion",
  "dfps_mapping",
+ "dfps_observability",
  "dfps_pipeline",
  "proptest",
  "serde",
