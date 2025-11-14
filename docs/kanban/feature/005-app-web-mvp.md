@@ -74,19 +74,7 @@ _Working branch: `feature/app/web/frontend-mvp`_
 ### Backend – HTTP API gateway (`dfps_api`)
 _Working branch: `feature/app/web/backend-mvp`_
 
-#### WEB-BE-04 – Tests & CI for backend
-- [x] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
-  - [x] Spin up the server in-process (no external port binding).
-  - [x] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
-  - [x] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
-- [x] Add a CI smoke test that:
-  - [x] Starts the server.
-  - [x] Runs `GET /health` and a minimal `POST /api/map-bundles`.
 
-#### WEB-BE-05 – Directory-architecture alignment (backend)
-- [x] Update `docs/system-design/base/directory-architecture.md` to:
-  - [x] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
-  - [x] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
 
 ---
 
@@ -118,6 +106,20 @@ _Working branch: `feature/app/web/backend-mvp`_
   - [x] Returns counts per `MappingState` to support dashboards.
 - [x] Ensure structured logs include a request ID / correlation ID for each call.
 
+#### WEB-BE-04 – Tests & CI for backend
+- [x] Add integration tests (in `dfps_api` or `dfps_test_suite`) that:
+  - [x] Spin up the server in-process (no external port binding).
+  - [x] `POST /api/map-bundles` with the baseline FHIR bundle fixture and assert NCIt IDs and mapping states.
+  - [x] `POST /api/map-bundles` with an “unknown code” bundle and assert `NoMatch` handling + proper HTTP status.
+- [x] Add a CI smoke test that:
+  - [x] Starts the server.
+  - [x] Runs `GET /health` and a minimal `POST /api/map-bundles`.
+
+#### WEB-BE-05 – Directory-architecture alignment (backend)
+- [x] Update `docs/system-design/base/directory-architecture.md` to:
+  - [x] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
+  - [x] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
+  
 ---
 
 ## DONE

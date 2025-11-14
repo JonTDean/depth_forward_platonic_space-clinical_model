@@ -19,21 +19,23 @@ code/
     ...
   lib/
     app/
-      frontend/
         cli/
         desktop/
         web/
+          frontend/
+          backend/
+            api/
 
     domain/
-      core/
-      ingestion/
-      mapping/
-      pipeline/
-      fake_data/
+        core/
+        ingestion/
+        mapping/
+        pipeline/
+        fake_data/
 
     platform/
-      observability/
-      test_suite/
+        observability/
+        test_suite/
 ````
 
 At a glance:
@@ -56,13 +58,12 @@ Current structure:
 
 ```text
 code/lib/app/
-  frontend/
-    cli/
-    desktop/
-    web/
+  cli/
+  desktop/
   web/
     backend/
       api/
+    frontend/
 ```
 
 * `frontend/cli/`
