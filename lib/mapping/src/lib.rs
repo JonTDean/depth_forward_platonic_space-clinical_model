@@ -8,16 +8,14 @@ use std::collections::HashSet;
 use std::hash::{Hash, Hasher};
 
 use dfps_core::{
-    mapping::{
-        CodeElement, DimNCITConcept, MappingCandidate, MappingResult, MappingStrategy,
-    },
+    mapping::{CodeElement, DimNCITConcept, MappingCandidate, MappingResult, MappingStrategy},
     staging::StgSrCodeExploded,
 };
 
 mod data;
 
 pub use data::{
-    load_ncit_concepts, load_umls_xrefs, UmlsXref, NCIT_DATA_VERSION, UMLS_DATA_VERSION,
+    NCIT_DATA_VERSION, UMLS_DATA_VERSION, UmlsXref, load_ncit_concepts, load_umls_xrefs,
 };
 
 pub trait Mapper {
@@ -182,9 +180,7 @@ pub fn default_engine() -> MappingEngine<LexicalRanker, VectorRankerMock> {
     MappingEngine::new(LexicalRanker, VectorRankerMock, RuleReranker)
 }
 
-pub fn map_staging_codes<I>(
-    codes: I,
-) -> (Vec<MappingResult>, Vec<DimNCITConcept>)
+pub fn map_staging_codes<I>(codes: I) -> (Vec<MappingResult>, Vec<DimNCITConcept>)
 where
     I: IntoIterator<Item = StgSrCodeExploded>,
 {

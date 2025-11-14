@@ -1,3 +1,10 @@
+//! Order / ServiceRequest aggregate mirroring the flows in the FHIR design docs.
+//!
+//! This module maps directly to the ServiceRequest lifecycle shown in
+//! `docs/system-design/fhir/behavior/state-servicerequest.md` and feeds the
+//! ingestion/mapping pipelines documented in `docs/system-design/fhir/index.md`
+//! and `docs/system-design/ncit/architecture/system-architecture.md`.
+
 use serde::{Deserialize, Serialize};
 
 use crate::value::{EncounterId, PatientId, ServiceRequestId};
@@ -37,6 +44,26 @@ pub enum ServiceRequestIntent {
 }
 
 /// Core "order" aggregate in DFPS, similar to a FHIR ServiceRequest.
+///
+/// # Examples
+///
+/// Construct a ServiceRequest from fake IDs, mirroring the diagrams in
+/// `docs/system-design/fhir/models/data-model-er.md`.
+///
+/// ```
+/// use dfps_core::order::{ServiceRequest, ServiceRequestStatus, ServiceRequestIntent};
+/// use dfps_core::value::{PatientId, EncounterId, ServiceRequestId};
+///
+/// let sr = ServiceRequest::new(
+///     ServiceRequestId::new("SR-123"),
+///     PatientId::new("PAT-1"),
+///     Some(EncounterId::new("ENC-1")),
+///     ServiceRequestStatus::Active,
+///     ServiceRequestIntent::Order,
+///     "PET/CT staging order",
+/// );
+/// assert_eq!(sr.status, ServiceRequestStatus::Active);
+/// ```
 #[cfg_attr(feature = "dummy", derive(Dummy))]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServiceRequest {

@@ -1,3 +1,9 @@
+//! Patient aggregate mirrored in the system design diagrams.
+//!
+//! The structure matches the Patient nodes in
+//! `docs/system-design/fhir/models/class-model.md` and is referenced by the
+//! ServiceRequest lifecycle diagrams in `docs/system-design/fhir/behavior/sequence-servicerequest.md`.
+
 use serde::{Deserialize, Serialize};
 
 use crate::value::PatientId;

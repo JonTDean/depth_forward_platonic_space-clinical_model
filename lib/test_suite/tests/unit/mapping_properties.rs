@@ -1,7 +1,4 @@
-use dfps_core::{
-    mapping::CodeElement,
-    staging::StgSrCodeExploded,
-};
+use dfps_core::{mapping::CodeElement, staging::StgSrCodeExploded};
 use dfps_mapping::{default_engine, map_staging_codes};
 use proptest::prelude::*;
 

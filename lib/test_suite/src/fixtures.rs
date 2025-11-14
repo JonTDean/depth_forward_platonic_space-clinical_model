@@ -1,7 +1,4 @@
-use dfps_core::{
-    order::ServiceRequest,
-    staging::StgSrCodeExploded,
-};
+use dfps_core::{order::ServiceRequest, staging::StgSrCodeExploded};
 use dfps_fake_data::{
     ServiceRequestScenario, fake_service_request_for,
     scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed},

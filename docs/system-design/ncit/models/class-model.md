@@ -22,6 +22,7 @@ classDiagram
     +ncit_id : string
     +score : float
     +strategy : string
+    +state : MappingState
   }
 
   class MappingEngine {
@@ -45,3 +46,11 @@ classDiagram
   MappingResult --> NCItConcept : resolved_to
   NCItConcept --> DimNCITConcept : materialized_as
 ```
+
+Implementation notes:
+
+- Types are implemented in `dfps_core::mapping`.
+- Mapping behavior lives in `dfps_mapping::MappingEngine` with state threshold
+  logic (MAP-07) and explainability helpers (MAP-11).
+- The end-to-end façade `dfps_pipeline::bundle_to_mapped_sr` produces the
+  `MappingResult`/`DimNCITConcept` pairs used by the warehouse layer.

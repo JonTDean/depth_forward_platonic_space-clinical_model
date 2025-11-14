@@ -1,3 +1,9 @@
+//! Strongly typed value objects (IDs) for the DFPS domain model.
+//!
+//! These types enforce invariants discussed in
+//! `docs/system-design/fhir/models/data-model-er.md` and provide the anchors
+//! for ServiceRequest/Encounter relationships.
+
 use serde::{Deserialize, Serialize};
 
 #[cfg(feature = "dummy")]

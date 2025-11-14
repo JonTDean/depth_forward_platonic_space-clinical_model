@@ -1,7 +1,8 @@
 //! End-to-end pipeline facade stitching together FHIR ingestion and NCIt mapping.
 //!
-//! This crate exists so callers can feed a FHIR `Bundle` and receive staging
-//! rows plus NCIt mapping results in one call (matching kanban task E2E-01).
+//! Matches the flows in `docs/system-design/fhir/index.md#quickstart` and
+//! `docs/system-design/ncit/behavior/sequence-servicerequest.md` by exposing a
+//! single entrypoint from Bundle → staging → NCIt concepts.
 
 use dfps_core::{
     fhir::Bundle,
