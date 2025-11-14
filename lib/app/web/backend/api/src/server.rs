@@ -5,12 +5,12 @@ use std::{
 };
 
 use axum::{
+    Json, Router,
     body::Bytes,
     extract::State,
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
-    Json, Router,
 };
 use dfps_core::{
     fhir::Bundle,
@@ -160,10 +160,7 @@ async fn map_bundles(State(state): State<ApiState>, body: Bytes) -> Result<Respo
 
     for bundle in bundles {
         let output = bundle_to_mapped_sr(&bundle).map_err(|err| match err {
-            PipelineError::Ingestion(source) => {
-                ApiError::ingestion(source.to_string(), request_id)
-            }
-            other => ApiError::internal(other.to_string(), request_id),
+            PipelineError::Ingestion(source) => ApiError::ingestion(source.to_string(), request_id),
         })?;
 
         log_pipeline_output(

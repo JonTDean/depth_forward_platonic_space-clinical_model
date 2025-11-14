@@ -1,9 +1,9 @@
 use axum::{
+    Router,
     body::Body,
     http::{Request, StatusCode},
-    Router,
 };
-use dfps_api::{router as api_router, ApiState};
+use dfps_api::{ApiState, router as api_router};
 use dfps_core::{
     mapping::{DimNCITConcept, MappingResult, MappingState},
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
@@ -11,8 +11,8 @@ use dfps_core::{
 use dfps_observability::PipelineMetrics;
 use dfps_test_suite::regression;
 use http_body_util::BodyExt;
-use serde::de::DeserializeOwned;
 use serde::Deserialize;
+use serde::de::DeserializeOwned;
 use tower::ServiceExt;
 
 #[derive(Deserialize)]
@@ -68,10 +68,11 @@ async fn map_bundles_returns_mapped_results() {
     assert_eq!(body.flats.len(), 1);
     assert_eq!(body.exploded_codes.len(), 2);
     assert_eq!(body.mapping_results.len(), 2);
-    assert!(body
-        .mapping_results
-        .iter()
-        .any(|result| result.state == MappingState::AutoMapped));
+    assert!(
+        body.mapping_results
+            .iter()
+            .any(|result| result.state == MappingState::AutoMapped)
+    );
 }
 
 #[tokio::test]
