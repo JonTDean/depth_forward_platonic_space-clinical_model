@@ -148,6 +148,20 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "abd57806937c9cc163efc8ea3910e00a62e2aeb0b8119f1793a978088f8f6b04"
 
 [[package]]
+name = "dfps_cli"
+version = "0.1.0"
+dependencies = [
+ "dfps_core",
+ "dfps_mapping",
+ "dfps_observability",
+ "dfps_pipeline",
+ "env_logger",
+ "log",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dfps_core"
 version = "0.1.0"
 dependencies = [
