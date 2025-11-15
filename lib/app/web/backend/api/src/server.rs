@@ -142,7 +142,8 @@ async fn eval_summary(Query(query): Query<EvalQuery>) -> Result<Response, ApiErr
     info!(target: "dfps_api", "request_id={request_id} eval_summary dataset={dataset}");
     let cases = dfps_eval::load_dataset(&dataset)
         .map_err(|err| ApiError::invalid_dataset(err.to_string(), request_id))?;
-    let summary = dfps_mapping::eval::run_eval(&cases);
+    let summary =
+        dfps_eval::run_eval_with_mapper(&cases, |rows| dfps_mapping::map_staging_codes(rows).0);
     Ok(Json(summary).into_response())
 }
 

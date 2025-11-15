@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use clap::Parser;
 use dfps_configuration::load_env;
 use dfps_eval::{self, AdvancedStats, EvalCase, StratifiedMetrics};
-use dfps_mapping::eval::run_eval;
+use dfps_mapping::map_staging_codes;
 use serde::{Deserialize, Serialize};
 
 #[derive(Parser)]
@@ -87,7 +87,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let summary = run_eval(&cases);
+    let summary = dfps_eval::run_eval_with_mapper(&cases, |rows| {
+        map_staging_codes(rows).0
+    });
     let summary_view = SummaryView {
         total_cases: summary.total_cases,
         predicted_cases: summary.predicted_cases,

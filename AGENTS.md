@@ -367,7 +367,7 @@ Small CLIs for local ingestion + mapping workflows.
     cd code
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
-- **`eval_mapping`** — run `dfps_mapping::eval::run_eval` against a gold NDJSON file.
+- **`eval_mapping`** — run `dfps_eval::run_eval_with_mapper` (via `dfps_mapping::map_staging_codes`) against a gold NDJSON file.
   - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--out-dir <dir>` (write `eval_summary.json` + `eval_results.ndjson`), `--report <path>` (Markdown summary), `--dump-details` (emit per-case `EvalResult` rows).
   - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
   - Example:
@@ -816,5 +816,5 @@ Owns the reusable evaluation types (`EvalCase`, `EvalSummary`, etc.) and dataset
 
 **Responsibilities**
 - Load NDJSON gold datasets from `DFPS_EVAL_DATA_ROOT` (default `lib/domain/fake_data/data/eval`).
-- Provide stratified metric helpers (`StratifiedMetrics`) used by `dfps_mapping::eval::run_eval`.
+- Provide stratified metric helpers (`StratifiedMetrics`) used by `dfps_eval::run_eval_with_mapper`.
 - Surface `compute_metrics` for CLI/test consumers.

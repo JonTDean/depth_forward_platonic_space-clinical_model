@@ -1,6 +1,9 @@
 //! Evaluation types and dataset helpers for NCIt mapping harnesses.
 
-use dfps_core::staging::StgSrCodeExploded;
+use dfps_core::{
+    mapping::{MappingResult, MappingState},
+    staging::StgSrCodeExploded,
+};
 #[cfg(feature = "rand")]
 use rand::{Rng, SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
@@ -8,7 +11,7 @@ use std::{
     collections::BTreeMap,
     env,
     fs::File,
-    io::{self, BufRead, BufReader},
+    io::{BufRead, BufReader},
     path::{Path, PathBuf},
 };
 
@@ -17,7 +20,7 @@ pub const DEFAULT_DATA_ROOT: &str = "lib/domain/fake_data/data/eval";
 #[derive(Debug)]
 pub enum DatasetError {
     Io {
-        source: io::Error,
+        source: std::io::Error,
         path: PathBuf,
     },
     Parse {
@@ -75,20 +78,8 @@ pub fn load_cases_from_path(path: impl AsRef<Path>) -> Result<Vec<EvalCase>, Dat
 
 pub fn load_cases_from_reader<R: BufRead>(reader: R) -> Result<Vec<EvalCase>, DatasetError> {
     let mut cases = Vec::new();
-    for (idx, line) in reader.lines().enumerate() {
-        let line = line.map_err(|source| DatasetError::Io {
-            source,
-            path: PathBuf::from("<reader>"),
-        })?;
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
-        }
-        let case: EvalCase =
-            serde_json::from_str(trimmed).map_err(|source| DatasetError::Parse {
-                line: idx + 1,
-                source,
-            })?;
+    let mut stream = crate::io::EvalCaseStream::new(reader);
+    while let Some(case) = stream.next_case()? {
         cases.push(case);
     }
     Ok(cases)
@@ -293,6 +284,296 @@ fn percentile_bounds(values: &mut [f32]) -> (f32, f32) {
         .unwrap_or(0.0);
     (lower, upper)
 }
+
+pub fn run_eval_with_mapper<F>(cases: &[EvalCase], mut mapper: F) -> EvalSummary
+where
+    F: FnMut(Vec<StgSrCodeExploded>) -> Vec<MappingResult>,
+{
+    if cases.is_empty() {
+        return EvalSummary::default();
+    }
+
+    let staging_rows: Vec<_> = cases
+        .iter()
+        .enumerate()
+        .map(|(idx, case)| case.to_staging_row(format!("eval-{idx:04}")))
+        .collect();
+    let mappings = mapper(staging_rows);
+    assemble_summary(cases, mappings)
+}
+
+fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSummary {
+    let mut summary = EvalSummary {
+        total_cases: cases.len(),
+        ..EvalSummary::default()
+    };
+
+    let mut results = Vec::with_capacity(cases.len());
+    let mut by_system: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
+    let mut by_license: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
+    let mut score_bucket_map: BTreeMap<BucketKey, BucketTally> = BTreeMap::new();
+    let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut advanced_samples = Vec::with_capacity(cases.len());
+    let mut auto_mapped_total = 0usize;
+    let mut auto_mapped_correct = 0usize;
+
+    for (case, mapping) in cases.iter().cloned().zip(mappings.into_iter()) {
+        let predicted = mapping.ncit_id.is_some();
+        if predicted {
+            summary.predicted_cases += 1;
+        }
+        let is_correct = mapping
+            .ncit_id
+            .as_ref()
+            .map(|ncit| ncit == &case.expected_ncit_id)
+            .unwrap_or(false);
+        if is_correct {
+            summary.correct += 1;
+        }
+
+        let label = state_label(mapping.state).to_string();
+        *summary.state_counts.entry(label).or_default() += 1;
+        if matches!(mapping.state, MappingState::AutoMapped) && predicted {
+            auto_mapped_total += 1;
+            if is_correct {
+                auto_mapped_correct += 1;
+            }
+        }
+
+        record_stratified(&mut by_system, case.system.clone(), predicted, is_correct);
+        record_stratified(
+            &mut by_license,
+            mapping
+                .license_tier
+                .clone()
+                .unwrap_or_else(|| "unknown".into()),
+            predicted,
+            is_correct,
+        );
+
+        if predicted {
+            let bucket = bucket_key(mapping.score);
+            let entry = score_bucket_map.entry(bucket).or_default();
+            entry.total += 1;
+            if is_correct {
+                entry.correct += 1;
+            }
+        }
+
+        let reason_key = mapping.reason.clone().unwrap_or_else(|| "none".to_string());
+        *reason_counts.entry(reason_key).or_default() += 1;
+
+        advanced_samples.push((predicted, is_correct));
+
+        results.push(EvalResult {
+            case,
+            mapping,
+            correct: is_correct,
+        });
+    }
+
+    summary.incorrect = summary.total_cases.saturating_sub(summary.correct);
+    let (precision, recall, f1) = compute_metrics(
+        summary.correct,
+        summary.predicted_cases,
+        summary.total_cases,
+    );
+    summary.precision = precision;
+    summary.recall = recall;
+    summary.f1 = f1;
+    summary.accuracy = if summary.total_cases > 0 {
+        summary.correct as f32 / summary.total_cases as f32
+    } else {
+        0.0
+    };
+    summary.auto_mapped_total = auto_mapped_total;
+    summary.auto_mapped_correct = auto_mapped_correct;
+    summary.auto_mapped_precision = if auto_mapped_total > 0 {
+        auto_mapped_correct as f32 / auto_mapped_total as f32
+    } else {
+        0.0
+    };
+    summary.by_system = finalize_stratified(by_system);
+    summary.by_license_tier = finalize_stratified(by_license);
+    summary.score_buckets = finalize_score_buckets(score_bucket_map);
+    summary.reason_counts = reason_counts;
+    #[cfg(feature = "eval-advanced")]
+    {
+        summary.advanced = Some(crate::bootstrap_metrics(&advanced_samples, 100));
+    }
+    summary.results = results;
+    summary
+}
+
+fn state_label(state: MappingState) -> &'static str {
+    match state {
+        MappingState::AutoMapped => "auto_mapped",
+        MappingState::NeedsReview => "needs_review",
+        MappingState::NoMatch => "no_match",
+    }
+}
+
+fn record_stratified(
+    map: &mut BTreeMap<String, StratifiedMetrics>,
+    key: String,
+    predicted: bool,
+    correct: bool,
+) {
+    map.entry(key)
+        .or_insert_with(StratifiedMetrics::new)
+        .record(predicted, correct);
+}
+
+fn finalize_stratified(
+    mut map: BTreeMap<String, StratifiedMetrics>,
+) -> BTreeMap<String, StratifiedMetrics> {
+    for metrics in map.values_mut() {
+        metrics.finalize();
+    }
+    map
+}
+
+fn finalize_score_buckets(map: BTreeMap<BucketKey, BucketTally>) -> Vec<ScoreBucket> {
+    map.into_iter()
+        .map(|(key, tally)| {
+            let (bucket, lower, upper) = match key {
+                BucketKey::Nan => ("nan".to_string(), None, None),
+                BucketKey::Range(idx) => {
+                    let lower = (idx as f32) / 10.0;
+                    let upper = ((idx + 1) as f32 / 10.0).min(1.0);
+                    (format!("{lower:.1}–{upper:.1}"), Some(lower), Some(upper))
+                }
+            };
+            ScoreBucket {
+                bucket,
+                lower_bound: lower,
+                upper_bound: upper,
+                total: tally.total,
+                correct: tally.correct,
+                accuracy: if tally.total > 0 {
+                    tally.correct as f32 / tally.total as f32
+                } else {
+                    0.0
+                },
+            }
+        })
+        .collect()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum BucketKey {
+    Range(u8),
+    Nan,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+struct BucketTally {
+    total: usize,
+    correct: usize,
+}
+
+fn bucket_key(score: f32) -> BucketKey {
+    if !score.is_finite() {
+        return BucketKey::Nan;
+    }
+    let normalized = score.clamp(0.0, 0.999);
+    let idx = (normalized * 10.0).floor() as u8;
+    BucketKey::Range(idx)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use dfps_core::mapping::{MappingSourceVersion, MappingStrategy, MappingThresholds};
+    use std::path::PathBuf;
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    fn ensure_dataset_env() {
+        INIT.call_once(|| {
+            let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            let root = manifest_dir
+                .ancestors()
+                .nth(3)
+                .expect("workspace root")
+                .to_path_buf();
+            unsafe {
+                std::env::set_var("DFPS_EVAL_DATA_ROOT", root.join("lib/domain/fake_data/data/eval"));
+            }
+        });
+    }
+
+    #[test]
+    fn load_sample_datasets() {
+        ensure_dataset_env();
+        for dataset in [
+            "pet_ct_small",
+            "bronze_pet_ct_small",
+            "silver_pet_ct_small",
+            "gold_pet_ct_small",
+        ] {
+            let cases =
+                load_dataset(dataset).unwrap_or_else(|_| panic!("dataset {dataset} should load"));
+            assert!(!cases.is_empty(), "dataset {dataset} should include cases");
+        }
+    }
+
+    #[test]
+    fn run_eval_counts_correct_cases_and_states() {
+        let cases = vec![
+            EvalCase {
+                system: "http://www.ama-assn.org/go/cpt".into(),
+                code: "78815".into(),
+                display: "PET with concurrently acquired CT for tumor imaging".into(),
+                expected_ncit_id: "NCIT:C19951".into(),
+            },
+            EvalCase {
+                system: "http://loinc.org".into(),
+                code: "24606-6".into(),
+                display: "FDG uptake PET".into(),
+                expected_ncit_id: "NCIT:C17747".into(),
+            },
+        ];
+        let summary = run_eval_with_mapper(&cases, |rows| {
+            rows.into_iter()
+                .map(|row| {
+                    let expected = match row.code.as_deref() {
+                        Some("24606-6") => "NCIT:C17747",
+                        _ => "NCIT:C19951",
+                    };
+                    MappingResult {
+                        code_element_id: row.sr_id,
+                        ncit_id: Some(expected.into()),
+                        cui: Some(expected.into()),
+                        score: 0.95,
+                        strategy: MappingStrategy::Lexical,
+                        state: MappingState::AutoMapped,
+                        thresholds: MappingThresholds::default(),
+                        source_version: MappingSourceVersion::new("v-test", "v-test"),
+                        reason: None,
+                        license_tier: Some("licensed".into()),
+                        source_kind: Some("fhir".into()),
+                    }
+                })
+                .collect()
+        });
+
+        assert_eq!(summary.total_cases, 2);
+        assert_eq!(summary.correct, 2);
+        assert_eq!(summary.incorrect, 0);
+        assert!(summary.precision >= 0.99);
+        assert!(summary.recall >= 0.99);
+        assert!(summary.f1 >= 0.99);
+        assert!(summary.accuracy >= 0.99);
+        assert!(summary.auto_mapped_total >= 2);
+        assert!(summary.auto_mapped_precision >= 0.99);
+        assert_eq!(summary.state_counts.get("auto_mapped"), Some(&2));
+        assert_eq!(summary.results.len(), 2);
+    }
+}
+
+pub mod io;
 
 #[cfg(test)]
 mod tests {

@@ -22,12 +22,12 @@
 
 ### EVAL-PLAT-06 – Migrate/unwrap 012 harness into `dfps_eval`
 
-* [ ] Create new crate `lib/domain/eval` (`dfps_eval`).
-  * [ ] Move `EvalCase`, `EvalResult`, `EvalSummary`, `run_eval` out of `dfps_mapping::eval` into `dfps_eval`.
-  * [ ] Re-export from `dfps_mapping` temporarily to avoid churn (`pub use dfps_eval::*`), then remove once downstream crates are updated.
-* [ ] Update imports across `dfps_test_suite` to use `dfps_eval`.
-* [ ] Provide a small, streaming NDJSON reader in `dfps_eval::io` (avoids loading entire datasets into memory).
-* [ ] Deprecation note in `lib/domain/mapping/src/eval.rs` (with `#[deprecated]`) pointing to `dfps_eval`.
+* [x] Create new crate `lib/domain/eval` (`dfps_eval`).
+  * [x] Move `EvalCase`, `EvalResult`, `EvalSummary`, `run_eval` out of `dfps_mapping::eval` into `dfps_eval`.
+  * [x] Re-export from `dfps_mapping` temporarily to avoid churn (`pub use dfps_eval::*`), then remove once downstream crates are updated.
+* [x] Update imports across `dfps_test_suite` to use `dfps_eval`.
+* [x] Provide a small, streaming NDJSON reader in `dfps_eval::io` (avoids loading entire datasets into memory).
+* [x] Deprecation note in `lib/domain/mapping/src/eval.rs` (with `#[deprecated]`) pointing to `dfps_eval`.
 
 **Acceptance:** `dfps_test_suite::integration::mapping_eval` compiles against `dfps_eval` with no regressions; old module emits a deprecated warning only.
 

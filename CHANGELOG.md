@@ -28,6 +28,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-022 – “EVAL-PLAT-02 – Calibration buckets” (`EvalSummary.score_buckets` now capture deterministic 0.1 score bands with accuracy per bucket; Markdown report/runbook document the calibration view).
 - EVAL-022 – “EVAL-PLAT-03 – CI regression gate” (`EvalSummary` tracks overall accuracy and AutoMapped precision; CLI thresholds/CI workflow enforce regression guards on the `gold_pet_ct_small` dataset).
 - EVAL-022 – “EVAL-PLAT-04 – Dashboards & reporting” (`dfps_eval::report` loads baseline snapshots and renders Markdown + HTML fragments; `dfps_web_frontend` exposes an HTMX dataset picker backed by `/eval/report`; baseline fixtures documented in `lib/domain/fake_data/data/eval/README.md`).
+- EVAL-022 – “EVAL-PLAT-06 – Eval harness migration” (`dfps_eval::run_eval_with_mapper` owns the harness + streaming NDJSON reader; `dfps_mapping::eval` now exposes a deprecated shim, and CLI/API/test suites call the new surface).
 
 ---
 

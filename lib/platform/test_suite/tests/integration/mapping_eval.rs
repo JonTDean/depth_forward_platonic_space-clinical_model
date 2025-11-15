@@ -1,6 +1,6 @@
 use dfps_core::mapping::MappingState;
-use dfps_eval;
-use dfps_mapping::eval::{run_eval, EvalCase};
+use dfps_eval::{self, EvalCase};
+use dfps_mapping::map_staging_codes;
 use dfps_test_suite::{fixtures, init_environment};
 
 fn custom_no_match_case() -> EvalCase {
@@ -16,7 +16,7 @@ fn custom_no_match_case() -> EvalCase {
 fn pet_ct_eval_sample_has_high_precision() {
     init_environment();
     let cases = fixtures::eval_pet_ct_small_cases();
-    let summary = run_eval(&cases);
+    let summary = eval_with_pipeline(&cases);
 
     assert_eq!(summary.total_cases, cases.len());
     assert!(summary.precision >= 0.95);
@@ -45,7 +45,7 @@ fn eval_summary_flags_no_match_cases() {
     let mut cases = fixtures::eval_pet_ct_small_cases();
     cases.push(custom_no_match_case());
 
-    let summary = run_eval(&cases);
+    let summary = eval_with_pipeline(&cases);
     let auto_mapped = summary.state_counts.get("auto_mapped").copied().unwrap_or(0);
     assert_eq!(auto_mapped, cases.len() - 1);
     assert_eq!(
@@ -79,4 +79,8 @@ fn tiered_datasets_load() {
             dfps_eval::load_dataset(dataset).unwrap_or_else(|_| panic!("{dataset} should load"));
         assert!(!cases.is_empty(), "{dataset} should contain rows");
     }
+}
+
+fn eval_with_pipeline(cases: &[EvalCase]) -> dfps_eval::EvalSummary {
+    dfps_eval::run_eval_with_mapper(cases, |rows| map_staging_codes(rows).0)
 }
