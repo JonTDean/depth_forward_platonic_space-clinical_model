@@ -1,6 +1,7 @@
 mod datamart;
 mod fhir_ingest;
 mod mapping;
+mod mapping_eval;
 mod regression;
 mod validation;
 mod web_api;
