@@ -21,5 +21,6 @@ pub use validation::{
         ExternalValidationError, ExternalValidationReport, ExternalValidatorConfig,
         OperationOutcome, OperationOutcomeIssue, validate_bundle_external,
     },
-    validate_bundle, validate_sr,
+    validate_bundle, validate_bundle_with_external, validate_bundle_with_external_profile,
+    validate_sr,
 };

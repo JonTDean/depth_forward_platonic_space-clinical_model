@@ -22,37 +22,37 @@
 
 ### FHIR-CONF-03 – Blending internal & external validation
 
-- [ ] Extend `ValidationMode` with new variants:
+- [x] Extend `ValidationMode` with new variants:
 
   - `ExternalPreferred`, `ExternalStrict`.
 
-- [ ] Update `validate_bundle` to:
+- [x] Update `validate_bundle` to:
 
-  - [ ] Optionally call `validate_bundle_external` and merge results:
+  - [x] Optionally call `validate_bundle_external` and merge results:
 
     - External `OperationOutcome` issues mapped into `ValidationIssue` with a new `RequirementRef` variant (e.g., `RExternal`), or tagged via a `source` field.
     - Ensure that IDs/requirements from `ingestion-requirements.md` remain stable.
 
-  - [ ] In `ExternalStrict` mode, treat any `OperationOutcomeIssue` with severity `error` or `fatal` as blocking.
+  - [x] In `ExternalStrict` mode, treat any `OperationOutcomeIssue` with severity `error` or `fatal` as blocking.
 
-- [ ] Provide helpers:
+- [x] Provide helpers:
 
   - `validate_bundle_with_external(bundle, mode) -> ValidationReport`.
 
 ### FHIR-CONF-04 – CLI & developer ergonomics
 
-- [ ] Add a new CLI in `dfps_cli`:
+- [x] Add a new CLI in `dfps_cli`:
 
   - `validate-fhir`:
 
-    - [ ] Reads Bundle JSON/NDJSON from stdin or file.
-    - [ ] Calls `validate_bundle_with_external`.
-    - [ ] Emits NDJSON `ValidationIssue` rows plus a summary line (counts by severity and source).
+    - [x] Reads Bundle JSON/NDJSON from stdin or file.
+    - [x] Calls `validate_bundle_with_external`.
+    - [x] Emits NDJSON `ValidationIssue` rows plus a summary line (counts by severity and source).
 
-- [ ] Update `docs/system-design/clinical/fhir/index.md` with:
+- [x] Update `docs/system-design/clinical/fhir/index.md` with:
 
-  - [ ] A “Validation (external)” subsection.
-  - [ ] Example `dfps_cli validate-fhir` commands.
+  - [x] A “Validation (external)” subsection.
+  - [x] Example `dfps_cli validate-fhir` commands.
 
 ### FHIR-CONF-05 – Tests & mocks
 

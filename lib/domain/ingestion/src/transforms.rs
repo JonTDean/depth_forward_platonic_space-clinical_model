@@ -8,7 +8,9 @@ use serde_json::Error as SerdeError;
 
 use crate::{
     reference,
-    validation::{Validated, ValidationIssue, ValidationMode, validate_bundle},
+    validation::{
+        Validated, ValidationIssue, ValidationMode, validate_bundle, validate_bundle_with_external,
+    },
 };
 
 /// Errors surfaced while normalizing raw FHIR payloads.
@@ -157,8 +159,17 @@ pub fn bundle_to_staging_with_validation(
     bundle: &fhir::Bundle,
     mode: ValidationMode,
 ) -> Result<Validated<(Vec<StgServiceRequestFlat>, Vec<StgSrCodeExploded>)>, IngestionError> {
-    let report = validate_bundle(bundle);
-    if matches!(mode, ValidationMode::Strict) && report.has_errors() {
+    let report = match mode {
+        ValidationMode::Strict | ValidationMode::Lenient => validate_bundle(bundle),
+        ValidationMode::ExternalPreferred | ValidationMode::ExternalStrict => {
+            validate_bundle_with_external(bundle, mode)
+        }
+    };
+    if matches!(
+        mode,
+        ValidationMode::Strict | ValidationMode::ExternalStrict
+    ) && report.has_errors()
+    {
         return Err(IngestionError::ValidationFailed(report.issues.clone()));
     }
     let (flats, exploded) = bundle_to_staging_inner(bundle)?;
@@ -194,8 +205,17 @@ pub fn bundle_to_domain_with_validation(
     bundle: &fhir::Bundle,
     mode: ValidationMode,
 ) -> Result<Validated<Vec<order::ServiceRequest>>, IngestionError> {
-    let report = validate_bundle(bundle);
-    if matches!(mode, ValidationMode::Strict) && report.has_errors() {
+    let report = match mode {
+        ValidationMode::Strict | ValidationMode::Lenient => validate_bundle(bundle),
+        ValidationMode::ExternalPreferred | ValidationMode::ExternalStrict => {
+            validate_bundle_with_external(bundle, mode)
+        }
+    };
+    if matches!(
+        mode,
+        ValidationMode::Strict | ValidationMode::ExternalStrict
+    ) && report.has_errors()
+    {
         return Err(IngestionError::ValidationFailed(report.issues.clone()));
     }
     let output = bundle_to_domain_inner(bundle)?;

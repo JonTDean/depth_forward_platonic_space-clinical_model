@@ -95,6 +95,8 @@ pub fn validate_sr(sr: &fhir::ServiceRequest) -> Vec<ValidationIssue> {
 pub enum ValidationMode {
     Strict,
     Lenient,
+    ExternalPreferred,
+    ExternalStrict,
 }
 
 impl Default for ValidationMode {
@@ -136,6 +138,23 @@ impl<T> Validated<T> {
 
 /// Validate an entire FHIR Bundle by walking ServiceRequests and referenced resources.
 pub fn validate_bundle(bundle: &fhir::Bundle) -> ValidationReport {
+    validate_bundle_with_external_profile(bundle, ValidationMode::Lenient, None)
+}
+
+/// Validate a bundle and optionally merge external validator feedback.
+pub fn validate_bundle_with_external(
+    bundle: &fhir::Bundle,
+    mode: ValidationMode,
+) -> ValidationReport {
+    validate_bundle_with_external_profile(bundle, mode, None)
+}
+
+/// Validate a bundle and optionally merge external validator feedback with an explicit profile URL.
+pub fn validate_bundle_with_external_profile(
+    bundle: &fhir::Bundle,
+    mode: ValidationMode,
+    profile_url: Option<&str>,
+) -> ValidationReport {
     let patient_ids = collect_resource_ids(bundle, "Patient");
     let encounter_ids = collect_resource_ids(bundle, "Encounter");
     let mut issues = Vec::new();
@@ -157,7 +176,43 @@ pub fn validate_bundle(bundle: &fhir::Bundle) -> ValidationReport {
         }
     }
 
-    ValidationReport::new(issues)
+    let mut report = ValidationReport::new(issues);
+
+    if matches!(
+        mode,
+        ValidationMode::ExternalPreferred | ValidationMode::ExternalStrict
+    ) {
+        report = merge_external_report(
+            report,
+            crate::validation::external::validate_bundle_external(bundle, profile_url),
+        );
+    }
+
+    report
+}
+
+/// Merge external validation output into an existing report.
+pub(crate) fn merge_external_report(
+    mut report: ValidationReport,
+    external: Result<
+        crate::validation::external::ExternalValidationReport,
+        crate::validation::external::ExternalValidationError,
+    >,
+) -> ValidationReport {
+    match external {
+        Ok(ext) => {
+            report.issues.extend(ext.issues);
+        }
+        Err(err) => {
+            report.issues.push(ValidationIssue::new(
+                "VAL_EXTERNAL_UNAVAILABLE",
+                ValidationSeverity::Warning,
+                format!("External validation unavailable: {err}"),
+                RequirementRef::RExternal,
+            ));
+        }
+    }
+    report
 }
 
 fn validate_subject(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationIssue>) {
@@ -290,6 +345,9 @@ fn collect_resource_ids(bundle: &fhir::Bundle, resource_type: &str) -> HashSet<S
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::validation::external::{
+        ExternalValidationError, ExternalValidationReport, OperationOutcome, OperationOutcomeIssue,
+    };
     use dfps_core::fhir;
 
     #[test]
@@ -344,6 +402,38 @@ mod tests {
                 .iter()
                 .any(|issue| issue.id == "VAL_SR_TRACE_ID_MISSING")
         );
+    }
+
+    #[test]
+    fn merge_external_adds_warning_on_failure() {
+        let report = ValidationReport::new(vec![]);
+        let merged = merge_external_report(
+            report,
+            Err(ExternalValidationError::MissingConfig(
+                "DFPS_FHIR_VALIDATOR_BASE_URL",
+            )),
+        );
+        assert_eq!(merged.issues.len(), 1);
+        let issue = &merged.issues[0];
+        assert_eq!(issue.requirement, RequirementRef::RExternal);
+        assert_eq!(issue.severity, ValidationSeverity::Warning);
+    }
+
+    #[test]
+    fn merge_external_includes_operation_outcome_issues() {
+        let ext = ExternalValidationReport::from_operation_outcome(Some(OperationOutcome {
+            issues: vec![OperationOutcomeIssue {
+                severity: Some("error".into()),
+                code: Some("invalid".into()),
+                diagnostics: Some("missing subject".into()),
+                expression: None,
+            }],
+        }));
+        let merged = merge_external_report(ValidationReport::new(vec![]), Ok(ext));
+        assert_eq!(merged.issues.len(), 1);
+        assert_eq!(merged.issues[0].requirement, RequirementRef::RExternal);
+        assert_eq!(merged.issues[0].severity, ValidationSeverity::Error);
+        assert!(merged.has_errors());
     }
 
     #[test]

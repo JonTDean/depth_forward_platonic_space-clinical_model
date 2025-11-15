@@ -91,6 +91,14 @@ assert!(!lenient.report.has_errors());
   cargo run -p dfps_cli --bin map_bundles bundles.ndjson > pipeline_output.ndjson
   ```
 
+- Validate Bundles (internal + optional external `$validate`):
+
+  ```bash
+  # Env keys (see data/environment/.env.domain.fhir_validation.example):
+  # DFPS_FHIR_VALIDATOR_BASE_URL, DFPS_FHIR_VALIDATOR_TIMEOUT_SECS, DFPS_FHIR_VALIDATOR_PROFILE
+  cargo run -p dfps_cli --bin validate_fhir -- --mode external_preferred < bundles.ndjson
+  ```
+
 - Show CLI help:
 
   ```bash
