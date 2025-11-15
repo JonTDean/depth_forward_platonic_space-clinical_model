@@ -30,13 +30,12 @@ script = [
 
 [tasks.codex-sync]
 description = "Concatenate .codex shards into AGENTS.md"
-script_runner = "bash"
-script = ["cd code && ./scripts/codex_sync.sh"]
+script = [
+    "powershell -NoLogo -NoProfile -Command \"bash scripts/codex_sync.sh\""
+]
 
 [tasks.codex-check]
 description = "Verify AGENTS.md exists and report size"
-script_runner = "bash"
 script = [
-    "cd code && test -s AGENTS.md || (echo 'Run: cargo make codex-sync' && exit 1)",
-    "cd code && wc -c AGENTS.md"
+    "powershell -NoLogo -NoProfile -Command \"if (!(Test-Path AGENTS.md) -or ((Get-Item AGENTS.md).Length -eq 0)) { Write-Error 'Run: cargo make codex-sync'; exit 1 }; Get-Item AGENTS.md | Select-Object Length\""
 ]
