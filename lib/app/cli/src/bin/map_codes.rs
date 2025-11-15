@@ -3,6 +3,7 @@ use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 
 use clap::Parser;
+use dfps_configuration::load_env;
 use dfps_core::staging::StgSrCodeExploded;
 use dfps_mapping::{explain_staging_code, map_staging_codes};
 
@@ -21,6 +22,7 @@ struct Args {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    load_env("app.cli").map_err(|err| format!("dfps_cli env error: {err}"))?;
     let args = Args::parse();
     let reader: Box<dyn BufRead> = match &args.input {
         Some(path) => Box::new(BufReader::new(File::open(path)?)),

@@ -8,7 +8,22 @@ use dfps_core::{
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
 use log::{info, warn};
+use once_cell::sync::Lazy;
 use serde::{Deserialize, Serialize};
+
+static OBS_ENV: Lazy<()> = Lazy::new(|| {
+    dfps_configuration::load_env("platform.observability")
+        .unwrap_or_else(|err| panic!("dfps_observability env error: {err}"));
+});
+
+fn ensure_env() {
+    Lazy::force(&OBS_ENV);
+}
+
+/// Allow callers to eagerly load environment files.
+pub fn init_environment() {
+    ensure_env();
+}
 
 #[derive(Debug, Default, Serialize, Deserialize, Clone, PartialEq)]
 pub struct PipelineMetrics {
@@ -48,6 +63,7 @@ pub fn log_pipeline_output(
     mappings: &[MappingResult],
     metrics: &mut PipelineMetrics,
 ) {
+    ensure_env();
     metrics.record(flats, codes, mappings);
     info!(
         target: "dfps_pipeline",
@@ -61,6 +77,7 @@ pub fn log_pipeline_output(
 }
 
 pub fn log_no_match(result: &MappingResult) {
+    ensure_env();
     warn!(
         target: "dfps_mapping",
         "no_match code={} reason={}",

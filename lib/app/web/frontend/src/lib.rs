@@ -12,7 +12,10 @@ use state::AppState;
 
 pub async fn run() -> std::io::Result<()> {
     if let Err(err) = dfps_configuration::load_env("app.web.frontend") {
-        eprintln!("warning: frontend env file not loaded: {err}");
+        return Err(std::io::Error::new(
+            std::io::ErrorKind::Other,
+            format!("dfps_web_frontend env error: {err}"),
+        ));
     }
     let config = AppConfig::from_env().map_err(|err| {
         std::io::Error::new(

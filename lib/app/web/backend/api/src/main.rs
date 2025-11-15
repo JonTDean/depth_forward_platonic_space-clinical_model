@@ -4,7 +4,8 @@ use dfps_configuration::load_env;
 #[tokio::main]
 async fn main() {
     if let Err(err) = load_env("app.web.api") {
-        eprintln!("warning: backend env file not loaded: {err}");
+        eprintln!("dfps_api env error: {err}");
+        std::process::exit(1);
     }
     init_logging();
     if let Err(err) = run(ApiServerConfig::default()).await {

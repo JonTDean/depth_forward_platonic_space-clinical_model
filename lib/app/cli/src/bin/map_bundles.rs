@@ -4,6 +4,7 @@ use std::io::{self, BufRead, BufReader, Write};
 use std::path::PathBuf;
 
 use clap::Parser;
+use dfps_configuration::load_env;
 use dfps_core::fhir::Bundle;
 use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::bundle_to_mapped_sr;
@@ -32,6 +33,7 @@ struct OutputRecord<'a, T> {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    load_env("app.cli").map_err(|err| format!("dfps_cli env error: {err}"))?;
     let args = Args::parse();
     init_logging(&args.log_level)?;
     let reader: Box<dyn BufRead> = match &args.input {

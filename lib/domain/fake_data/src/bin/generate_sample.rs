@@ -5,6 +5,10 @@ use serde_json::to_string;
 use std::env;
 
 fn main() {
+    if let Err(err) = dfps_configuration::load_env("domain.fake_data") {
+        eprintln!("dfps_fake_data env error: {err}");
+        std::process::exit(1);
+    }
     let mut args = env::args().skip(1);
     let count = args
         .next()

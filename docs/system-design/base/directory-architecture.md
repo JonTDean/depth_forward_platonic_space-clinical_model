@@ -95,6 +95,7 @@ code/lib/app/
   * Crate: `dfps_api`.
   * HTTP API gateway that exposes the DFPS pipeline over `/api/map-bundles`, `/health`, and `/metrics/summary`.
   * Delegates ingestion/mapping work to `dfps_pipeline` and emits metrics via `dfps_observability`.
+  * Loads `.env.app.web.api.<profile>` via `dfps_configuration` so dev/test/prod profiles share the same config story as the frontend UI.
 
 **Principle:**
 No heavy business logic should live here. If you find complex logic in `app/`, move it into a `domain/` crate and import it.
@@ -229,6 +230,7 @@ code/lib/platform/
   * Golden fixture loaders for regression tests.
   * Helpers to construct fake graphs / mappings in tests.
   * Property-testing combinators reused across crates.
+  * `.env.platform.observability.<profile>` drives workspace-wide logging defaults (e.g., `RUST_LOG`) so all binaries/tests emit consistent telemetry.
 
 **Principle:**
 If it’s used by many crates and not fundamentally a domain concept, it likely belongs under `platform/`.

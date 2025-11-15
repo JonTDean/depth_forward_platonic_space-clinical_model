@@ -14,9 +14,8 @@ pub use fixtures::*;
 pub use regression::*;
 
 static TEST_SUITE_ENV: Lazy<()> = Lazy::new(|| {
-    if let Err(err) = dfps_configuration::load_env("platform.test_suite") {
-        eprintln!("warning: dfps_test_suite env not loaded: {err}");
-    }
+    dfps_configuration::load_env("platform.test_suite")
+        .unwrap_or_else(|err| panic!("dfps_test_suite env error: {err}"));
 });
 
 /// Ensure the platform test suite env file is loaded (idempotent).

@@ -47,3 +47,5 @@ Desktop.ini
 .env.*
 *.local
 *.secret
+# allow tracked templates
+!data/environment/.env.*.example
