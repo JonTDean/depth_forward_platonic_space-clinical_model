@@ -6,9 +6,10 @@ use std::path::PathBuf;
 use clap::Parser;
 use dfps_configuration::load_env;
 use dfps_core::fhir::Bundle;
+use dfps_ingestion::validation::{validate_bundle, ValidationSeverity};
 use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::bundle_to_mapped_sr;
-use log::{LevelFilter, info};
+use log::{LevelFilter, info, warn};
 use serde::Serialize;
 
 #[derive(Parser)]
@@ -16,6 +17,7 @@ use serde::Serialize;
     name = "map_bundles",
     about = "Ingest FHIR bundles and emit staging + mapping rows"
 )]
+
 struct Args {
     /// NDJSON file containing FHIR Bundles (defaults to stdin)
     #[arg(value_name = "INPUT")]
@@ -53,6 +55,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             continue;
         }
         let bundle: Bundle = serde_json::from_str(trimmed)?;
+        let validation = validate_bundle(&bundle);
+        if validation.has_errors() {
+            warn!(
+                "validation detected {} issue(s) ({} errors).",
+                validation.issues.len(),
+                validation
+                    .issues
+                    .iter()
+                    .filter(|issue| matches!(issue.severity, ValidationSeverity::Error))
+                    .count()
+            );
+        } else if !validation.issues.is_empty() {
+            info!(
+                "validation reported {} warning(s)/info messages.",
+                validation.issues.len()
+            );
+        }
+        for issue in &validation.issues {
+            write_json(&mut handle, "validation_issue", issue)?;
+        }
         let output = bundle_to_mapped_sr(&bundle)?;
         log_pipeline_output(
             &output.flats,

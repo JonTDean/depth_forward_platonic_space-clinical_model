@@ -43,12 +43,12 @@
   - [x] whether errors stop ingestion or just annotate results.
 
 ### VAL-05 - Tests & regression fixtures
-- [ ] Add new fixtures that explicitly violate R_Subject / R_Status / R_Trace (or reuse existing ones where possible).
-- [ ] Unit tests ensuring:
-  - [ ] each requirement in the requirement diagram corresponds to at least one `ValidationIssue` path.
-- [ ] Integration test in `dfps_test_suite` verifying:
-  - [ ] baseline bundle produces zero `Error` issues,
-  - [ ] malformed bundles surface the expected requirement-bound issues.
+- [x] Add new fixtures that explicitly violate R_Subject / R_Status / R_Trace (or reuse existing ones where possible).
+- [x] Unit tests ensuring:
+  - [x] each requirement in the requirement diagram corresponds to at least one `ValidationIssue` path.
+- [x] Integration test in `dfps_test_suite` verifying:
+  - [x] baseline bundle produces zero `Error` issues,
+  - [x] malformed bundles surface the expected requirement-bound issues.
 
 ### VAL-06 - Docs alignment
 - [x] Extend `docs/system-design/clinical/fhir/requirements/ingestion-requirements.md` with a -Verification- section:
@@ -60,10 +60,7 @@
 ---
 
 ## DOING
-
-### VAL-05 - Tests & regression fixtures
-- [ ] Extend regression fixtures to exercise the new validation API (R_Subject/R_Status/R_Trace).
-- [ ] Ensure ingestion CLI/test harness surfaces validation reports in logs.
+- _Empty_
 
 ---
 
@@ -74,7 +71,7 @@
 ---
 
 ## DONE
-- _Empty_
+- VAL-01 through VAL-05 (validation primitives, SR/bundle checks, ingestion integration, fixtures/tests)
 
 ---
 

@@ -22,6 +22,8 @@ const FHIR_BUNDLE_UPPERCASE_STATUS: &str =
     include_str!("../fixtures/regression/fhir_bundle_uppercase_status.json");
 const FHIR_BUNDLE_UNKNOWN_CODE: &str =
     include_str!("../fixtures/regression/fhir_bundle_unknown_code.json");
+const FHIR_BUNDLE_MISSING_ENCOUNTER: &str =
+    include_str!("../fixtures/regression/fhir_bundle_missing_encounter.json");
 
 pub fn baseline_service_request() -> ServiceRequest {
     ensure_env_loaded();
@@ -63,4 +65,10 @@ pub fn fhir_bundle_unknown_code() -> fhir::Bundle {
     ensure_env_loaded();
     serde_json::from_str(FHIR_BUNDLE_UNKNOWN_CODE)
         .expect("unknown-code bundle should be valid JSON")
+}
+
+pub fn fhir_bundle_missing_encounter() -> fhir::Bundle {
+    ensure_env_loaded();
+    serde_json::from_str(FHIR_BUNDLE_MISSING_ENCOUNTER)
+        .expect("missing-encounter bundle should be valid JSON")
 }
