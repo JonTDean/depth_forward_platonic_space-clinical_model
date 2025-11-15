@@ -65,7 +65,7 @@ architecture-beta
   - `lib/domain/terminology` (`dfps_terminology`) -?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**
   - `lib/platform/observability` : metrics/log helpers used by the CLI and tests.
-  - `lib/platform/test_suite` : regression/property tests and fixtures.
+  - `lib/platform/test_suite` : regression/property tests and fixtures, plus the evaluation harness tests (`tests/integration/mapping_eval.rs`) that keep `run_eval` wired to the gold datasets.
 - **Warehouse bridge**
   - `lib/app/web/backend/datamart` (`dfps_datamart`) -?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**

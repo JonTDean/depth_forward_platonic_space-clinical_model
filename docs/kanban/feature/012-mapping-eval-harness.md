@@ -39,11 +39,12 @@
 - [x] Implementation lives at `lib/domain/mapping/src/eval.rs` and is re-exported via `dfps_mapping::eval`.
 
 ### EVAL-03 - Test harness integration
-- [ ] Add evaluation tests in `dfps_test_suite`:
-  - [ ] Construct a small suite of EvalCase rows from fixtures.
-  - [ ] Assert:
-    - [ ] AutoMapped precision meets a minimal bar for the tiny sample.
-    - [ ] NoMatch cases are correctly flagged when NCIt has no entry for the code.
+- [x] Add evaluation tests in `dfps_test_suite`:
+  - [x] Construct a small suite of EvalCase rows from fixtures.
+  - [x] Assert:
+    - [x] AutoMapped precision meets a minimal bar for the tiny sample.
+    - [x] NoMatch cases are correctly flagged when NCIt has no entry for the code.
+- [x] Coverage implemented in `lib/platform/test_suite/tests/integration/mapping_eval.rs`.
 - [ ] Optionally add a property test ensuring:
   - [ ] label-mismatched golds never report as correct.
 
