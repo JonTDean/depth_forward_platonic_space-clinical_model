@@ -1,6 +1,6 @@
 use dfps_core::mapping::MappingState;
 use dfps_observability::PipelineMetrics;
-use maud::{DOCTYPE, Markup, html};
+use maud::{DOCTYPE, Markup, PreEscaped, html};
 
 use crate::view_model::{AlertKind, AlertMessage, MappingResultsView, PageContext};
 
@@ -119,6 +119,7 @@ pub fn render_page(ctx: &PageContext) -> String {
                         (render_results(ctx))
                     }
                     (render_metrics_dashboard(ctx.metrics.as_ref()))
+                    (render_eval_panel(ctx))
                     (render_no_match_explorer(ctx.results.as_ref()))
                 }
             }
@@ -174,6 +175,43 @@ fn render_metrics_dashboard(metrics: Option<&PipelineMetrics>) -> Markup {
     }
 }
 
+fn render_eval_panel(ctx: &PageContext) -> Markup {
+    html! {
+        section class="bg-white shadow-sm rounded-xl p-6 space-y-4" id="eval-panel" {
+            div class="flex items-center justify-between" {
+                h2 class="text-xl font-semibold" { "Mapping evaluation snapshot" }
+                span class="text-sm text-slate-500" { "HTMX fragment from dfps_eval::report" }
+            }
+            div class="flex flex-wrap items-center gap-3 text-sm" {
+                label class="text-slate-600" for="eval-dataset" { "Dataset" }
+                select id="eval-dataset" name="dataset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    hx-get="/eval/report"
+                    hx-target="#eval-report-fragment"
+                    hx-swap="innerHTML"
+                    hx-trigger="change" {
+                    @if !ctx.datasets.is_empty() {
+                        @for dataset in &ctx.datasets {
+                            option value=(dataset.name) selected[(ctx.selected_eval_dataset == dataset.name)] { (dataset.name.clone()) }
+                        }
+                    } @else {
+                        // Fallback if dataset list failed to load.
+                        option value=(ctx.selected_eval_dataset) { (ctx.selected_eval_dataset.clone()) }
+                    }
+                }
+            }
+            div id="eval-report-fragment" class="rounded-lg border border-slate-200 bg-slate-50 p-4" {
+                @if let Some(html) = &ctx.eval_report_html {
+                    (PreEscaped(html))
+                } @else if let Some(err) = &ctx.eval_panel_error {
+                    p class="text-sm text-rose-700" { (err) }
+                } @else {
+                    p class="text-sm text-slate-500" { "Run dfps_cli eval_mapping --out-dir to populate eval artifacts, then reload this page." }
+                }
+            }
+        }
+    }
+}
+
 fn render_no_match_explorer(results: Option<&MappingResultsView>) -> Markup {
     html! {
         section class="bg-white shadow-sm rounded-xl p-6 space-y-4" id="no-match-explorer" {
@@ -221,6 +259,97 @@ fn render_no_match_explorer(results: Option<&MappingResultsView>) -> Markup {
             } @else {
                 div class="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-600" {
                     "Upload a Bundle or paste JSON to seed the explorer with actionable NoMatch rows."
+                }
+            }
+        }
+    }
+}
+
+pub fn render_eval_page(ctx: &PageContext) -> String {
+    html! {
+        (DOCTYPE)
+        html class="h-full bg-slate-100" {
+            head {
+                meta charset="utf-8";
+                meta name="viewport" content="width=device-width, initial-scale=1";
+                title { "DFPS Eval" }
+                script src="https://cdn.tailwindcss.com" {}
+                script src="https://unpkg.com/htmx.org@1.9.12" {}
+            }
+            body class="min-h-screen bg-slate-100 text-slate-900" {
+                main class="mx-auto max-w-5xl px-4 py-10 space-y-6" {
+                    (render_eval_section(ctx))
+                }
+            }
+        }
+    }
+    .into_string()
+}
+
+pub fn render_eval_fragment(run: &crate::client::EvalRunResponse) -> String {
+    render_eval_summary(&run.summary, &run.dataset).into_string()
+}
+
+fn render_eval_section(ctx: &PageContext) -> Markup {
+    html! {
+        section class="bg-white shadow-sm rounded-xl p-6 space-y-4" {
+            div class="flex items-center justify-between" {
+                h2 class="text-xl font-semibold" { "Evaluation" }
+                span class="text-sm text-slate-500" { "DFPS mapping eval datasets" }
+            }
+            form hx-post="/eval/run" hx-target="#eval-fragment" hx-swap="innerHTML" class="flex flex-wrap gap-3 items-center text-sm" {
+                label for="dataset" { "Dataset" }
+                select id="dataset" name="dataset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm" {
+                    @for ds in &ctx.datasets {
+                        option value=(ds.name) selected[(ctx.selected_eval_dataset == ds.name)] { (format!("{} ({} rows)", ds.name, ds.n_cases)) }
+                    }
+                }
+                label for="top_k" { "Top K" }
+                input type="number" id="top_k" name="top_k" value="1" min="1" max="5" class="w-16 rounded-lg border border-slate-300 px-2 py-1 text-sm" {}
+                button type="submit" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-white font-medium hover:bg-emerald-700" { "Run eval" }
+            }
+            div id="eval-fragment" {
+                @if let Some(eval) = &ctx.eval {
+                    (render_eval_summary(&eval.summary, &eval.dataset))
+                } @else {
+                    p class="text-sm text-slate-500" { "No eval summary available yet." }
+                }
+            }
+        }
+    }
+}
+
+fn render_eval_summary(summary: &dfps_eval::EvalSummary, dataset: &str) -> Markup {
+    html! {
+        div class="space-y-4" {
+            div class="flex items-center justify-between" {
+                h3 class="text-lg font-semibold" { (format!("Dataset: {}", dataset)) }
+                span class="text-sm text-slate-500" { (format!("Total cases: {}", summary.total_cases)) }
+            }
+            div class="grid gap-4 md:grid-cols-3" {
+                (metric_card("Precision", (summary.precision * 100.0) as usize, "%", "text-emerald-600"))
+                (metric_card("Recall", (summary.recall * 100.0) as usize, "%", "text-emerald-600"))
+                (metric_card("Coverage", (summary.coverage * 100.0) as usize, "%", "text-emerald-600"))
+            }
+            div class="grid gap-4 md:grid-cols-3" {
+                (metric_card("Top1 accuracy", (summary.top1_accuracy * 100.0) as usize, "%", "text-slate-700"))
+                (metric_card("Top3 accuracy", (summary.top3_accuracy * 100.0) as usize, "%", "text-slate-700"))
+                (metric_card("AutoMapped precision", (summary.auto_mapped_precision * 100.0) as usize, "%", "text-slate-700"))
+            }
+            div class="bg-slate-50 rounded-lg border border-slate-200 p-4" {
+                h4 class="text-sm font-semibold text-slate-800 mb-2" { "State counts" }
+                ul class="text-sm text-slate-600 space-y-1" {
+                    @for (state, count) in &summary.state_counts {
+                        li { (format!("{state}: {count}")) }
+                    }
+                }
+            }
+            div class="bg-slate-50 rounded-lg border border-slate-200 p-4" {
+                h4 class="text-sm font-semibold text-slate-800 mb-2" { "Top NoMatch reasons" }
+                ul class="text-sm text-slate-600 space-y-1" {
+                    @for (reason, count) in &summary.reason_counts {
+                        li { (format!("{reason}: {count}")) }
+                    }
                 }
             }
         }
@@ -386,7 +515,7 @@ fn state_metric_card(title: &str, value: usize, classes: &str, tooltip: &str) ->
 mod tests {
     use super::*;
     use crate::view_model::{
-        CountStat, MappingResultsView, MappingRowView, NoMatchRowView, PageContext,
+        CountStat, EvalContext, MappingResultsView, MappingRowView, NoMatchRowView, PageContext,
         ServiceRequestSummary,
     };
 
@@ -443,13 +572,12 @@ mod tests {
             }],
         };
 
-        let ctx = PageContext {
-            health: None,
-            health_error: Some("Health endpoint unreachable: test".into()),
-            metrics: Some(metrics),
-            alert: None,
-            results: Some(results),
-        };
+        let mut ctx = PageContext::default();
+        ctx.health = None;
+        ctx.health_error = Some("Health endpoint unreachable: test".into());
+        ctx.metrics = Some(metrics);
+        ctx.results = Some(results);
+        ctx.eval_report_html = Some("<div>Eval report</div>".into());
 
         let html = render_page(&ctx);
         assert!(html.contains("Pipeline metrics"));
@@ -457,5 +585,43 @@ mod tests {
         assert!(html.contains("MappingResult.reason"));
         assert!(html.contains("missing_system_or_code"));
         assert!(html.contains("Backend warning"));
+        assert!(html.contains("Mapping evaluation snapshot"));
+        assert!(html.contains("Eval report"));
+    }
+
+    #[test]
+    fn render_eval_page_shows_dataset_picker_and_metrics() {
+        let mut ctx = PageContext::default();
+        ctx.datasets = vec![dfps_eval::DatasetManifest {
+            name: "pet_ct_small".into(),
+            version: "20240601".into(),
+            license: Some("test-license".into()),
+            source: Some("test-source".into()),
+            n_cases: 3,
+            sha256: "abc123".into(),
+            notes: None,
+        }];
+        ctx.selected_eval_dataset = "pet_ct_small".into();
+        ctx.eval = Some(super::super::view_model::EvalContext {
+            dataset: "pet_ct_small".into(),
+            summary: dfps_eval::EvalSummary {
+                total_cases: 3,
+                precision: 0.97,
+                recall: 0.97,
+                coverage: 1.0,
+                top1_accuracy: 0.97,
+                top3_accuracy: 0.97,
+                auto_mapped_precision: 0.98,
+                state_counts: [("auto_mapped".into(), 3)].into_iter().collect(),
+                reason_counts: [("missing_system_or_code".into(), 1)].into_iter().collect(),
+                ..dfps_eval::EvalSummary::default()
+            },
+        });
+
+        let html = render_eval_page(&ctx);
+        assert!(html.contains("Dataset: pet_ct_small"));
+        assert!(html.contains("Run eval"));
+        assert!(html.contains("Top1 accuracy"));
+        assert!(html.contains("missing_system_or_code"));
     }
 }

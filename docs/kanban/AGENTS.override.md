@@ -30,14 +30,14 @@ codex --cd code/docs/kanban --add-dir ../../
 > Epic: FP-07 – Ingestion error surface
 > Branch: feature/FP-07-ingestion-error-surface
 > Branch target version: v0.2.1
-> Status: DOING
-> Introduced in: _TBD_
+> Status: INPROGRESS
+> Introduced in: 2025-11-15
 > Last updated in: v0.2.1
 ```
 
 ---
 
-## 2) When a card leaves “DOING” (to REVIEW or DONE)
+## 2) When a card leaves “INPROGRESS” (to REVIEW or DONE)
 
 1. **Pick a SemVer bump for this branch’s *target* version** (don’t change Cargo’s workspace version yet):
    - **PATCH** - routine checklist completion, no user‑visible change.
@@ -55,7 +55,7 @@ codex --cd code/docs/kanban --add-dir ../../
 
 ## 3) When the branch merges to `main`
 
-- In the epic header, mark **“Included in upcoming release”** (or add `Release: Upcoming`) and keep `Introduced in: _TBD_` until you cut the release.
+- In the epic header, mark **“Included in upcoming release”** (or add `Release: Upcoming`) and keep `Introduced in: 2025-11-15` until you cut the release.
 - Move the card to **DONE**.
 - Ensure `CHANGELOG.md` has an **Unreleased** entry listing this epic and its `Branch target version`.
 
@@ -70,7 +70,7 @@ codex --cd code/docs/kanban --add-dir ../../
   git rev-parse --abbrev-ref HEAD
   rg -n "^(Branch:|Branch target version:|Introduced in:|Last updated in:)" .
   ```
-- If you’re cutting a release later, apply the real bump in `../../Cargo.toml` once, then replace `Introduced in: _TBD_` with that version across included epics and roll **Unreleased** -> `vX.Y.Z` in `CHANGELOG.md`.
+- If you’re cutting a release later, apply the real bump in `../../Cargo.toml` once, then replace `Introduced in: 2025-11-15` with that version across included epics and roll **Unreleased** -> `vX.Y.Z` in `CHANGELOG.md`.
 
 ---
 

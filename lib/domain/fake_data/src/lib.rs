@@ -4,6 +4,7 @@
 //! service requests, and composite scenarios for tests and local tooling.
 
 pub mod encounter;
+pub mod fixtures;
 pub mod order;
 pub mod patient;
 pub mod raw_fhir;

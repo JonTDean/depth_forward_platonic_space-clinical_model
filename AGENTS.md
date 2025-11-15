@@ -82,7 +82,7 @@ _All paths relative to `code/`._
 5) **Update tests**
    - Unit tests (per crate)
    - Integration & e2e in `lib/platform/test_suite/tests/**`
-   - Regression fixtures under `lib/platform/test_suite/fixtures/regression/`
+   - Regression fixtures under `lib/domain/fake_data/data/regression/`
 
 6) **Run standard checks**
    - `cargo make fmt` � `cargo make clippy` � `cargo make test`
@@ -109,7 +109,7 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
    If missing, write `Unreleased` instead of a version number for the steps below.
 
 2) **Update the epic header** in the Kanban you touched:
-   - If the epic is newly started and its “Introduced in” is `_TBD_`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
+   - If the epic is newly started and its “Introduced in” is `2025-11-15`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
    - Always set **“Last updated in”** to the current workspace version (or `Unreleased`).
 
    Example:
@@ -171,14 +171,14 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
 ### FP-07 � Validatio& & error surface
 - [ ] Add `IngestionError` in `lib/domain/ingestion/src/transforms.rs`
 - [ ] Update FHIR semantics in `docs/system-design/fhir/behavior/sequence-servicerequest.md`
-- [ ] Add regression fixtures under `lib/platform/test_suite/fixtures/regression/`
+- [ ] Add regression fixtures under `lib/domain/fake_data/data/regression/`
 - [ ] Document error codes in `docs/reference-terminology/semantic-relationships.yaml`
 ```
 
 ## Columns
 
-* **TODO ? DOING**: implementation starts
-* **DOING ? REVIEW**: code + tests + initial docs written; pass locally
+* **TODO ? INPROGRESS**: implementation starts
+* **INPROGRESS ? REVIEW**: code + tests + initial docs written; pass locally
 * **REVIEW ? DONE**: acceptance criteria met, docs fully synced
 
 
@@ -242,30 +242,30 @@ Where `<kind>` ∈ {`feature`, `bugfix`, `chore`, `docs`, `spike`} and `<card-id
 > Epic: FP-07 – Ingestion error surface
 > Branch: feature/FP-07-ingestion-error-surface
 > Branch target version: v0.2.1
-> Status: DOING
-> Introduced in: _TBD_
+> Status: INPROGRESS
+> Introduced in: 2025-11-15
 > Last updated in: v0.2.1
 ```
 
 ## Workflow
 
-1. **TODO -> DOING**
+1. **TODO -> INPROGRESS**
    - Create the branch from `main` using the naming rule.
    - In the epic Kanban, ensure the header contains:
      - `Branch: <branch-name>`
      - `Branch target version: Unreleased` (or seed with the planned semver)
-     - `Status: DOING`
+     - `Status: INPROGRESS`
 
 2. **Implement**
    - Code + tests + docs as usual.
 
-3. **DOING -> REVIEW or DONE (leaving DOING)**
+3. **INPROGRESS -> REVIEW or DONE (leaving INPROGRESS)**
    - **Update the branch target version in the epic** (metadata only; do **not** bump Cargo here):
      - **PATCH** - routine/internal change
      - **MINOR** - user‑visible addition
      - **MAJOR** - breaking change
    - Set `Last updated in` to that version.
-   - Keep `Introduced in: _TBD_` until a release PR.
+   - Keep `Introduced in: 2025-11-15` until a release PR.
 
 4. **Merge -> `main`**
    - Move the card to **DONE**.
@@ -367,6 +367,16 @@ Small CLIs for local ingestion + mapping workflows.
     cd code
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
+- **`eval_mapping`** — run `dfps_eval::run_eval_with_mapper` (via `dfps_mapping::map_staging_codes`) against a gold NDJSON file.
+  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--out-dir <dir>` (write `eval_summary.json` + `eval_results.ndjson`), `--report <path>` (Markdown summary), `--dump-details` (emit per-case `EvalResult` rows).
+  - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
+  - Example:
+    ```bash
+    cd code
+    cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-details
+    ```
+  - Runbook: `docs/runbook/mapping-eval-quickstart.md`; requirements trace: `MAP_ACCURACY` in `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md`.
+  - Dataset tiers: bronze/silver/gold splits (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) are documented in `lib/domain/fake_data/data/eval/README.md`.
 
 
 # Crate: lib/app/web/backend/api — `dfps_api`
@@ -386,6 +396,7 @@ Axum HTTP API for mapping requests and metrics.
   - Accepts: **Bundle object**, **array**, or **NDJSON**.
   - For each bundle: `bundle_to_mapped_sr` → aggregate `flats`, `exploded_codes`, `mapping_results`, `dim_concepts`.
   - Dedupes concepts by `ncit_id`; updates global `PipelineMetrics`.
+- `GET /api/eval/summary?dataset=<name>` → `EvalSummary` (loads dataset via `DFPS_EVAL_DATA_ROOT`, reuses mapping harness).
 
 **Errors**
 - `400 invalid_json`, `422 invalid_fhir`, `500 internal_error` — all include `request_id`.
@@ -798,3 +809,12 @@ cd code
 cargo test -p dfps_test_suite
 ```
 
+# Crate: lib/domain/eval — `dfps_eval`
+
+**Purpose**  
+Owns the reusable evaluation types (`EvalCase`, `EvalSummary`, etc.) and dataset loaders.
+
+**Responsibilities**
+- Load NDJSON gold datasets from `DFPS_EVAL_DATA_ROOT` (default `lib/domain/fake_data/data/eval`).
+- Provide stratified metric helpers (`StratifiedMetrics`) used by `dfps_eval::run_eval_with_mapper`.
+- Surface `compute_metrics` for CLI/test consumers.

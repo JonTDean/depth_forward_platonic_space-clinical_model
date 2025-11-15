@@ -8,7 +8,7 @@ use std::{
 use axum::{
     Json, Router,
     body::Bytes,
-    extract::State,
+    extract::{Json as JsonPayload, Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -21,12 +21,13 @@ use dfps_core::{
 use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::{PipelineError, bundle_to_mapped_sr};
 use log::{error, info, warn};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 use tokio::{net::TcpListener, sync::Mutex};
 use uuid::Uuid;
 
+use crate::dto::EvalRunResponse;
 /// Runtime configuration for the HTTP server.
 #[derive(Debug, Clone)]
 pub struct ApiServerConfig {
@@ -79,12 +80,14 @@ pub enum ServerError {
 #[derive(Clone)]
 pub struct ApiState {
     metrics: Arc<Mutex<PipelineMetrics>>,
+    latest_eval: Arc<Mutex<Option<crate::dto::EvalRunResponse>>>,
 }
 
 impl ApiState {
     pub fn new() -> Self {
         Self {
             metrics: Arc::new(Mutex::new(PipelineMetrics::default())),
+            latest_eval: Arc::new(Mutex::new(None)),
         }
     }
 }
@@ -121,13 +124,99 @@ pub fn router(state: ApiState) -> Router {
         .route("/health", get(health))
         .route("/metrics/summary", get(metrics_summary))
         .route("/api/map-bundles", post(map_bundles))
+        .route("/api/eval/summary", get(eval_summary))
+        .route("/api/eval/datasets", get(list_eval_datasets))
+        .route("/api/eval/run", post(run_eval))
+        .route("/api/eval/latest", get(latest_eval))
         .with_state(state)
+}
+
+#[derive(Deserialize)]
+struct EvalQuery {
+    dataset: String,
+    #[serde(default = "default_top_k")]
+    top_k: usize,
+}
+
+fn default_top_k() -> usize {
+    1
+}
+
+#[derive(Deserialize)]
+struct EvalRunRequest {
+    dataset: String,
+    #[serde(default = "default_top_k")]
+    top_k: usize,
 }
 
 async fn health() -> impl IntoResponse {
     let request_id = Uuid::new_v4();
     info!(target: "dfps_api", "request_id={request_id} health");
     Json(json!({ "status": "ok" }))
+}
+
+async fn eval_summary(Query(query): Query<EvalQuery>) -> Result<Response, ApiError> {
+    let request_id = Uuid::new_v4();
+    let dataset = query.dataset;
+    info!(target: "dfps_api", "request_id={request_id} eval_summary dataset={dataset}");
+    let cases = dfps_eval::load_dataset(&dataset)
+        .map_err(|err| ApiError::invalid_dataset(err.to_string(), request_id))?;
+    let summary = run_eval_internal(&cases, query.top_k);
+    Ok(Json(summary).into_response())
+}
+
+async fn list_eval_datasets() -> Result<Response, ApiError> {
+    let manifests = dfps_eval::list_manifests()
+        .map_err(|err| ApiError::invalid_dataset(err.to_string(), Uuid::new_v4()))?;
+    Ok(Json(manifests).into_response())
+}
+
+async fn run_eval(
+    State(state): State<ApiState>,
+    JsonPayload(body): JsonPayload<EvalRunRequest>,
+) -> Result<Response, ApiError> {
+    let request_id = Uuid::new_v4();
+    info!(
+        target: "dfps_api",
+        "request_id={request_id} eval_run dataset={} top_k={}",
+        body.dataset,
+        body.top_k
+    );
+    let outcome = dfps_eval::load_dataset_with_manifest(&body.dataset)
+        .map_err(|err| ApiError::invalid_dataset(err.to_string(), request_id))?;
+    let summary = run_eval_internal(&outcome.cases, body.top_k);
+    let response = EvalRunResponse {
+        dataset: body.dataset.clone(),
+        manifest: Some(outcome.manifest),
+        summary,
+    };
+    {
+        let mut latest = state.latest_eval.lock().await;
+        *latest = Some(response.clone());
+    }
+    Ok(Json(response).into_response())
+}
+
+async fn latest_eval(State(state): State<ApiState>) -> Result<Response, ApiError> {
+    let latest = state.latest_eval.lock().await;
+    if let Some(run) = &*latest {
+        Ok(Json(run).into_response())
+    } else {
+        Err(ApiError::invalid_dataset(
+            "no eval has run yet".to_string(),
+            Uuid::new_v4(),
+        ))
+    }
+}
+
+fn run_eval_internal(cases: &[dfps_eval::EvalCase], top_k: usize) -> dfps_eval::EvalSummary {
+    let summary =
+        dfps_eval::run_eval_with_mapper(cases, |rows| dfps_mapping::map_staging_codes(rows).0);
+    if top_k > 1 {
+        // Placeholder until engine exposes true top-k.
+        return summary;
+    }
+    summary
 }
 
 async fn metrics_summary(State(state): State<ApiState>) -> impl IntoResponse {
@@ -247,6 +336,10 @@ enum ApiError {
         message: String,
         request_id: Uuid,
     },
+    InvalidDataset {
+        message: String,
+        request_id: Uuid,
+    },
     #[allow(dead_code)]
     Internal {
         message: String,
@@ -274,6 +367,18 @@ impl ApiError {
             "request_id={request_id} invalid fhir payload: {message}"
         );
         Self::Ingestion {
+            message,
+            request_id,
+        }
+    }
+
+    fn invalid_dataset(message: impl Into<String>, request_id: Uuid) -> Self {
+        let message = message.into();
+        warn!(
+            target: "dfps_api",
+            "request_id={request_id} invalid dataset: {message}"
+        );
+        Self::InvalidDataset {
             message,
             request_id,
         }
@@ -315,6 +420,18 @@ impl IntoResponse for ApiError {
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(ErrorResponse {
                     code: "invalid_fhir",
+                    message,
+                    request_id,
+                }),
+            )
+                .into_response(),
+            ApiError::InvalidDataset {
+                message,
+                request_id,
+            } => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    code: "invalid_dataset",
                     message,
                     request_id,
                 }),

@@ -13,7 +13,7 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
    If missing, write `Unreleased` instead of a version number for the steps below.
 
 2) **Update the epic header** in the Kanban you touched:
-   - If the epic is newly started and its “Introduced in” is `_TBD_`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
+   - If the epic is newly started and its “Introduced in” is `2025-11-15`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
    - Always set **“Last updated in”** to the current workspace version (or `Unreleased`).
 
    Example:

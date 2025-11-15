@@ -6,6 +6,7 @@
   - [Env Quickstart](runbook/env-quickstart.md)
   - [Web Quickstart](runbook/web-quickstart.md)
   - [Makefile Quickstart](runbook/makefile-quickstart.md)
+  - [Mapping Eval Quickstart](runbook/mapping-eval-quickstart.md)
 
 - [Kanban (Feature)](kanban/README.md)
   - [001 – Base skeleton](kanban/feature/001-base-skeleton.md)

@@ -16,6 +16,6 @@
 
 ## Columns
 
-* **TODO ? DOING**: implementation starts
-* **DOING ? REVIEW**: code + tests + initial docs written; pass locally
+* **TODO ? INPROGRESS**: implementation starts
+* **INPROGRESS ? REVIEW**: code + tests + initial docs written; pass locally
 * **REVIEW ? DONE**: acceptance criteria met, docs fully synced

@@ -60,16 +60,18 @@ architecture-beta
 
 - **Domain crates**
   - `lib/domain/ingestion` (`dfps_ingestion`) : emits `stg_sr_code_exploded` rows.
-  - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`.
+  - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`. Evaluation is now owned by `dfps_eval::run_eval_with_mapper`, with `dfps_mapping` providing a deprecated shim for backwards compatibility.
+  - `lib/domain/eval` (`dfps_eval`) : owns `EvalCase`/`EvalSummary` types and dataset helpers (`DFPS_EVAL_DATA_ROOT`, default `lib/domain/fake_data/data/eval`).
   - `lib/domain/pipeline` (`dfps_pipeline`) : composes ingestion + mapping via `bundle_to_mapped_sr`.
   - `lib/domain/terminology` (`dfps_terminology`) -?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**
   - `lib/platform/observability` : metrics/log helpers used by the CLI and tests.
-  - `lib/platform/test_suite` : regression/property tests and fixtures.
+  - `lib/platform/test_suite` : regression/property tests and fixtures, plus the evaluation harness tests (`tests/integration/mapping_eval.rs`) that keep `run_eval` wired to the gold datasets.
 - **Warehouse bridge**
   - `lib/app/web/backend/datamart` (`dfps_datamart`) -?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**
-  - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes.
+  - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes; `eval_mapping` reads gold NDJSON or a named dataset (`--dataset pet_ct_small`) and prints enriched metrics (precision/recall/F1, stratified tables) via `dfps_eval::run_eval_with_mapper` (backed by `map_staging_codes`). The quickstart lives in `docs/runbook/mapping-eval-quickstart.md`; use `--thresholds` to gate CI and `--out-dir` to capture `eval_summary.json`/`eval_results.ndjson`.
+  - `lib/app/web/backend/api` : exposes `GET /api/eval/summary?dataset=...` (runs the same eval harness on a dataset) alongside `/api/map-bundles`, so dashboards/UI can ingest fresh summaries.
 
 ## Mapping states & thresholds
 

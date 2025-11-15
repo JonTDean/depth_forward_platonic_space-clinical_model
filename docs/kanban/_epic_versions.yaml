@@ -1,4 +1,11 @@
 epics:
+<<<<<<< HEAD
   FHIR-015:
+=======
+  EVAL-012:
+    introduced_in: v0.1.0
+    last_updated_in: v0.1.0
+  EVAL-022:
+>>>>>>> feature/EVAL-022-mapping-benchmarking-platform
     introduced_in: v0.1.0
     last_updated_in: v0.1.0

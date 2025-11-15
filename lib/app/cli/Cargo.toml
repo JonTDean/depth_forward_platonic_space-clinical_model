@@ -12,8 +12,13 @@ name = "map_codes"
 path = "src/bin/map_codes.rs"
 
 [[bin]]
+<<<<<<< HEAD
 name = "validate_fhir"
 path = "src/bin/validate_fhir.rs"
+=======
+name = "eval_mapping"
+path = "src/bin/eval_mapping.rs"
+>>>>>>> feature/EVAL-022-mapping-benchmarking-platform
 
 [dependencies]
 dfps_core = { path = "../../domain/core" }
@@ -22,6 +27,7 @@ dfps_mapping = { path = "../../domain/mapping" }
 dfps_ingestion = { path = "../../domain/ingestion" }
 dfps_observability = { path = "../../platform/observability" }
 dfps_configuration = { path = "../../platform/configuration" }
+dfps_eval = { path = "../../domain/eval" }
 serde.workspace = true
 serde_json.workspace = true
 env_logger = "0.11"

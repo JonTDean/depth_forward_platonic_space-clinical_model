@@ -6,7 +6,7 @@ requirementDiagram
     id: N1
     text: "High-confidence auto-maps SHALL achieve > 90% precision."
     risk: High
-    verifymethod: Test
+    verifymethod: Test (dfps_cli eval_mapping)
   }
 
   requirement MAP_TRACE {
@@ -24,6 +24,15 @@ requirementDiagram
     type: "DB schema"
   }
 
+  element EvalHarness {
+    type: "CLI/Test Harness"
+  }
+
   RerankPipeline - satisfies -> MAP_ACCURACY
+  EvalHarness - verifies -> MAP_ACCURACY
   MappingDB - verifies -> MAP_TRACE
 ```
+
+## Verification notes
+- MAP_ACCURACY → `dfps_cli eval_mapping --dataset pet_ct_small --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json` (datasets under `lib/domain/fake_data/data/eval/`).
+- MAP_TRACE → Schema/tests ensure each `MappingResult` stores provenance (`source_version`, `strategy`, `reason`).

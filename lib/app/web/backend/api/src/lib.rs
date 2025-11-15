@@ -4,6 +4,7 @@
 //! binaries) can spin up the server in-process without binding to a global
 //! executable.
 
+pub mod dto;
 pub mod server;
 
 pub use server::{ApiServerConfig, ApiState, ServerError, router, run};
