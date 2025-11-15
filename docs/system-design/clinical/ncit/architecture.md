@@ -60,7 +60,8 @@ architecture-beta
 
 - **Domain crates**
   - `lib/domain/ingestion` (`dfps_ingestion`) : emits `stg_sr_code_exploded` rows.
-  - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`. The crate also exports `dfps_mapping::eval::{EvalCase, EvalResult, EvalSummary, run_eval}` which consumes the gold fixtures and reports precision/recall + per-state counts.
+  - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`. `dfps_mapping::eval::run_eval` remains the orchestration surface.
+  - `lib/domain/eval` (`dfps_eval`) : owns `EvalCase`/`EvalSummary` types and dataset helpers (`DFPS_EVAL_DATA_ROOT`, default `data/eval`).
   - `lib/domain/pipeline` (`dfps_pipeline`) : composes ingestion + mapping via `bundle_to_mapped_sr`.
   - `lib/domain/terminology` (`dfps_terminology`) -?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**
@@ -69,7 +70,7 @@ architecture-beta
 - **Warehouse bridge**
   - `lib/app/web/backend/datamart` (`dfps_datamart`) -?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**
-  - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes; `eval_mapping` reads gold NDJSON and prints precision/recall + state counts via `dfps_mapping::eval::run_eval`. The quickstart lives in `docs/runbook/mapping-eval-quickstart.md`.
+  - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes; `eval_mapping` reads gold NDJSON or a named dataset (`--dataset pet_ct_small`) and prints precision/recall + state counts via `dfps_mapping::eval::run_eval`. The quickstart lives in `docs/runbook/mapping-eval-quickstart.md`.
 
 ## Mapping states & thresholds
 

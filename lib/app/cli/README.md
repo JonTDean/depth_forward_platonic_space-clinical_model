@@ -22,9 +22,11 @@ cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 <codes.ndjson
 ## `eval_mapping`
 
 Evaluates the NCIt mapping pipeline against a gold-standard NDJSON file made of
-`EvalCase` rows. Emits a JSON summary plus optional per-case details.
+`EvalCase` rows. Emits a JSON summary plus optional per-case details. You can point
+to a named dataset under `DFPS_EVAL_DATA_ROOT` via `--dataset` or provide a direct
+NDJSON path via `--input`.
 
 ```bash
 cd code
-cargo run -p dfps_cli --bin eval_mapping -- --input lib/platform/test_suite/fixtures/eval/pet_ct_small.ndjson --dump-details
+cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-details
 ```

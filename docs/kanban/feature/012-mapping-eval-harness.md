@@ -18,24 +18,67 @@
 ---
 
 ## TODO
-
-_Nothing pending._
-
----
-
-## INPROGRESS
 - _Empty_
 
 ---
 
-## REVIEW
-- [x] **EVAL-01 – Gold standard format** (schema + PET/CT sample under `lib/platform/test_suite/fixtures/eval/`).
-- [x] **EVAL-02 – Evaluation core API** (`dfps_mapping::eval::{EvalCase, EvalResult, EvalSummary, run_eval}`).
-- [x] **EVAL-03 – Test harness integration** (`lib/platform/test_suite/tests/integration/mapping_eval.rs` + fixture loader).
-- [x] **EVAL-04 – CLI wrapper** (`dfps_cli eval_mapping`).
-- [x] **EVAL-05 – Docs & requirements** (runbook + MAP_ACCURACY verification).
+## INPROGRESS
+
+### EVAL-00 - General Tasks
 - [ ] Confirm EvalSummary is stable enough to be consumed by CI or dashboards.
 - [ ] Sanity check results on the current gold sample for regressions.
+
+### EVAL-03 - Test harness integration
+- [ ] Optionally add a property test ensuring:
+  - [ ] label-mismatched golds never report as correct.
+
+---
+
+## REVIEW
+
+### EVAL-01 - Gold standard format
+- [x] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `data/eval/`:
+  - [x] `{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}`
+- [x] Include a small PET/CT-focused sample:
+  - [x] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.
+
+### EVAL-02 - Evaluation core API
+- [x] New module or crate (e.g., `lib/platform/eval`):
+  - [x] `EvalCase` struct mirroring the fixture shape.
+  - [x] `EvalResult` / `EvalSummary` with:
+    - [x] counts of correct / incorrect mappings,
+    - [x] precision/recall,
+    - [x] confusion by `MappingState` (`AutoMapped`, `NeedsReview`, `NoMatch`).
+- [x] Provide a function:
+  - [x] `run_eval(cases: &[EvalCase]) -> EvalSummary` that:
+    - [x] runs each case through `map_staging_codes` (or equivalent),
+    - [x] compares `expected_ncit_id` to the top `MappingResult`.
+- [x] Implementation lives at `lib/domain/mapping/src/eval.rs` and is re-exported via `dfps_mapping::eval`.
+
+### EVAL-03 - Test harness integration
+- [x] Add evaluation tests in `dfps_test_suite`:
+  - [x] Construct a small suite of EvalCase rows from fixtures.
+  - [x] Assert:
+    - [x] AutoMapped precision meets a minimal bar for the tiny sample.
+    - [x] NoMatch cases are correctly flagged when NCIt has no entry for the code.
+- [x] Coverage implemented in `lib/platform/test_suite/tests/integration/mapping_eval.rs`.
+
+### EVAL-04 - CLI wrapper
+- [x] Introduce a small CLI binary, e.g.:
+  - [x] Integrate a new `dfps_cli` subcommand `eval-mapping`.
+- [x] CLI behavior:
+  - [x] Accepts an NDJSON gold file path (`--input`).
+  - [x] Prints summary metrics (precision, recall, counts by MappingState).
+  - [x] Optional `--dump-details` flag to emit per-code results.
+- [x] `lib/app/cli/src/bin/eval_mapping.rs` streams JSON summary rows that CI/scripts can consume.
+
+### EVAL-05 - Docs & requirements link
+- [x] Add `docs/runbook/mapping-eval-quickstart.md` describing:
+  - [x] how to run the CLI over the gold file,
+  - [x] how to interpret metrics.
+- [x] Update `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md` (e.g., requirement `MAP_ACCURACY`):
+  - [x] reference the eval harness as the primary verification method.
+- [x] Runbook also mirrored into `docs/book/src/runbook/mapping-eval-quickstart.md`.
 
 ---
 

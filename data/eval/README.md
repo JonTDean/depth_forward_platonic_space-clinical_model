@@ -3,8 +3,12 @@
 This directory contains gold-standard mapping datasets that power epic EVAL-012.
 All files use **NDJSON** (one JSON object per line) with the schema below:
 
-```
-{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}
+```json
+{
+    "system": "...", 
+    "code": "...", 
+    "display": "...", 
+    "expected_ncit_id": "NCIT:Cxxxx"}
 ```
 
 Field meanings:

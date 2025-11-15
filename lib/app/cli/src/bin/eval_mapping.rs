@@ -4,7 +4,8 @@ use std::path::PathBuf;
 
 use clap::Parser;
 use dfps_configuration::load_env;
-use dfps_mapping::eval::{EvalCase, run_eval};
+use dfps_eval::{self, EvalCase};
+use dfps_mapping::eval::run_eval;
 use serde::Serialize;
 
 #[derive(Parser)]
@@ -14,8 +15,11 @@ use serde::Serialize;
 )]
 struct Args {
     /// NDJSON gold file with EvalCase rows
-    #[arg(long, value_name = "PATH")]
-    input: PathBuf,
+    #[arg(long, value_name = "PATH", conflicts_with = "dataset")]
+    input: Option<PathBuf>,
+    /// Named dataset under DFPS_EVAL_DATA_ROOT (e.g., pet_ct_small)
+    #[arg(long, value_name = "NAME", conflicts_with = "input")]
+    dataset: Option<String>,
     /// Emit per-case EvalResult rows after the summary
     #[arg(long)]
     dump_details: bool,
@@ -37,11 +41,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     load_env("app.cli").map_err(|err| format!("dfps_cli env error: {err}"))?;
     let args = Args::parse();
 
-    let cases = read_cases(&args.input)?;
+    let cases = read_cases(&args)?;
     if cases.is_empty() {
         eprintln!(
             "warning: no EvalCase rows detected in {}; summary will be zeroed",
-            args.input.display()
+            args.dataset
+                .as_deref()
+                .map(|name| format!("dataset {name}"))
+                .unwrap_or_else(|| args
+                    .input
+                    .as_ref()
+                    .map(|p| p.display().to_string())
+                    .unwrap())
         );
     }
 
@@ -79,18 +90,25 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-fn read_cases(path: &PathBuf) -> Result<Vec<EvalCase>, Box<dyn std::error::Error>> {
-    let file = File::open(path)?;
-    let reader = BufReader::new(file);
-    let mut cases = Vec::new();
-    for line in reader.lines() {
-        let line = line?;
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue;
+fn read_cases(args: &Args) -> Result<Vec<EvalCase>, Box<dyn std::error::Error>> {
+    if let Some(name) = &args.dataset {
+        dfps_eval::load_dataset(name)
+            .map_err(|err| format!("failed to load dataset {name}: {err}").into())
+    } else if let Some(path) = &args.input {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        let mut cases = Vec::new();
+        for line in reader.lines() {
+            let line = line?;
+            let trimmed = line.trim();
+            if trimmed.is_empty() {
+                continue;
+            }
+            let case: EvalCase = serde_json::from_str(trimmed)?;
+            cases.push(case);
         }
-        let case: EvalCase = serde_json::from_str(trimmed)?;
-        cases.push(case);
+        Ok(cases)
+    } else {
+        Err("either --input or --dataset must be provided".into())
     }
-    Ok(cases)
 }

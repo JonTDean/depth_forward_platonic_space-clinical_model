@@ -732,6 +732,7 @@ dependencies = [
  "clap",
  "dfps_configuration",
  "dfps_core",
+ "dfps_eval",
  "dfps_ingestion",
  "dfps_mapping",
  "dfps_observability",
@@ -769,6 +770,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dfps_eval"
+version = "0.1.0"
+dependencies = [
+ "dfps_core",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "dfps_fake_data"
 version = "0.1.0"
 dependencies = [
@@ -795,6 +805,7 @@ name = "dfps_mapping"
 version = "0.1.0"
 dependencies = [
  "dfps_core",
+ "dfps_eval",
  "dfps_terminology",
  "serde",
  "serde_json",
@@ -844,6 +855,7 @@ dependencies = [
  "dfps_configuration",
  "dfps_core",
  "dfps_datamart",
+ "dfps_eval",
  "dfps_fake_data",
  "dfps_ingestion",
  "dfps_mapping",

@@ -1,9 +1,9 @@
 use dfps_core::{order::ServiceRequest, staging::StgSrCodeExploded};
+use dfps_eval::EvalCase;
 use dfps_fake_data::{
     ServiceRequestScenario, fake_service_request_for,
     scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed},
 };
-use dfps_mapping::EvalCase;
 
 pub fn service_request_scenario() -> ServiceRequestScenario {
     fake_service_request_scenario()
@@ -58,18 +58,6 @@ pub fn mapping_ncit_obo_code() -> StgSrCodeExploded {
 }
 
 pub fn eval_pet_ct_small_cases() -> Vec<EvalCase> {
-    include_str!("../fixtures/eval/pet_ct_small.ndjson")
-        .lines()
-        .filter_map(|line| {
-            let trimmed = line.trim();
-            if trimmed.is_empty() {
-                None
-            } else {
-                Some(
-                    serde_json::from_str(trimmed)
-                        .expect("eval pet_ct_small NDJSON line should parse into EvalCase"),
-                )
-            }
-        })
-        .collect()
+    dfps_eval::load_dataset("pet_ct_small")
+        .expect("pet_ct_small dataset should load from data/eval")
 }

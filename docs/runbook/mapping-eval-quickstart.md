@@ -5,14 +5,14 @@ against the gold NDJSON fixtures.
 
 ## Prerequisites
 - Rust toolchain (install via `data/scripts/install_rust_tooling.sh`).
-- Gold dataset: `lib/platform/test_suite/fixtures/eval/pet_ct_small.ndjson` (or your custom NDJSON with `EvalCase` rows).
+- Gold dataset: `data/eval/pet_ct_small.ndjson` (or your custom NDJSON with `EvalCase` rows).
 
 ## Steps
 1. Build/run the CLI
    ```bash
    cd code
    cargo run -p dfps_cli --bin eval_mapping -- \
-     --input lib/platform/test_suite/fixtures/eval/pet_ct_small.ndjson \
+     --dataset pet_ct_small \
      --dump-details
    ```
 2. Interpret output

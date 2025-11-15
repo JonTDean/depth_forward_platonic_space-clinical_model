@@ -22,6 +22,7 @@ dfps_mapping = { path = "../../domain/mapping" }
 dfps_ingestion = { path = "../../domain/ingestion" }
 dfps_observability = { path = "../../platform/observability" }
 dfps_configuration = { path = "../../platform/configuration" }
+dfps_eval = { path = "../../domain/eval" }
 serde.workspace = true
 serde_json.workspace = true
 env_logger = "0.11"

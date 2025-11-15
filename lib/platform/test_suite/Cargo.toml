@@ -24,4 +24,5 @@ dfps_mapping = { path = "../../domain/mapping" }
 dfps_pipeline = { path = "../../domain/pipeline" }
 dfps_observability = { path = "../observability" }
 dfps_configuration = { path = "../configuration" }
+dfps_eval = { path = "../../domain/eval" }
 
