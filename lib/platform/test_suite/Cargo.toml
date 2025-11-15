@@ -24,5 +24,6 @@ dfps_mapping = { path = "../../domain/mapping" }
 dfps_pipeline = { path = "../../domain/pipeline" }
 dfps_observability = { path = "../observability" }
 dfps_configuration = { path = "../configuration" }
+sqlx = { version = "0.7.4", default-features = false, features = ["runtime-tokio", "macros", "sqlite"] }
 dfps_eval = { path = "../../domain/eval" }
 

@@ -1,0 +1,17 @@
+name: Warehouse Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  warehouse:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Run warehouse integration tests (sqlite)
+        run: |
+          cargo test -p dfps_test_suite --test integration_tests -- warehouse

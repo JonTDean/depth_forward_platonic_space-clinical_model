@@ -133,6 +133,7 @@ pub fn validate_bundle_external(
                     RequirementRef::RExternal,
                 )],
             },
+            "ok" => ExternalValidationReport::default(),
             _ => ExternalValidationReport::default(),
         });
     }

@@ -5,4 +5,5 @@ mod mapping;
 mod mapping_eval;
 mod regression;
 mod validation;
+mod warehouse;
 mod web_api;

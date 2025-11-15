@@ -16,7 +16,7 @@
 
 ### WH-SQL-04 – Tests & CI integration
 
-- [ ] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
+- [x] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
 
   - [ ] Start an ephemeral DB (e.g., sqlite or Postgres in-memory/container).
   - [ ] Run migrations.
@@ -34,11 +34,11 @@
 
 ### WH-SQL-05 – Documentation
 
-- [ ] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with:
+- [x] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with:
 
   - [ ] A short “SQL implementation” section linking dim/fact structs to table names and key columns.
 
-- [ ] Add `docs/runbook/warehouse-quickstart.md` with:
+- [x] Add `docs/runbook/warehouse-quickstart.md` with:
 
   - [ ] How to spin up a local DB.
   - [ ] How to run migrations.

@@ -57,6 +57,7 @@ async fn spawn_validator(with_issue: bool) -> (SocketAddr, oneshot::Sender<()>, 
 }
 
 fn set_env_for(with_issue: bool) {
+    let _ = with_issue;
     unsafe {
         std::env::set_var("DFPS_FHIR_VALIDATOR_BASE_URL", "mock://validator");
         std::env::set_var(
