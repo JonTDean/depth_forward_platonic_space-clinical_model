@@ -18,31 +18,31 @@
 
 - [x] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
 
-  - [ ] Start an ephemeral DB (e.g., sqlite or Postgres in-memory/container).
-  - [ ] Run migrations.
-  - [ ] Load the baseline FHIR bundle via `bundle_to_mapped_sr` + `load_from_pipeline_output`.
-  - [ ] Assert:
+  - [x] Start an ephemeral DB (e.g., sqlite or Postgres in-memory/container).
+  - [x] Run migrations.
+  - [x] Load the baseline FHIR bundle via `bundle_to_mapped_sr` + `load_from_pipeline_output`.
+  - [x] Assert:
 
     - Row counts in each dim table.
     - Facts reference valid FK keys.
     - `NO_MATCH` NCIt dim exists and is referenced by NoMatch facts.
 
-- [ ] Add a CI job (or extend existing) to:
+- [x] Add a CI job (or extend existing) to:
 
-  - [ ] Run migrations against a test DB.
-  - [ ] Execute warehouse integration tests.
+  - [x] Run migrations against a test DB.
+  - [x] Execute warehouse integration tests.
 
 ### WH-SQL-05 – Documentation
 
 - [x] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with:
 
-  - [ ] A short “SQL implementation” section linking dim/fact structs to table names and key columns.
+  - [x] A short “SQL implementation” section linking dim/fact structs to table names and key columns.
 
 - [x] Add `docs/runbook/warehouse-quickstart.md` with:
 
-  - [ ] How to spin up a local DB.
-  - [ ] How to run migrations.
-  - [ ] Example `dfps_cli load-datamart` pipeline.
+  - [x] How to spin up a local DB.
+  - [x] How to run migrations.
+  - [x] Example `dfps_cli load-datamart` pipeline.
 
 ---
 
