@@ -3,15 +3,15 @@
 > Epic: EVAL-012 – Mapping eval harness  
 > Branch: `feature/EVAL-012-mapping-eval-harness`  
 > Branch target version: `Unreleased`  
-> Status: **DOING**  
-> Introduced in: `_TBD_`  
+> Status: **INPROGRESS**  
+> Introduced in: `Unreleased`  
 > Last updated in: `Unreleased`
 
 **Goal:** Build a lightweight evaluation harness that measures NCIt mapping quality (precision/recall, state distributions) against gold-standard code -> NCIt labels.
 
 ### Columns
 * **TODO** - Not started yet
-* **DOING** - In progress
+* **INPROGRESS** - In progress
 * **REVIEW** - Needs code review / refactor / docs polish
 * **DONE** - Completed
 
@@ -20,13 +20,13 @@
 ## TODO
 
 ### EVAL-01 - Gold standard format
-- [ ] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `lib/platform/test_suite/fixtures/eval/`:
-  - [ ] `{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}`
-- [ ] Include a small PET/CT-focused sample:
-  - [ ] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.
+- [x] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `lib/platform/test_suite/fixtures/eval/`:
+  - [x] `{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}`
+- [x] Include a small PET/CT-focused sample:
+  - [x] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.
 
 ### EVAL-02 - Evaluation core API
-- [ ] New module or crate (e.g., `lib/domain/eval` or `dfps_mapping::eval`):
+- [ ] New module or crate (e.g., `lib/platform/eval`):
   - [ ] `EvalCase` struct mirroring the fixture shape.
   - [ ] `EvalResult` / `EvalSummary` with:
     - [ ] counts of correct / incorrect mappings,
@@ -48,7 +48,7 @@
 
 ### EVAL-04 - CLI wrapper
 - [ ] Introduce a small CLI binary, e.g.:
-  - [ ] `dfps_mapping_eval` or a new `dfps_cli` subcommand `eval-mapping`.
+  - [ ] Integrate a new `dfps_cli` subcommand `eval-mapping`.
 - [ ] CLI behavior:
   - [ ] Accepts an NDJSON gold file path (`--input`).
   - [ ] Prints summary metrics (precision, recall, counts by MappingState).
@@ -63,7 +63,7 @@
 
 ---
 
-## DOING
+## INPROGRESS
 - _Empty_
 
 ---

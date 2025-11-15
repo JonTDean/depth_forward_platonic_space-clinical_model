@@ -16,6 +16,9 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - Validation REVIEW checks (010): requirement ID consistency; error separation clarity.
 - Terminology REVIEW checks (011): license/source modeling; stability; doc alignment.
 
+### Added
+- EVAL-012 – “EVAL-01 – Gold standard format” (documented NDJSON schema + PET/CT gold sample).
+
 ---
 
 ## [0.1.0] – 2025‑11‑15
