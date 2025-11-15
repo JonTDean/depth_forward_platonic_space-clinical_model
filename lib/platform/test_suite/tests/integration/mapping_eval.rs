@@ -2,6 +2,7 @@ use dfps_core::mapping::MappingState;
 use dfps_eval::{self, EvalCase};
 use dfps_mapping::map_staging_codes;
 use dfps_test_suite::{fixtures, init_environment};
+use serde_json::to_vec;
 
 fn custom_no_match_case() -> EvalCase {
     EvalCase {
@@ -83,4 +84,22 @@ fn tiered_datasets_load() {
 
 fn eval_with_pipeline(cases: &[EvalCase]) -> dfps_eval::EvalSummary {
     dfps_eval::run_eval_with_mapper(cases, |rows| map_staging_codes(rows).0)
+}
+
+#[test]
+fn eval_summary_is_deterministic() {
+    init_environment();
+    let cases = fixtures::eval_pet_ct_small_cases();
+
+    let first = eval_with_pipeline(&cases);
+    let second = eval_with_pipeline(&cases);
+
+    // Byte-for-byte stable fingerprints.
+    let fp1 = dfps_eval::fingerprint_summary(&first);
+    let fp2 = dfps_eval::fingerprint_summary(&second);
+    assert_eq!(fp1, fp2, "fingerprints should match across runs");
+
+    let serialized1 = to_vec(&first).expect("serialize summary");
+    let serialized2 = to_vec(&second).expect("serialize summary");
+    assert_eq!(serialized1, serialized2, "serialized summaries should match");
 }

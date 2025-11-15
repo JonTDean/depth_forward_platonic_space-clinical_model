@@ -52,7 +52,7 @@
 
 ### EVAL-PLAT-10 – CLI thresholds & CI gate (first cut)
 
-* [ ] New crate: `lib/app/cli` (`dfps_cli`) with subcommand:
+* [ ] Crate: `lib/app/cli` (`dfps_cli`) with subcommand:
   * [ ] `dfps_cli eval-mapping --input lib/domain/fake_data/data/eval/pet_ct_small.ndjson --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json --out target/eval/pet_ct_small.json`
 * [ ] Thresholds schema (JSON):
   ```json
