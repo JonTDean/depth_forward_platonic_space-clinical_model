@@ -2,12 +2,14 @@
 //! core domain aggregates.
 //!
 //! The helpers here are intentionally lightweight and align with the minimal
-//! scope documented in `docs/kanban/feature-fhir-pipeline-mvp.md`.
+//! scope documented in `docs\kanban\feature\002-fhir-pipeline-mvp.md`.
 
 mod reference;
 mod transforms;
+pub mod validation;
 
 pub use reference::{reference_id, reference_id_from_str};
 pub use transforms::{
     IngestionError, bundle_to_domain, bundle_to_staging, sr_to_domain, sr_to_staging,
 };
+pub use validation::{RequirementRef, ValidationIssue, ValidationSeverity};
