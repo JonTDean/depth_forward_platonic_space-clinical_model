@@ -14,36 +14,6 @@
 
 ## TODO
 
-### WH-SQL-04 – Tests & CI integration
-
-- [x] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
-
-  - [x] Start an ephemeral DB (e.g., sqlite or Postgres in-memory/container).
-  - [x] Run migrations.
-  - [x] Load the baseline FHIR bundle via `bundle_to_mapped_sr` + `load_from_pipeline_output`.
-  - [x] Assert:
-
-    - Row counts in each dim table.
-    - Facts reference valid FK keys.
-    - `NO_MATCH` NCIt dim exists and is referenced by NoMatch facts.
-
-- [x] Add a CI job (or extend existing) to:
-
-  - [x] Run migrations against a test DB.
-  - [x] Execute warehouse integration tests.
-
-### WH-SQL-05 – Documentation
-
-- [x] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with:
-
-  - [x] A short “SQL implementation” section linking dim/fact structs to table names and key columns.
-
-- [x] Add `docs/runbook/warehouse-quickstart.md` with:
-
-  - [x] How to spin up a local DB.
-  - [x] How to run migrations.
-  - [x] Example `dfps_cli load-datamart` pipeline.
-
 ---
 
 ## INPROGRESS
@@ -94,6 +64,36 @@
 
     - [x] Reads NDJSON `PipelineOutput` fragments or runs `bundle_to_mapped_sr` internally.
     - [x] Calls `load_from_pipeline_output` and prints a summary (`rows_inserted`, `rows_updated`).
+
+### WH-SQL-04 – Tests & CI integration
+
+- [x] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
+
+  - [x] Start an ephemeral DB (e.g., sqlite or Postgres in-memory/container).
+  - [x] Run migrations.
+  - [x] Load the baseline FHIR bundle via `bundle_to_mapped_sr` + `load_from_pipeline_output`.
+  - [x] Assert:
+
+    - Row counts in each dim table.
+    - Facts reference valid FK keys.
+    - `NO_MATCH` NCIt dim exists and is referenced by NoMatch facts.
+
+- [x] Add a CI job (or extend existing) to:
+
+  - [x] Run migrations against a test DB.
+  - [x] Execute warehouse integration tests.
+
+### WH-SQL-05 – Documentation
+
+- [x] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with:
+
+  - [x] A short “SQL implementation” section linking dim/fact structs to table names and key columns.
+
+- [x] Add `docs/runbook/warehouse-quickstart.md` with:
+
+  - [x] How to spin up a local DB.
+  - [x] How to run migrations.
+  - [x] Example `dfps_cli load-datamart` pipeline.
 
 ---
 
