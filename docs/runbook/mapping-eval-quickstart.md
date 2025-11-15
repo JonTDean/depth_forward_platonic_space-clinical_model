@@ -20,6 +20,7 @@ against the gold NDJSON fixtures.
 2. Interpret output
    - Summary line: `{"kind":"eval_summary", ...}` includes `precision`, `recall`, counts.
    - Optional details: per-case `{"kind":"eval_result",...}` entries show whether each case was correct and include the `MappingResult` payload.
+   - Calibration-style summaries land under `score_buckets`: each bucket represents a 0.1 score range and only includes MappingResults that produced an NCIt prediction, exposing how well the engine is calibrated per score band.
 3. For custom gold sets, ensure each line matches:
    ```json
    {"system":"...","code":"...","display":"...","expected_ncit_id":"NCIT:Cxxxx"}

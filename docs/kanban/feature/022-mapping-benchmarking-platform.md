@@ -25,7 +25,7 @@
 
 - [x] Advanced stats when the feature flag `eval-advanced` is set:
   - [x] Bootstrap confidence intervals for key metrics (`dfps_eval::bootstrap_metrics`).
-  - [ ] Calibration-style summaries (e.g., score buckets vs correctness).
+  - [x] Calibration-style summaries (e.g., score buckets vs correctness).
 
 ### EVAL-PLAT-03 – CI & regression gates
 
@@ -87,7 +87,6 @@
 ### EVAL-PLAT-09 – Top‑K, coverage & error analysis
 
 * [ ] Extend `EvalSummary` with:
-
   * [ ] `top1_accuracy`, `top3_accuracy` (if engine exposes top‑k).
   * [ ] `coverage` = predicted_cases / total_cases.
   * [ ] Per-system confusion/coverage tables.
@@ -103,10 +102,8 @@
 ### EVAL-PLAT-10 – CLI thresholds & CI gate (first cut)
 
 * [ ] New crate: `lib/app/cli` (`dfps_cli`) with subcommand:
-
   * [ ] `dfps_cli eval-mapping --input data/eval/pet_ct_small.ndjson --thresholds config/eval_thresholds.json --out target/eval/pet_ct_small.json`
 * [ ] Thresholds schema (JSON):
-
   ```json
   {
     "min_precision": 0.95,
@@ -117,7 +114,6 @@
   ```
 * [ ] Exit non‑zero when metrics fall below thresholds.
 * [ ] GitHub Actions workflow `.github/workflows/eval.yml`:
-
   * [ ] Runs CLI on PRs and merges to `main` over `pet_ct_small`.
   * [ ] Uploads `eval_results.json` as an artifact.
 
@@ -128,7 +124,6 @@
 ### EVAL-PLAT-11 – API endpoints to expose eval results
 
 * [ ] In `dfps_api`:
-
   * [ ] `GET /api/eval/datasets` → list manifests (name, version, n_cases).
   * [ ] `POST /api/eval/run` with `{ "dataset": "pet_ct_small", "top_k": 3 }` → runs eval and returns `EvalSummary`.
   * [ ] `GET /api/eval/latest` → last on‑box summary (cached).
@@ -142,9 +137,7 @@
 ### EVAL-PLAT-12 – Minimal web UI for eval
 
 * [ ] In `dfps_web_frontend`:
-
   * [ ] Add route `/eval` showing:
-
     * [ ] Dataset picker (from `/api/eval/datasets`).
     * [ ] Button “Run eval” → hits `/api/eval/run`.
     * [ ] Cards for precision/recall/F1/top‑k/coverage.
@@ -159,7 +152,6 @@
 ### EVAL-PLAT-13 – Performance & scale
 
 * [ ] Add Criterion benchmarks under `lib/domain/eval/benches/`:
-
   * [ ] `bench_eval_pet_ct_small`
   * [ ] `bench_eval_pet_ct_extended`
 * [ ] Stream NDJSON in chunks to keep RSS < 256MB for 100k lines (document guideline).
@@ -172,7 +164,6 @@
 ### EVAL-PLAT-14 – Reporting artifacts
 
 * [ ] Add `dfps_eval::report` to emit:
-
   * [ ] `eval_results.json` (machine-readable).
   * [ ] `summary.md` (for humans; includes a simple table and deltas vs baseline).
 * [ ] Include a “baseline” file alongside each dataset (e.g., `pet_ct_small.baseline.json`).
@@ -192,26 +183,19 @@
 ### EVAL-PLAT-01 – Eval crate & dataset handling
 
 - [x] Introduce a dedicated eval crate `lib/domain/eval` (`dfps_eval`):
-
   - [x] Move or wrap the core types from epic 012:
-
     - `EvalCase { system, code, display, expected_ncit_id }`
     - `EvalResult`, `EvalSummary`.
-
   - [x] Add support for multiple datasets:
-
     - Named splits (e.g., `pet_ct_small`, `pet_ct_extended`, `mixed_modalities`).
     - Config-driven dataset root (`DFPS_EVAL_DATA_ROOT`).
-
 - [x] Store gold-standard files under `data/eval/*.ndjson`.
 
 ### EVAL-PLAT-02 – Advanced metrics
 
 - [x] Extend `EvalSummary` to include:
-
   - [x] Precision/recall/F1 (overall).
   - [x] Metrics stratified by:
-
     - [x] Code system (CPT/SNOMED/LOINC/NCIt OBO).
     - [x] LicenseTier (licensed vs open).
     - MappingState (AutoMapped/NeedsReview/NoMatch) already present.
@@ -219,16 +203,13 @@
 ### EVAL-PLAT-03 – CI & regression gates
 
 - [x] Add a CLI entrypoint:
-
   - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
-
     - [x] Runs `run_eval` and writes a JSON summary.
     - [x] Exit with non-zero code if metrics drop below configured thresholds.
 
 ### EVAL-PLAT-04 – Dashboards & reporting
 
 - [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
-
 
 ### EVAL-PLAT-05 – Datasets & tests
 
@@ -238,7 +219,6 @@
   - Gold: `gold_pet_ct_small`, `gold_pet_ct_extended`, `gold_pet_ct_comprehensive`.
   - Updated `data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
 - [x] Tests in `dfps_test_suite`:
-
   - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
   - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.
 

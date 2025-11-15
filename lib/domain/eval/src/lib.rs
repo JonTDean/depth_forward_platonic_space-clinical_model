@@ -162,6 +162,8 @@ impl Default for EvalSummary {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScoreBucket {
     pub bucket: String,
+    pub lower_bound: Option<f32>,
+    pub upper_bound: Option<f32>,
     pub total: usize,
     pub correct: usize,
     pub accuracy: f32,
@@ -321,3 +323,5 @@ mod tests {
         }
     }
 }
+
+pub mod report;

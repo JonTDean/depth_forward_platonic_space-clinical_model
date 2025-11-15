@@ -28,7 +28,7 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     let mut results = Vec::with_capacity(cases.len());
     let mut by_system: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
     let mut by_license: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
-    let mut score_bucket_map: BTreeMap<String, (usize, usize)> = BTreeMap::new();
+    let mut score_bucket_map: BTreeMap<BucketKey, BucketTally> = BTreeMap::new();
     let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
     let mut advanced_samples = Vec::with_capacity(cases.len());
 
@@ -60,14 +60,13 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
             is_correct,
         );
 
-        let bucket = match mapping.score.is_nan() {
-            true => "nan".to_string(),
-            false => format!("{:.1}", (mapping.score * 10.0).floor() / 10.0),
-        };
-        let entry = score_bucket_map.entry(bucket).or_insert((0, 0));
-        entry.0 += 1;
-        if is_correct {
-            entry.1 += 1;
+        if predicted {
+            let bucket = bucket_key(mapping.score);
+            let entry = score_bucket_map.entry(bucket).or_default();
+            entry.total += 1;
+            if is_correct {
+                entry.correct += 1;
+            }
         }
 
         let reason_key = mapping.reason.clone().unwrap_or_else(|| "none".to_string());
@@ -131,19 +130,52 @@ fn finalize_stratified(
     map
 }
 
-fn finalize_score_buckets(map: BTreeMap<String, (usize, usize)>) -> Vec<ScoreBucket> {
+fn finalize_score_buckets(map: BTreeMap<BucketKey, BucketTally>) -> Vec<ScoreBucket> {
     map.into_iter()
-        .map(|(bucket, (total, correct))| ScoreBucket {
-            bucket,
-            total,
-            correct,
-            accuracy: if total > 0 {
-                correct as f32 / total as f32
-            } else {
-                0.0
-            },
+        .map(|(key, tally)| {
+            let (bucket, lower, upper) = match key {
+                BucketKey::Nan => ("nan".to_string(), None, None),
+                BucketKey::Range(idx) => {
+                    let lower = (idx as f32) / 10.0;
+                    let upper = ((idx + 1) as f32 / 10.0).min(1.0);
+                    (format!("{lower:.1}–{upper:.1}"), Some(lower), Some(upper))
+                }
+            };
+            ScoreBucket {
+                bucket,
+                lower_bound: lower,
+                upper_bound: upper,
+                total: tally.total,
+                correct: tally.correct,
+                accuracy: if tally.total > 0 {
+                    tally.correct as f32 / tally.total as f32
+                } else {
+                    0.0
+                },
+            }
         })
         .collect()
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+enum BucketKey {
+    Range(u8),
+    Nan,
+}
+
+#[derive(Debug, Default, Clone, Copy)]
+struct BucketTally {
+    total: usize,
+    correct: usize,
+}
+
+fn bucket_key(score: f32) -> BucketKey {
+    if !score.is_finite() {
+        return BucketKey::Nan;
+    }
+    let normalized = score.clamp(0.0, 0.999);
+    let idx = (normalized * 10.0).floor() as u8;
+    BucketKey::Range(idx)
 }
 
 #[cfg(test)]
@@ -197,6 +229,12 @@ mod tests {
         assert!(summary.results.iter().all(|res| res.correct));
         let bucket_total: usize = summary.score_buckets.iter().map(|b| b.total).sum();
         assert_eq!(bucket_total, 2);
+        assert!(
+            summary
+                .score_buckets
+                .iter()
+                .any(|bucket| bucket.lower_bound.is_some() && bucket.upper_bound.is_some())
+        );
         assert!(!summary.reason_counts.is_empty());
         #[cfg(feature = "eval-advanced")]
         {
