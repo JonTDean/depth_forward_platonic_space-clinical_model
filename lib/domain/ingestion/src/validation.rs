@@ -3,6 +3,7 @@
 //! Each [`RequirementRef`] corresponds to an ID defined in
 //! `docs/system-design/clinical/fhir/requirements/ingestion-requirements.md`.
 
+use dfps_core::fhir;
 use serde::{Deserialize, Serialize};
 
 /// Requirement identifiers mirrored from the ingestion requirements doc.
@@ -69,9 +70,96 @@ impl ValidationIssue {
     }
 }
 
+/// Validate a FHIR ServiceRequest against ingestion requirements.
+pub fn validate_sr(sr: &fhir::ServiceRequest) -> Vec<ValidationIssue> {
+    let mut issues = Vec::new();
+
+    validate_subject(sr, &mut issues);
+    validate_status(sr, &mut issues);
+    validate_traceability(sr, &mut issues);
+
+    issues
+}
+
+fn validate_subject(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationIssue>) {
+    match sr
+        .subject
+        .as_ref()
+        .and_then(|reference| reference.reference.as_deref())
+    {
+        Some(reference) if is_patient_reference(reference) => {}
+        Some(_) => issues.push(ValidationIssue::new(
+            "VAL_SR_SUBJECT_INVALID",
+            ValidationSeverity::Error,
+            "ServiceRequest.subject must reference a Patient (Patient/<id>).",
+            RequirementRef::RSubject,
+        )),
+        None => issues.push(ValidationIssue::new(
+            "VAL_SR_SUBJECT_MISSING",
+            ValidationSeverity::Error,
+            "ServiceRequest.subject is required.",
+            RequirementRef::RSubject,
+        )),
+    }
+}
+
+fn validate_status(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationIssue>) {
+    match sr.status.as_deref() {
+        Some(value) if is_known_status(value) => {}
+        Some(_) => issues.push(ValidationIssue::new(
+            "VAL_SR_STATUS_INVALID",
+            ValidationSeverity::Error,
+            "ServiceRequest.status must be a recognized value (draft, active, on-hold, completed, cancelled, revoked, entered-in-error).",
+            RequirementRef::RStatus,
+        )),
+        None => issues.push(ValidationIssue::new(
+            "VAL_SR_STATUS_MISSING",
+            ValidationSeverity::Error,
+            "ServiceRequest.status is required.",
+            RequirementRef::RStatus,
+        )),
+    }
+}
+
+fn validate_traceability(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationIssue>) {
+    if sr.id.as_deref().unwrap_or("").is_empty() {
+        issues.push(ValidationIssue::new(
+            "VAL_SR_TRACE_ID_MISSING",
+            ValidationSeverity::Error,
+            "ServiceRequest.id is required to trace staging rows back to the Bundle.",
+            RequirementRef::RTrace,
+        ))
+    }
+}
+
+fn is_patient_reference(reference: &str) -> bool {
+    reference.starts_with("Patient/")
+        && reference
+            .split('/')
+            .nth(1)
+            .map(|id| !id.is_empty())
+            .unwrap_or(false)
+}
+
+fn is_known_status(value: &str) -> bool {
+    matches!(
+        value.to_ascii_lowercase().as_str(),
+        "draft"
+            | "active"
+            | "on-hold"
+            | "on_hold"
+            | "completed"
+            | "cancelled"
+            | "revoked"
+            | "entered-in-error"
+            | "entered_in_error"
+    )
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{RequirementRef, ValidationIssue, ValidationSeverity};
+    use super::*;
+    use dfps_core::fhir;
 
     #[test]
     fn requirement_codes_match_docs() {
@@ -90,5 +178,64 @@ mod tests {
         );
         assert_eq!(issue.requirement_ref(), "R_Subject");
         assert_eq!(issue.severity, ValidationSeverity::Error);
+    }
+
+    #[test]
+    fn validate_sr_flags_missing_subject_and_status() {
+        let sr = fhir::ServiceRequest {
+            resource_type: "ServiceRequest".into(),
+            id: None,
+            status: None,
+            intent: Some("order".into()),
+            subject: None,
+            encounter: None,
+            requester: None,
+            supporting_info: vec![],
+            code: None,
+            category: vec![],
+            description: None,
+            authored_on: None,
+        };
+
+        let issues = validate_sr(&sr);
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.id == "VAL_SR_SUBJECT_MISSING")
+        );
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.id == "VAL_SR_STATUS_MISSING")
+        );
+        assert!(
+            issues
+                .iter()
+                .any(|issue| issue.id == "VAL_SR_TRACE_ID_MISSING")
+        );
+    }
+
+    #[test]
+    fn validate_sr_accepts_valid_status_and_subject() {
+        let sr = fhir::ServiceRequest {
+            resource_type: "ServiceRequest".into(),
+            id: Some("SR-1".into()),
+            status: Some("active".into()),
+            intent: Some("order".into()),
+            subject: Some(fhir::Reference {
+                reference: Some("Patient/P1".into()),
+                display: None,
+            }),
+            encounter: None,
+            requester: None,
+            supporting_info: vec![],
+            code: None,
+            category: vec![],
+            description: None,
+            authored_on: None,
+        };
+
+        let issues = validate_sr(&sr);
+        assert!(issues.is_empty());
     }
 }
