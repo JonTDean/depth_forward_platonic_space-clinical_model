@@ -6,10 +6,17 @@ edition.workspace = true
 [dependencies]
 axum.workspace = true
 tokio.workspace = true
+reqwest.workspace = true
+serde_json.workspace = true
+proptest.workspace = true
+serde.workspace = true
+once_cell.workspace = true
+
 http-body-util = "0.1"
 tower = "0.5"
+
 dfps_api = { path = "../../app/web/backend/api" }
-reqwest.workspace = true
+dfps_datamart = { path = "../../app/web/backend/datamart" }
 dfps_core = { path = "../../domain/core" }
 dfps_fake_data = { path = "../../domain/fake_data" }
 dfps_ingestion = { path = "../../domain/ingestion" }
@@ -17,7 +24,4 @@ dfps_mapping = { path = "../../domain/mapping" }
 dfps_pipeline = { path = "../../domain/pipeline" }
 dfps_observability = { path = "../observability" }
 dfps_configuration = { path = "../configuration" }
-serde_json.workspace = true
-proptest.workspace = true
-serde.workspace = true
-once_cell.workspace = true
+

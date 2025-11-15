@@ -1,6 +1,6 @@
 # Kanban — feature/ncit-analytics-mart (009)
 
-**Branch:** `feature/app/backend/ncit-analytics-mart`  
+**Branch:** `feature/app/web/backend/ncit-analytics-mart`  
 **Goal:** Materialize an NCIt-aware analytics mart (dim/fact layer) fed by `dfps_pipeline::bundle_to_mapped_sr`, aligned with the NCIt ERD docs.
 
 ### Columns
@@ -13,12 +13,7 @@
 
 ## TODO
 
-### MART-01 – Datamart crate scaffold
-- [ ] Create `lib/app/backend/datamart` crate (e.g., `dfps_datamart`).
-- [ ] Wire into `[workspace].members` in `Cargo.toml`.
-- [ ] Expose top-level modules: `dim`, `fact`, and `keys` (surrogate key helpers).
-
-### MART-02 – Dimension types
+### MART-02 — Dimension types
 - [ ] Implement `DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT` structs mirroring:
   - `docs/system-design/clinical/ncit/models/data-model-er.md`
 - [ ] Add simple surrogate key strategy (e.g., integer or hashed keys) with helpers:
@@ -61,7 +56,11 @@
 ---
 
 ## DOING
-- _Empty_
+
+### MART-01 — Datamart crate scaffold
+- [ ] Create `lib/app/web/backend/datamart` crate (e.g., `dfps_datamart`).
+- [ ] Wire into `[workspace].members` in `Cargo.toml`.
+- [ ] Expose top-level modules: `dim`, `fact`, and `keys` (surrogate key helpers).
 
 ---
 

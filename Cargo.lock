@@ -759,6 +759,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "dfps_datamart"
+version = "0.1.0"
+dependencies = [
+ "dfps_core",
+ "dfps_pipeline",
+ "serde",
+]
+
+[[package]]
 name = "dfps_fake_data"
 version = "0.1.0"
 dependencies = [
@@ -824,6 +833,7 @@ dependencies = [
  "dfps_api",
  "dfps_configuration",
  "dfps_core",
+ "dfps_datamart",
  "dfps_fake_data",
  "dfps_ingestion",
  "dfps_mapping",

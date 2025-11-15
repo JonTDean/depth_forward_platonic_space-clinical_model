@@ -19,9 +19,51 @@ command = "cargo"
 args = ["clippy", "--all-targets", "--", "-D", "warnings"]
 
 [tasks.test]
-description = "Run all tests"
+description = "Run all tests (workspace libs + integration + curated doc tests)"
+dependencies = ["test-workspace", "test-docs"]
+
+[tasks.test-workspace]
+description = "Run workspace libs + integration surfaces without bin/doc harness noise"
+dependencies = ["test-libs", "test-suite"]
+
+[tasks.test-libs]
 command = "cargo"
-args = ["test", "--workspace"]
+args = [
+    "test",
+    "-p",
+    "dfps_api",
+    "-p",
+    "dfps_core",
+    "-p",
+    "dfps_datamart",
+    "-p",
+    "dfps_ingestion",
+    "-p",
+    "dfps_mapping",
+    "-p",
+    "dfps_web_frontend",
+    "--lib",
+]
+
+[tasks.test-suite]
+command = "cargo"
+args = [
+    "test",
+    "-p",
+    "dfps_test_suite",
+    "--test",
+    "e2e_tests",
+    "--test",
+    "integration_tests",
+    "--test",
+    "unit_tests",
+]
+
+[tasks.test-docs]
+description = "Run doc tests only for crates that actually host them"
+script = [
+    "cargo test -p dfps_core --doc",
+]
 
 [tasks.ci]
 description = "CI convenience target (fmt + clippy + test)"

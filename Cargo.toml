@@ -9,6 +9,7 @@ members = [
     "lib/app/cli",
     "lib/app/web/backend/api",
     "lib/app/web/frontend",
+    "lib/app/web/backend/datamart",
     "lib/domain/core",
     "lib/domain/fake_data",
     "lib/domain/ingestion",
