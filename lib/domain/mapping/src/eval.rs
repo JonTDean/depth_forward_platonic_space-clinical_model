@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 
 use dfps_core::mapping::MappingState;
-use dfps_eval::{StratifiedMetrics, compute_metrics};
+use dfps_eval::{ScoreBucket, StratifiedMetrics, compute_metrics};
 
 use crate::map_staging_codes;
 
@@ -28,7 +28,7 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     let mut results = Vec::with_capacity(cases.len());
     let mut by_system: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
     let mut by_license: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
-    let mut score_histogram: BTreeMap<String, usize> = BTreeMap::new();
+    let mut score_bucket_map: BTreeMap<String, (usize, usize)> = BTreeMap::new();
     let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
     let mut advanced_samples = Vec::with_capacity(cases.len());
 
@@ -64,7 +64,11 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
             true => "nan".to_string(),
             false => format!("{:.1}", (mapping.score * 10.0).floor() / 10.0),
         };
-        *score_histogram.entry(bucket).or_default() += 1;
+        let entry = score_bucket_map.entry(bucket).or_insert((0, 0));
+        entry.0 += 1;
+        if is_correct {
+            entry.1 += 1;
+        }
 
         let reason_key = mapping.reason.clone().unwrap_or_else(|| "none".to_string());
         *reason_counts.entry(reason_key).or_default() += 1;
@@ -89,7 +93,7 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     summary.f1 = f1;
     summary.by_system = finalize_stratified(by_system);
     summary.by_license_tier = finalize_stratified(by_license);
-    summary.score_histogram = score_histogram;
+    summary.score_buckets = finalize_score_buckets(score_bucket_map);
     summary.reason_counts = reason_counts;
     #[cfg(feature = "eval-advanced")]
     {
@@ -125,6 +129,21 @@ fn finalize_stratified(
         metrics.finalize();
     }
     map
+}
+
+fn finalize_score_buckets(map: BTreeMap<String, (usize, usize)>) -> Vec<ScoreBucket> {
+    map.into_iter()
+        .map(|(bucket, (total, correct))| ScoreBucket {
+            bucket,
+            total,
+            correct,
+            accuracy: if total > 0 {
+                correct as f32 / total as f32
+            } else {
+                0.0
+            },
+        })
+        .collect()
 }
 
 #[cfg(test)]
@@ -176,7 +195,8 @@ mod tests {
         assert_eq!(open_metrics.total_cases, 1);
         assert_eq!(summary.results.len(), 2);
         assert!(summary.results.iter().all(|res| res.correct));
-        assert_eq!(summary.score_histogram.values().sum::<usize>(), 2);
+        let bucket_total: usize = summary.score_buckets.iter().map(|b| b.total).sum();
+        assert_eq!(bucket_total, 2);
         assert!(!summary.reason_counts.is_empty());
         #[cfg(feature = "eval-advanced")]
         {

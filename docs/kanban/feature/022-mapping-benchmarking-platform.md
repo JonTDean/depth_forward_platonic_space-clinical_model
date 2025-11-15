@@ -36,7 +36,8 @@
 ### EVAL-PLAT-04 – Dashboards & reporting
 
 - [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
-- [ ] Add a small HTMX/markdown report generator in `dfps_eval`:
+- [x] Simple Markdown report via `dfps_cli eval_mapping --report <path>` (temporary CLI-side generator until a richer HTMX/dfps_eval report lands).
+- [ ] Add a small HTMX/markdown report generator in `dfps_eval` and `dfps_web_frontend`:
   - [ ] Renders tables of metrics and a short changelog comparing against a baseline.
 - [x] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI (`GET /api/eval/summary?dataset=...`).
 
@@ -58,15 +59,12 @@
 
 * [ ] New directory: `data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
 * [ ] Manifest schema:
-
   * [ ] `{ "name": "...", "version": "YYYYMMDD", "license": "…", "source": "…", "n_cases": N, "sha256": "<file hash>", "notes": "…" }`
 * [ ] Add a loader in `dfps_eval::datasets` that:
-
   * [ ] Resolves data root via `DFPS_EVAL_DATA_ROOT` (falls back to `data/eval`).
   * [ ] Validates `sha256` on load; fails fast if mismatched.
   * [ ] Warns if `license` is missing/unknown.
 * [ ] Provide manifests for:
-
   * [ ] `pet_ct_small.ndjson` (existing)
   * [ ] `pet_ct_extended.ndjson` (new; includes OBO-backed NCIt IDs, unknown systems, tricky synonyms)
 
@@ -77,11 +75,9 @@
 ### EVAL-PLAT-08 – Reproducibility & determinism guardrails
 
 * [ ] Ensure all scoring paths remain deterministic across platforms:
-
   * [ ] Audit hash usage and iteration order in `dfps_mapping` (e.g., `HashSet` -> order-independent usage) and confirm determinism of `VectorRankerMock`.
   * [ ] Add `--deterministic` flag to CLI that asserts stable results vs a prior `eval_results.json`.
 * [ ] Add a property test in `dfps_test_suite`:
-
   * [ ] Given the same input NDJSON, `run_eval` output bytes are identical across two runs.
 
 **Acceptance:** CI job fails if a second run (same commit) produces a different `eval_results.json`.
@@ -98,7 +94,6 @@
   * [ ] Distribution of `MappingResult.reason` for `NoMatch` rows.
 * [ ] Add `--top-k N` to CLI to compute top‑k metrics (engine already exposes `explain()`; use it).
 * [ ] Optional (under `eval-advanced` feature):
-
   * [ ] Bootstrap CIs for precision/recall/F1 using simple resampling.
 
 **Acceptance:** `eval_results.json` contains `topk` and `coverage` fields; test asserts that `NoMatch` reasons include `missing_system_or_code` on the unknown-code fixture.

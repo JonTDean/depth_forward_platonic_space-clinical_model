@@ -132,7 +132,7 @@ pub struct EvalSummary {
     pub state_counts: BTreeMap<String, usize>,
     pub by_system: BTreeMap<String, StratifiedMetrics>,
     pub by_license_tier: BTreeMap<String, StratifiedMetrics>,
-    pub score_histogram: BTreeMap<String, usize>,
+    pub score_buckets: Vec<ScoreBucket>,
     pub reason_counts: BTreeMap<String, usize>,
     pub advanced: Option<AdvancedStats>,
     pub results: Vec<EvalResult>,
@@ -151,12 +151,20 @@ impl Default for EvalSummary {
             state_counts: BTreeMap::new(),
             by_system: BTreeMap::new(),
             by_license_tier: BTreeMap::new(),
-            score_histogram: BTreeMap::new(),
+            score_buckets: Vec::new(),
             reason_counts: BTreeMap::new(),
             advanced: None,
             results: Vec::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScoreBucket {
+    pub bucket: String,
+    pub total: usize,
+    pub correct: usize,
+    pub accuracy: f32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

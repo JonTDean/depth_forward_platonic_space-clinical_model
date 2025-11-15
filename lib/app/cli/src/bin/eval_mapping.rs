@@ -23,6 +23,9 @@ struct Args {
     /// Directory for machine-readable artifacts (summary/results)
     #[arg(long, value_name = "DIR")]
     out_dir: Option<PathBuf>,
+    /// Markdown report output path
+    #[arg(long, value_name = "PATH")]
+    report: Option<PathBuf>,
     /// Threshold JSON file enforcing minimum metrics
     #[arg(long, value_name = "PATH")]
     thresholds: Option<PathBuf>,
@@ -45,8 +48,8 @@ struct SummaryView<'a> {
     by_system: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
     #[serde(rename = "by_license_tier")]
     by_license: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
-    #[serde(rename = "score_histogram")]
-    histogram: &'a std::collections::BTreeMap<String, usize>,
+    #[serde(rename = "score_buckets")]
+    buckets: &'a [dfps_eval::ScoreBucket],
     #[serde(rename = "reason_counts")]
     reasons: &'a std::collections::BTreeMap<String, usize>,
     advanced: &'a Option<AdvancedStats>,
@@ -90,7 +93,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         states: &summary.state_counts,
         by_system: &summary.by_system,
         by_license: &summary.by_license_tier,
-        histogram: &summary.score_histogram,
+        buckets: &summary.score_buckets,
         reasons: &summary.reason_counts,
         advanced: &summary.advanced,
     };
@@ -117,6 +120,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     if let Some(base_dir) = &args.out_dir {
         persist_artifacts(base_dir, &args, &summary_view, &summary.results)?;
+    }
+
+    if let Some(report_path) = &args.report {
+        write_report(report_path, &summary_view)?;
     }
 
     if let Some(path) = &args.thresholds {
@@ -219,4 +226,43 @@ fn resolve_out_dir(base: &Path, args: &Args) -> PathBuf {
         }
     }
     dir
+}
+
+fn write_report(path: &Path, summary: &SummaryView) -> Result<(), Box<dyn std::error::Error>> {
+    let mut report = String::new();
+    report.push_str("# Mapping Evaluation Report\n\n");
+    report.push_str(&format!(
+        "*Total cases:* {}\n\n*Precision:* {:.3}\n\n*Recall:* {:.3}\n\n*F1:* {:.3}\n\n",
+        summary.total_cases, summary.precision, summary.recall, summary.f1
+    ));
+
+    report.push_str("## Score buckets\n\n| Bucket | Total | Correct | Accuracy |\n| --- | ---: | ---: | ---: |\n");
+    for bucket in summary.buckets {
+        report.push_str(&format!(
+            "| {} | {} | {} | {:.3} |\n",
+            bucket.bucket, bucket.total, bucket.correct, bucket.accuracy
+        ));
+    }
+
+    report.push_str("\n## NoMatch reasons\n\n| Reason | Count |\n| --- | ---: |\n");
+    for (reason, count) in summary.reasons {
+        report.push_str(&format!("| {} | {} |\n", reason, count));
+    }
+
+    if let Some(advanced) = summary.advanced {
+        report.push_str("\n## Confidence intervals\n\n");
+        report.push_str(&format!(
+            "Precision CI (95%): {:.3}–{:.3}\n\nRecall CI (95%): {:.3}–{:.3}\n\nF1 CI (95%): {:.3}–{:.3}\n\nIterations: {}\n",
+            advanced.precision_ci.0,
+            advanced.precision_ci.1,
+            advanced.recall_ci.0,
+            advanced.recall_ci.1,
+            advanced.f1_ci.0,
+            advanced.f1_ci.1,
+            advanced.bootstrap_iterations
+        ));
+    }
+
+    std::fs::write(path, report)?;
+    Ok(())
 }

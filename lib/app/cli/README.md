@@ -35,9 +35,10 @@ cargo run -p dfps_cli --bin eval_mapping -- \
   --dataset pet_ct_small \
   --thresholds config/eval_thresholds.json
 
-# Persist machine-readable artifacts (summary/results)
+# Persist machine-readable artifacts (summary/results) and markdown report
 cargo run -p dfps_cli --bin eval_mapping -- \
   --dataset gold_pet_ct_comprehensive \
   --out-dir target/eval \
+  --report target/eval/report.md \
   --dump-details
 ```
