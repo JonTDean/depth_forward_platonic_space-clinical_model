@@ -1,4 +1,4 @@
-# DFPS Mapping Workbench (Rust)
+# DFPS - Clinical Model Workbench
 
 Monorepo with a small DFPS pipeline & web UI:
 - **Backend** (Axum): `/api/map-bundles`, `/metrics/summary`, `/health`
