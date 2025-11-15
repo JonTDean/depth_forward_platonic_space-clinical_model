@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    env,
     net::{IpAddr, SocketAddr},
     sync::Arc,
 };
@@ -35,10 +36,12 @@ pub struct ApiServerConfig {
 
 impl Default for ApiServerConfig {
     fn default() -> Self {
-        Self {
-            host: "127.0.0.1".to_string(),
-            port: 8080,
-        }
+        let host = env::var("DFPS_API_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+        let port = env::var("DFPS_API_PORT")
+            .ok()
+            .and_then(|raw| raw.parse::<u16>().ok())
+            .unwrap_or(8080);
+        Self { host, port }
     }
 }
 

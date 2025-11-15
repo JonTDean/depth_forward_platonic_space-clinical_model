@@ -6,7 +6,11 @@ use axum::{
 // DFPS Lib
 use dfps_api::{ApiState, router as api_router};
 use dfps_core::{
-    mapping::{DimNCITConcept, MappingResult, MappingState},
+    mapping::{
+        // DimNCITConcept,
+        MappingResult,
+        MappingState,
+    },
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
 use dfps_observability::PipelineMetrics;
@@ -25,7 +29,7 @@ struct MapBundlesBody {
     flats: Vec<StgServiceRequestFlat>,
     exploded_codes: Vec<StgSrCodeExploded>,
     mapping_results: Vec<MappingResult>,
-    dim_concepts: Vec<DimNCITConcept>,
+    // dim_concepts: Vec<DimNCITConcept>,
 }
 
 #[derive(Deserialize)]

@@ -17,55 +17,30 @@
 ### Frontend – Web UI (`dfps_web_frontend` or external app)
 _Working branch: `feature/app/web/frontend-mvp`_
 
-#### WEB-FE-01 – Frontend project scaffold
-- [ ] Create a frontend project (e.g., `code/app/web/frontend`) using HTMX + Tailwind.
-- [ ] Document how it discovers the backend base URL (env var, config file, etc.).
-- [ ] Add a small “API client” layer that calls:
-  - [ ] `POST /api/map-bundles`
-  - [ ] `GET /metrics/summary`
-  - [ ] `GET /health`
-
-#### WEB-FE-02 – Bundle upload & mapping viewer
-- [ ] Implement a “Bundle upload” or “Paste JSON” screen:
-  - [ ] Let the user upload a Bundle JSON file or paste raw JSON.
-  - [ ] Call the backend `map-bundles` endpoint.
-- [ ] Render:
-  - [ ] A summary of SR flats (count, statuses/intents).
-  - [ ] A table of `MappingResult` rows (code, system, NCIt ID, state).
-  - [ ] A small badge or chips for `AutoMapped / NeedsReview / NoMatch`.
-
-#### WEB-FE-03 – Metrics & NoMatch explorer
-- [ ] Add a simple dashboard view that:
-  - [ ] Calls `GET /metrics/summary`.
-  - [ ] Shows counts by mapping state as cards or a bar chart.
-- [ ] Add a “NoMatch explorer” view that:
-  - [ ] Lists codes with `MappingState::NoMatch`.
-  - [ ] Displays their `reason` and basic code metadata for triage.
-
 #### WEB-FE-04 – UX polish & copy
-- [ ] Align terminology with `docs/system-design/clinical/fhir/*` and `docs/system-design/clinical/ncit/*` (Bundle, `stg_servicerequest_flat`, `stg_sr_code_exploded`, etc.).
-- [ ] Add basic help text / tooltips explaining:
-  - [ ] What AutoMapped/NeedsReview/NoMatch mean.
-  - [ ] How the mapping engine uses NCIt and mock UMLS xrefs.
-- [ ] Add sensible empty/error states for:
-  - [ ] No mappings returned.
-  - [ ] Backend unreachable or `health` failing.
+- [x] Align terminology with `docs/system-design/clinical/fhir/*` and `docs/system-design/clinical/ncit/*` (Bundle, `stg_servicerequest_flat`, `stg_sr_code_exploded`, etc.).
+- [x] Add basic help text / tooltips explaining:
+  - [x] What AutoMapped/NeedsReview/NoMatch mean.
+  - [x] How the mapping engine uses NCIt and mock UMLS xrefs.
+- [x] Add sensible empty/error states for:
+  - [x] No mappings returned.
+  - [x] Backend unreachable or `health` failing.
 
 #### WEB-FE-05 – Frontend tests & wiring
-- [ ] Add unit/interaction tests (component tests or minimal e2e) for:
-  - [ ] Submitting a Bundle and rendering mappings.
-  - [ ] Rendering metrics and NoMatch lists.
+- [x] Add unit/interaction tests (component tests or minimal e2e) for:
+  - [x] Submitting a Bundle and rendering mappings.
+  - [x] Rendering metrics and NoMatch lists.
 - [ ] Optional: add a small CI step that:
   - [ ] Builds the frontend.
   - [ ] Runs the critical tests.
 
 #### WEB-FE-06 – Docs & Quickstart (frontend)
-- [ ] Extend `docs/system-design/base/directory-architecture.md` or a new `docs/system-design/clinical/web-ui.md` to describe:
-  - [ ] Where the frontend lives in `code/`.
-  - [ ] How it interacts with the backend API.
-- [ ] Add Quickstart snippets:
-  - [ ] “Run backend server + frontend dev server.”
-  - [ ] Example curl/UI flows for mapping bundles.
+- [x] Extend `docs/system-design/base/directory-architecture.md` or a new `docs/system-design/clinical/web-ui.md` to describe:
+  - [x] Where the frontend lives in `code/`.
+  - [x] How it interacts with the backend API.
+- [x] Add Quickstart snippets:
+  - [x] “Run backend server + frontend dev server.”
+  - [x] Example curl/UI flows for mapping bundles.
 
 ---
 
@@ -95,6 +70,15 @@ _Working branch: `feature/app/web/frontend-mvp`_
   - [x] A summary of SR flats (count, statuses/intents).
   - [x] A table of `MappingResult` rows (code, system, NCIt ID, state).
   - [x] A small badge or chips for `AutoMapped / NeedsReview / NoMatch`.
+
+#### WEB-FE-03 – Metrics & NoMatch explorer
+- [x] Add a simple dashboard view that:
+  - [x] Calls `GET /metrics/summary`.
+  - [x] Shows counts by mapping state as Tailwind cards.
+- [x] Add a “NoMatch explorer” view that:
+  - [x] Lists codes with `MappingState::NoMatch` plus their code metadata.
+  - [x] Displays the `reason` badge for triage.
+- [x] Add unit coverage for the frontend view model to validate NoMatch derivation.
 
 ---
 
@@ -144,3 +128,14 @@ _Working branch: `feature/app/web/backend-mvp`_
 
 ## DONE
 - _Empty_
+
+
+---
+
+# Next steps
+
+- Customize bundles to reproduce `NeedsReview` or `NoMatch` scenarios and verify how the UI reflects them.
+- Tail `dfps_api` logs while submitting bundles to correlate request IDs between backend and frontend (HTMX surfaces alert banners with request context).
+- Hook the frontend into future CI by running `cargo test -p dfps_web_frontend` plus optional `cargo fmt --check`.
+
+Once comfortable with this workflow, you can iterate on new UX panels or backend endpoints knowing the full loop from FHIR bundle to NCIt mapping.

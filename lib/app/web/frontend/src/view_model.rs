@@ -11,6 +11,7 @@ use crate::client::MapBundlesResponse;
 #[derive(Debug, Default, Clone)]
 pub struct PageContext {
     pub health: Option<HealthOverview>,
+    pub health_error: Option<String>,
     pub metrics: Option<PipelineMetrics>,
     pub alert: Option<AlertMessage>,
     pub results: Option<MappingResultsView>,
@@ -38,6 +39,7 @@ pub enum AlertKind {
 pub struct MappingResultsView {
     pub request_summary: ServiceRequestSummary,
     pub rows: Vec<MappingRowView>,
+    pub no_matches: Vec<NoMatchRowView>,
 }
 
 #[derive(Debug, Clone, Default)]
@@ -65,6 +67,15 @@ pub struct MappingRowView {
     pub reason: Option<String>,
 }
 
+#[derive(Debug, Clone)]
+pub struct NoMatchRowView {
+    pub sr_id: String,
+    pub system: String,
+    pub code: String,
+    pub display: String,
+    pub reason: Option<String>,
+}
+
 impl MappingResultsView {
     pub fn from_response(response: &MapBundlesResponse) -> Self {
         let request_summary = summarize_flats(&response.flats);
@@ -75,42 +86,48 @@ impl MappingResultsView {
             .map(|concept| (concept.ncit_id.clone(), concept.preferred_name.clone()))
             .collect::<HashMap<_, _>>();
 
-        let rows = response
-            .mapping_results
-            .iter()
-            .map(|result| {
-                let (sr_id, system, code, display) = code_lookup
-                    .get(&result.code_element_id)
-                    .cloned()
-                    .unwrap_or_else(|| CodeInfo {
-                        sr_id: result.code_element_id.clone(),
-                        system: Some("unknown-system".to_string()),
-                        code: Some(result.code_element_id.clone()),
-                        display: None,
-                    })
-                    .components();
+        let mut rows = Vec::with_capacity(response.mapping_results.len());
+        let mut no_matches = Vec::new();
 
-                let ncit_label = result
-                    .ncit_id
-                    .as_ref()
-                    .and_then(|id| concept_lookup.get(id).cloned());
+        for result in &response.mapping_results {
+            let (sr_id, system, code, display) = code_lookup
+                .get(&result.code_element_id)
+                .cloned()
+                .unwrap_or_else(|| CodeInfo {
+                    sr_id: result.code_element_id.clone(),
+                    system: Some("unknown-system".to_string()),
+                    code: Some(result.code_element_id.clone()),
+                    display: None,
+                })
+                .components();
 
-                MappingRowView {
-                    sr_id,
-                    system,
-                    code,
-                    display,
-                    ncit_id: result.ncit_id.clone(),
-                    ncit_label,
-                    state: result.state,
-                    reason: result.reason.clone(),
-                }
-            })
-            .collect();
+            let ncit_label = result
+                .ncit_id
+                .as_ref()
+                .and_then(|id| concept_lookup.get(id).cloned());
+
+            let row = MappingRowView {
+                sr_id,
+                system,
+                code,
+                display,
+                ncit_id: result.ncit_id.clone(),
+                ncit_label,
+                state: result.state,
+                reason: result.reason.clone(),
+            };
+
+            if row.state == MappingState::NoMatch {
+                no_matches.push(NoMatchRowView::from(&row));
+            }
+
+            rows.push(row);
+        }
 
         Self {
             request_summary,
             rows,
+            no_matches,
         }
     }
 }
@@ -179,5 +196,114 @@ impl CodeInfo {
             .or(display)
             .unwrap_or_else(|| "unknown-code".to_string());
         (sr_id, system, code, display_value)
+    }
+}
+
+impl From<&MappingRowView> for NoMatchRowView {
+    fn from(value: &MappingRowView) -> Self {
+        Self {
+            sr_id: value.sr_id.clone(),
+            system: value.system.clone(),
+            code: value.code.clone(),
+            display: value.display.clone(),
+            reason: value.reason.clone(),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::client::MapBundlesResponse;
+    use dfps_core::{
+        mapping::{
+            DimNCITConcept, MappingResult, MappingSourceVersion, MappingState, MappingStrategy,
+            MappingThresholds,
+        },
+        staging::{StgServiceRequestFlat, StgSrCodeExploded},
+    };
+
+    fn sample_response() -> MapBundlesResponse {
+        let flats = vec![
+            StgServiceRequestFlat {
+                sr_id: "SR-1".into(),
+                patient_id: "P1".into(),
+                encounter_id: None,
+                status: "active".into(),
+                intent: "order".into(),
+                description: "PET-CT".into(),
+            },
+            StgServiceRequestFlat {
+                sr_id: "SR-2".into(),
+                patient_id: "P1".into(),
+                encounter_id: None,
+                status: "completed".into(),
+                intent: "order".into(),
+                description: "Unknown".into(),
+            },
+        ];
+
+        let exploded_codes = vec![
+            StgSrCodeExploded {
+                sr_id: "SR-1".into(),
+                system: Some("http://loinc.org".into()),
+                code: Some("24606-6".into()),
+                display: Some("FDG uptake".into()),
+            },
+            StgSrCodeExploded {
+                sr_id: "SR-2".into(),
+                system: Some("http://loinc.org".into()),
+                code: Some("99999-9".into()),
+                display: Some("Unknown code".into()),
+            },
+        ];
+
+        let mapping_results = vec![
+            MappingResult {
+                code_element_id: "SR-1::http://loinc.org::24606-6".into(),
+                cui: Some("C0001".into()),
+                ncit_id: Some("C1234".into()),
+                score: 0.99,
+                strategy: MappingStrategy::Lexical,
+                state: MappingState::AutoMapped,
+                thresholds: MappingThresholds::default(),
+                source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
+                reason: None,
+            },
+            MappingResult {
+                code_element_id: "SR-2::http://loinc.org::99999-9".into(),
+                cui: None,
+                ncit_id: None,
+                score: 0.12,
+                strategy: MappingStrategy::Lexical,
+                state: MappingState::NoMatch,
+                thresholds: MappingThresholds::default(),
+                source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
+                reason: Some("missing_system_or_code".into()),
+            },
+        ];
+
+        MapBundlesResponse {
+            flats,
+            exploded_codes,
+            mapping_results,
+            dim_concepts: vec![DimNCITConcept {
+                ncit_id: "C1234".into(),
+                preferred_name: "FDG Uptake".into(),
+                semantic_group: "Test".into(),
+            }],
+        }
+    }
+
+    #[test]
+    fn derives_no_match_rows_from_mapping_results() {
+        let response = sample_response();
+        let view = MappingResultsView::from_response(&response);
+        assert_eq!(view.rows.len(), 2);
+        assert_eq!(view.no_matches.len(), 1);
+        let row = &view.no_matches[0];
+        assert_eq!(row.sr_id, "SR-2");
+        assert_eq!(row.code, "99999-9");
+        assert_eq!(row.reason.as_deref(), Some("missing_system_or_code"));
     }
 }

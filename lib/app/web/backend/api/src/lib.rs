@@ -6,7 +6,7 @@
 
 pub mod server;
 
-pub use server::{run, router, ApiServerConfig, ApiState, ServerError};
+pub use server::{ApiServerConfig, ApiState, ServerError, router, run};
 
 use env_logger::{Builder, Env};
 use std::sync::Once;

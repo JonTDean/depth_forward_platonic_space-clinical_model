@@ -19,3 +19,4 @@ uuid.workspace = true
 dfps_core = { path = "../../../../domain/core" }
 dfps_pipeline = { path = "../../../../domain/pipeline" }
 dfps_observability = { path = "../../../../platform/observability" }
+dfps_configuration = { path = "../../../../platform/configuration" }

@@ -4,7 +4,7 @@ use dfps_core::{
 };
 use dfps_observability::PipelineMetrics;
 use reqwest::{Client, Response, StatusCode};
-use serde::{Deserialize, de::DeserializeOwned};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use thiserror::Error;
 
 use crate::config::AppConfig;
@@ -90,12 +90,12 @@ pub enum ClientError {
     Utf8(#[from] std::string::FromUtf8Error),
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct HealthResponse {
     pub status: String,
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct MapBundlesResponse {
     pub flats: Vec<StgServiceRequestFlat>,
     pub exploded_codes: Vec<StgSrCodeExploded>,

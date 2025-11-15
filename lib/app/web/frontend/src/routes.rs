@@ -2,7 +2,7 @@ use actix_multipart::Multipart;
 use actix_web::{HttpRequest, HttpResponse, Result, web};
 use bytes::BytesMut;
 use futures_util::TryStreamExt;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     client::{BackendClient, ClientError},
@@ -26,7 +26,7 @@ async fn index(state: web::Data<AppState>) -> Result<HttpResponse> {
         .body(views::render_page(&ctx)))
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Serialize)]
 struct BundleForm {
     bundle_text: String,
 }
@@ -103,12 +103,18 @@ async fn handle_mapping(
     match state.client.map_bundles(payload).await {
         Ok(response) => {
             ctx.results = Some(MappingResultsView::from_response(&response));
-            ctx.alert = Some(AlertMessage {
-                kind: AlertKind::Info,
-                text: format!(
-                    "Mapped {} codes",
-                    ctx.results.as_ref().map(|res| res.rows.len()).unwrap_or(0)
-                ),
+            let mapped = ctx.results.as_ref().map(|res| res.rows.len()).unwrap_or(0);
+            ctx.alert = Some(if mapped == 0 {
+                AlertMessage {
+                    kind: AlertKind::Info,
+                    text: "Backend responded but did not emit MappingResult rows. Confirm your bundle produced `stg_sr_code_exploded` entries."
+                        .to_string(),
+                }
+            } else {
+                AlertMessage {
+                    kind: AlertKind::Info,
+                    text: format!("Mapped {mapped} code(s)"),
+                }
             });
             Ok(respond(ctx, hx))
         }
@@ -123,17 +129,27 @@ async fn handle_mapping(
 }
 
 async fn build_base_context(client: &BackendClient) -> PageContext {
-    let health = client.health().await.ok().map(|resp| {
-        let status = resp.status;
-        let ok = status == "ok";
-        HealthOverview { status, ok }
-    });
-    let metrics = client.metrics_summary().await.ok();
-    PageContext {
-        health,
-        metrics,
-        ..Default::default()
+    let mut ctx = PageContext::default();
+    match client.health().await {
+        Ok(resp) => {
+            let status = resp.status;
+            let ok = status == "ok";
+            ctx.health = Some(HealthOverview {
+                status: status.clone(),
+                ok,
+            });
+            if !ok {
+                ctx.health_error = Some(format!(
+                    "Health endpoint returned status '{status}'. See backend logs for details."
+                ));
+            }
+        }
+        Err(err) => {
+            ctx.health_error = Some(format!("Health endpoint unreachable: {err}"));
+        }
     }
+    ctx.metrics = client.metrics_summary().await.ok();
+    ctx
 }
 
 fn respond(ctx: PageContext, hx: bool) -> HttpResponse {
@@ -186,13 +202,125 @@ async fn read_bundle_file(payload: &mut Multipart) -> Result<Option<String>, Str
 
 fn summarize_client_error(err: ClientError) -> String {
     match err {
-        ClientError::Backend { status, body } => {
-            format!("status {status} – {body}")
-        }
+        ClientError::Backend { status, body } => format!("status {status} - {body}"),
         ClientError::Http(inner) => format!("HTTP error: {inner}"),
         ClientError::InvalidJson(inner) => format!("Invalid JSON: {inner}"),
         ClientError::Upload(msg) => msg,
         ClientError::Utf8(inner) => format!("UTF-8 error: {inner}"),
         ClientError::EmptyBundle => "No bundle payload supplied".to_string(),
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{App, test, web};
+    use dfps_core::{
+        mapping::{
+            DimNCITConcept, MappingResult, MappingSourceVersion, MappingState, MappingStrategy,
+            MappingThresholds,
+        },
+        staging::{StgServiceRequestFlat, StgSrCodeExploded},
+    };
+    use dfps_observability::PipelineMetrics;
+    use serde_json::json;
+    use std::time::Duration;
+    use wiremock::{
+        Mock, MockServer, ResponseTemplate,
+        matchers::{method, path},
+    };
+
+    use crate::{
+        client::{HealthResponse, MapBundlesResponse},
+        config::AppConfig,
+    };
+
+    fn sample_backend_response() -> MapBundlesResponse {
+        MapBundlesResponse {
+            flats: vec![StgServiceRequestFlat {
+                sr_id: "SR-1".into(),
+                patient_id: "P1".into(),
+                encounter_id: None,
+                status: "active".into(),
+                intent: "order".into(),
+                description: "PET-CT".into(),
+            }],
+            exploded_codes: vec![StgSrCodeExploded {
+                sr_id: "SR-1".into(),
+                system: Some("http://loinc.org".into()),
+                code: Some("24606-6".into()),
+                display: Some("FDG uptake".into()),
+            }],
+            mapping_results: vec![MappingResult {
+                code_element_id: "SR-1::http://loinc.org::24606-6".into(),
+                cui: Some("C0001".into()),
+                ncit_id: Some("C1234".into()),
+                score: 0.99,
+                strategy: MappingStrategy::Lexical,
+                state: MappingState::AutoMapped,
+                thresholds: MappingThresholds::default(),
+                source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
+                reason: None,
+            }],
+            dim_concepts: vec![DimNCITConcept {
+                ncit_id: "C1234".into(),
+                preferred_name: "FDG Uptake".into(),
+                semantic_group: "Test".into(),
+            }],
+        }
+    }
+
+    #[actix_web::test]
+    async fn submitting_bundle_renders_mapping_rows() {
+        let backend = MockServer::start().await;
+        Mock::given(method("GET"))
+            .and(path("/health"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(HealthResponse {
+                status: "ok".into(),
+            }))
+            .mount(&backend)
+            .await;
+        Mock::given(method("GET"))
+            .and(path("/metrics/summary"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(PipelineMetrics {
+                bundle_count: 1,
+                flats_count: 1,
+                exploded_count: 1,
+                mapping_count: 1,
+                auto_mapped: 1,
+                needs_review: 0,
+                no_match: 0,
+            }))
+            .mount(&backend)
+            .await;
+        Mock::given(method("POST"))
+            .and(path("/api/map-bundles"))
+            .respond_with(ResponseTemplate::new(200).set_body_json(sample_backend_response()))
+            .mount(&backend)
+            .await;
+
+        let config = AppConfig {
+            listen_addr: "127.0.0.1:0".into(),
+            backend_base_url: backend.uri(),
+            client_timeout: Duration::from_secs(5),
+        };
+        let client = BackendClient::from_config(&config).expect("client");
+        let state = web::Data::new(AppState::new(config.clone(), client));
+        let app = test::init_service(App::new().app_data(state.clone()).configure(configure)).await;
+
+        let payload = json!({ "resourceType": "Bundle", "type": "collection" }).to_string();
+        let request = test::TestRequest::post()
+            .uri("/map/paste")
+            .set_form(&BundleForm {
+                bundle_text: payload,
+            })
+            .to_request();
+
+        let response = test::call_service(&app, request).await;
+        assert!(response.status().is_success());
+        let body = test::read_body(response).await;
+        let html = String::from_utf8(body.to_vec()).expect("html");
+        assert!(html.contains("MappingResult rows"));
+        assert!(html.contains("C1234"));
+        assert!(html.contains("AutoMapped"));
     }
 }

@@ -22,9 +22,9 @@ code/
         cli/
         desktop/
         web/
-          frontend/
           backend/
             api/
+          frontend/
 
     domain/
         core/
@@ -66,7 +66,7 @@ code/lib/app/
     frontend/
 ```
 
-* `frontend/cli/`
+* `app/cli/`
 
   * Command-line tools and utilities.
   * Typical responsibilities:
@@ -75,17 +75,20 @@ code/lib/app/
     * call domain services (e.g. mapping pipeline),
     * handle basic IO and exit codes.
 
-* `frontend/desktop/`
+* `app/desktop/`
 
   * Future desktop UI shells, if any (e.g., Tauri/Wry/Electron-bridged UIs).
 
-* `frontend/web/`
+* `app/web/`
 
   * Web-facing UI or HTTP-gateway shells (e.g., web dashboards, admin panels).
+  * Path: `code/lib/app/web/frontend`.
   * Crate: `dfps_web_frontend`.
   * Actix-web UI that renders a Tailwind/HTMX dashboard for bundle uploads and mapping review.
   * Reads `DFPS_API_BASE_URL` to reach the backend API, `DFPS_FRONTEND_LISTEN_ADDR` for its bind address, and `DFPS_API_CLIENT_TIMEOUT_SECS` for the reqwest client timeout.
   * Exposes an HTML form for paste/upload workflows and calls `/api/map-bundles`, `/metrics/summary`, and `/health` via an internal API client.
+  * Provides real-time mapping summaries, a metrics dashboard fed by `/metrics/summary`, and a NoMatch explorer so reviewers can triage unmapped codes.
+  * `src/views.rs` holds the Maud templates, `src/routes.rs` hosts the paste/upload endpoints, and `src/client.rs` houses the reqwest wrapper that talks to the backend. For a full end-to-end runbook, see `docs/runbook/web-quickstart.md`.
 
 * `web/backend/api/`
 
@@ -305,3 +308,7 @@ Naming pattern (recommended):
 * `code/lib/platform/<capability>/`
 
 This keeps the workspace readable even as the number of crates grows.
+
+---
+
+For operational guidance and run instructions, refer to the runbooks under `docs/runbook/`.
