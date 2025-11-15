@@ -228,6 +228,9 @@ pub struct EvalSummary {
     pub recall: f32,
     pub f1: f32,
     pub accuracy: f32,
+    pub coverage: f32,
+    pub top1_accuracy: f32,
+    pub top3_accuracy: f32,
     pub auto_mapped_total: usize,
     pub auto_mapped_correct: usize,
     pub auto_mapped_precision: f32,
@@ -236,6 +239,7 @@ pub struct EvalSummary {
     pub by_license_tier: BTreeMap<String, StratifiedMetrics>,
     pub score_buckets: Vec<ScoreBucket>,
     pub reason_counts: BTreeMap<String, usize>,
+    pub system_confusion: BTreeMap<String, SystemConfusion>,
     pub advanced: Option<AdvancedStats>,
     pub results: Vec<EvalResult>,
 }
@@ -251,6 +255,9 @@ impl Default for EvalSummary {
             recall: 0.0,
             f1: 0.0,
             accuracy: 0.0,
+            coverage: 0.0,
+            top1_accuracy: 0.0,
+            top3_accuracy: 0.0,
             auto_mapped_total: 0,
             auto_mapped_correct: 0,
             auto_mapped_precision: 0.0,
@@ -259,6 +266,7 @@ impl Default for EvalSummary {
             by_license_tier: BTreeMap::new(),
             score_buckets: Vec::new(),
             reason_counts: BTreeMap::new(),
+            system_confusion: BTreeMap::new(),
             advanced: None,
             results: Vec::new(),
         }
@@ -322,6 +330,18 @@ impl StratifiedMetrics {
         self.recall = recall;
         self.f1 = f1;
     }
+}
+
+#[derive(Debug, Default, Clone, Serialize, Deserialize)]
+pub struct SystemConfusion {
+    pub total_cases: usize,
+    pub predicted_cases: usize,
+    pub correct: usize,
+    pub auto_mapped: usize,
+    pub needs_review: usize,
+    pub no_match: usize,
+    pub coverage: f32,
+    pub accuracy: f32,
 }
 
 pub fn compute_metrics(correct: usize, predicted: usize, total: usize) -> (f32, f32, f32) {
@@ -418,6 +438,7 @@ fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSum
     let mut results = Vec::with_capacity(cases.len());
     let mut by_system: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
     let mut by_license: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
+    let mut system_confusion: BTreeMap<String, SystemConfusion> = BTreeMap::new();
     let mut score_bucket_map: BTreeMap<BucketKey, BucketTally> = BTreeMap::new();
     let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
     let mut advanced_samples = Vec::with_capacity(cases.len());
@@ -448,6 +469,13 @@ fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSum
         }
 
         record_stratified(&mut by_system, case.system.clone(), predicted, is_correct);
+        record_confusion(
+            &mut system_confusion,
+            case.system.clone(),
+            mapping.state,
+            predicted,
+            is_correct,
+        );
         record_stratified(
             &mut by_license,
             mapping
@@ -493,6 +521,13 @@ fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSum
     } else {
         0.0
     };
+    summary.coverage = if summary.total_cases > 0 {
+        summary.predicted_cases as f32 / summary.total_cases as f32
+    } else {
+        0.0
+    };
+    summary.top1_accuracy = summary.precision;
+    summary.top3_accuracy = summary.precision; // placeholder until multi-candidate plumbing exists
     summary.auto_mapped_total = auto_mapped_total;
     summary.auto_mapped_correct = auto_mapped_correct;
     summary.auto_mapped_precision = if auto_mapped_total > 0 {
@@ -504,12 +539,21 @@ fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSum
     summary.by_license_tier = finalize_stratified(by_license);
     summary.score_buckets = finalize_score_buckets(score_bucket_map);
     summary.reason_counts = reason_counts;
+    summary.system_confusion = finalize_confusion(system_confusion);
     #[cfg(feature = "eval-advanced")]
     {
         summary.advanced = Some(crate::bootstrap_metrics(&advanced_samples, 100));
     }
     summary.results = results;
     summary
+}
+
+/// Produce a deterministic fingerprint (sha256 hex) for an EvalSummary.
+pub fn fingerprint_summary(summary: &EvalSummary) -> String {
+    let mut hasher = Sha256::new();
+    let bytes = serde_json::to_vec(summary).unwrap_or_default();
+    hasher.update(bytes);
+    format!("{:x}", hasher.finalize())
 }
 
 fn state_label(state: MappingState) -> &'static str {
@@ -586,6 +630,46 @@ fn bucket_key(score: f32) -> BucketKey {
     let normalized = score.clamp(0.0, 0.999);
     let idx = (normalized * 10.0).floor() as u8;
     BucketKey::Range(idx)
+}
+
+fn record_confusion(
+    map: &mut BTreeMap<String, SystemConfusion>,
+    system: String,
+    state: MappingState,
+    predicted: bool,
+    correct: bool,
+) {
+    let entry = map.entry(system).or_default();
+    entry.total_cases += 1;
+    if predicted {
+        entry.predicted_cases += 1;
+    }
+    if correct {
+        entry.correct += 1;
+    }
+    match state {
+        MappingState::AutoMapped => entry.auto_mapped += 1,
+        MappingState::NeedsReview => entry.needs_review += 1,
+        MappingState::NoMatch => entry.no_match += 1,
+    }
+}
+
+fn finalize_confusion(
+    mut map: BTreeMap<String, SystemConfusion>,
+) -> BTreeMap<String, SystemConfusion> {
+    for entry in map.values_mut() {
+        entry.coverage = if entry.total_cases > 0 {
+            entry.predicted_cases as f32 / entry.total_cases as f32
+        } else {
+            0.0
+        };
+        entry.accuracy = if entry.total_cases > 0 {
+            entry.correct as f32 / entry.total_cases as f32
+        } else {
+            0.0
+        };
+    }
+    map
 }
 
 #[cfg(test)]

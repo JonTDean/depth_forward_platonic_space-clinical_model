@@ -32,20 +32,28 @@ against the gold NDJSON fixtures.
      "min_recall": 0.95,
      "min_f1": 0.95,
      "min_accuracy": 0.95,
-     "min_auto_precision": 0.98
+     "min_auto_precision": 0.98,
+     "min_coverage": 0.95
    }
    ```
    ```bash
-   cargo run -p dfps_cli --bin eval_mapping -- \
-     --dataset pet_ct_small \
-     --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json
-   ```
-   `min_accuracy` guards overall correctness (regardless of predictions) while `min_auto_precision` focuses on the AutoMapped band specifically.
-5. Persist machine-readable artifacts for dashboards/CI (plus optional Markdown report):
+  cargo run -p dfps_cli --bin eval_mapping -- \
+    --dataset pet_ct_small \
+    --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json
+  ```
+  `min_accuracy` guards overall correctness (regardless of predictions) while `min_auto_precision` focuses on the AutoMapped band specifically.
+   For determinism checks, provide a baseline fingerprint file:
    ```bash
    cargo run -p dfps_cli --bin eval_mapping -- \
-     --dataset gold_pet_ct_comprehensive \
-     --out-dir target/eval \
+     --dataset pet_ct_small \
+     --deterministic target/eval/pet_ct_small.fingerprint
+   ```
+   First run writes the fingerprint; subsequent runs fail if the summary hash changes.
+5. Persist machine-readable artifacts for dashboards/CI (plus optional Markdown report):
+  ```bash
+  cargo run -p dfps_cli --bin eval_mapping -- \
+    --dataset gold_pet_ct_comprehensive \
+    --out-dir target/eval \
      --report target/eval/report.md \
      --dump-details
    ```

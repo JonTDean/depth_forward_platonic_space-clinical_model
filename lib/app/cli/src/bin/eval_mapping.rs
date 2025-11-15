@@ -32,6 +32,12 @@ struct Args {
     /// Emit per-case EvalResult rows after the summary
     #[arg(long)]
     dump_details: bool,
+    /// Compare against a deterministic fingerprint file (sha256). Fails if mismatched.
+    #[arg(long, value_name = "PATH")]
+    deterministic: Option<PathBuf>,
+    /// Desired top-k (placeholder until multi-candidate surfaces). Default: 1.
+    #[arg(long, value_name = "N", default_value_t = 1)]
+    top_k: usize,
 }
 
 #[derive(Serialize)]
@@ -44,9 +50,13 @@ struct SummaryView<'a> {
     recall: f32,
     f1: f32,
     accuracy: f32,
+    coverage: f32,
+    top1_accuracy: f32,
+    top3_accuracy: f32,
     auto_mapped_total: usize,
     auto_mapped_correct: usize,
     auto_mapped_precision: f32,
+    system_confusion: &'a std::collections::BTreeMap<String, dfps_eval::SystemConfusion>,
     #[serde(rename = "state_counts")]
     states: &'a std::collections::BTreeMap<String, usize>,
     by_system: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
@@ -66,6 +76,7 @@ struct ThresholdConfig {
     min_f1: Option<f32>,
     min_accuracy: Option<f32>,
     min_auto_precision: Option<f32>,
+    min_coverage: Option<f32>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -97,9 +108,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         recall: summary.recall,
         f1: summary.f1,
         accuracy: summary.accuracy,
+        coverage: summary.coverage,
+        top1_accuracy: summary.top1_accuracy,
+        top3_accuracy: summary.top3_accuracy,
         auto_mapped_total: summary.auto_mapped_total,
         auto_mapped_correct: summary.auto_mapped_correct,
         auto_mapped_precision: summary.auto_mapped_precision,
+        system_confusion: &summary.system_confusion,
         states: &summary.state_counts,
         by_system: &summary.by_system,
         by_license: &summary.by_license_tier,
@@ -136,11 +151,38 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         write_report(report_path, &summary_view, args.dataset.as_deref())?;
     }
 
+    if args.top_k > 1 && summary.top3_accuracy == summary.top1_accuracy {
+        eprintln!(
+            "note: --top-k >1 requested, but current engine exposes only top-1; top3 mirrors top1"
+        );
+    }
+
     if let Some(path) = &args.thresholds {
         let file = File::open(path)?;
         let cfg: ThresholdConfig = serde_json::from_reader(file)?;
         enforce_thresholds(&summary, &cfg)
             .map_err(|msg| format!("{msg} (thresholds file: {})", path.display()))?;
+    }
+
+    if let Some(path) = &args.deterministic {
+        let fingerprint = dfps_eval::fingerprint_summary(&summary);
+        if path.exists() {
+            let baseline = std::fs::read_to_string(path)?;
+            let baseline = baseline.trim();
+            if baseline != fingerprint {
+                return Err(format!(
+                    "deterministic check failed: baseline {} vs current {}",
+                    baseline, fingerprint
+                )
+                .into());
+            }
+        } else {
+            std::fs::write(path, format!("{fingerprint}\n"))?;
+            eprintln!(
+                "deterministic baseline written to {}; rerun to verify stability",
+                path.display()
+            );
+        }
     }
 
     Ok(())
@@ -209,6 +251,14 @@ fn enforce_thresholds(
             return Err(format!(
                 "accuracy {} fell below configured minimum {}",
                 summary.accuracy, min
+            ));
+        }
+    }
+    if let Some(min) = cfg.min_coverage {
+        if summary.coverage < min {
+            return Err(format!(
+                "coverage {} fell below configured minimum {}",
+                summary.coverage, min
             ));
         }
     }
