@@ -5,7 +5,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use dfps_configuration::load_env;
 use dfps_core::staging::StgSrCodeExploded;
-use dfps_mapping::{explain_staging_code, map_staging_codes};
+use dfps_mapping::{explain_staging_code, map_staging_codes_with_summary};
 
 #[derive(Parser)]
 #[command(name = "map_codes", about = "Map staging codes to NCIt concepts")]
@@ -40,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         codes.push(code);
     }
 
-    let (results, _) = map_staging_codes(codes.clone());
+    let (results, _, summary) = map_staging_codes_with_summary(codes.clone());
     let stdout = io::stdout();
     let mut handle = stdout.lock();
     for result in results {
@@ -60,6 +60,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             )?;
         }
     }
+
+    eprintln!(
+        "mapping summary total={} by_code_kind={:?} by_license_tier={:?}",
+        summary.total, summary.by_code_kind, summary.by_license_tier
+    );
 
     Ok(())
 }

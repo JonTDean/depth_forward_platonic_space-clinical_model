@@ -36,3 +36,36 @@ fn unknown_codes_report_no_match() {
     assert!(result.ncit_id.is_none());
     assert_eq!(result.reason.as_deref(), Some("missing_system_or_code"));
 }
+
+#[test]
+fn unknown_systems_surface_reason() {
+    let code = fixtures::mapping_unknown_system_code();
+    let (results, _) = map_staging_codes(vec![code]);
+
+    assert_eq!(results.len(), 1);
+    let result = &results[0];
+    assert_eq!(result.state, MappingState::NoMatch);
+    assert_eq!(result.reason.as_deref(), Some("unknown_code_system"));
+    assert!(result.license_tier.is_none());
+    assert!(result.source_kind.is_none());
+}
+
+#[test]
+fn licensed_systems_expose_metadata() {
+    let code = fixtures::mapping_cpt_code();
+    let (results, _) = map_staging_codes(vec![code]);
+
+    let result = &results[0];
+    assert_eq!(result.license_tier.as_deref(), Some("licensed"));
+    assert_eq!(result.source_kind.as_deref(), Some("fhir"));
+}
+
+#[test]
+fn obo_systems_marked_open() {
+    let code = fixtures::mapping_ncit_obo_code();
+    let (results, _) = map_staging_codes(vec![code]);
+
+    let result = &results[0];
+    assert_eq!(result.source_kind.as_deref(), Some("obo_foundry"));
+    assert_eq!(result.license_tier.as_deref(), Some("open"));
+}

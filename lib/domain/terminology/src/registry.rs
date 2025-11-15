@@ -78,4 +78,12 @@ mod tests {
         assert!(lookup_codesystem("http://example.com/unknown").is_none());
         assert!(!is_licensed("http://example.com/unknown"));
     }
+
+    #[test]
+    fn lookup_open_system() {
+        let meta = lookup_codesystem("http://loinc.org").expect("LOINC should be registered");
+        assert!(is_open(meta.url));
+        assert!(!is_licensed(meta.url));
+        assert_eq!(meta.license_tier.as_str(), "open");
+    }
 }

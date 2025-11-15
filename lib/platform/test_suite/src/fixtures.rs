@@ -43,3 +43,15 @@ pub fn mapping_unknown_code() -> StgSrCodeExploded {
     serde_json::from_str(include_str!("../fixtures/regression/mapping_unknown.json"))
         .expect("mapping unknown fixture should parse")
 }
+
+pub fn mapping_unknown_system_code() -> StgSrCodeExploded {
+    serde_json::from_str(include_str!(
+        "../fixtures/regression/mapping_unknown_system.json"
+    ))
+    .expect("mapping unknown system fixture should parse")
+}
+
+pub fn mapping_ncit_obo_code() -> StgSrCodeExploded {
+    serde_json::from_str(include_str!("../fixtures/regression/mapping_ncit_obo.json"))
+        .expect("mapping NCIt OBO fixture should parse")
+}

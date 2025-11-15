@@ -14,38 +14,7 @@
 ---
 
 ## TODO
-
-### TERM-05 - Mapping integration (reason codes, policy hooks)
-- [ ] Integrate terminology checks into `dfps_mapping::map_staging_codes`:
-  - [ ] For `UnknownSystem` → `MappingResult.state = NoMatch`, `reason = "unknown_code_system"`.
-  - [ ] For `MissingSystemOrCode` → `reason = "missing_system_or_code"` (existing behavior).
-- [ ] Add **license-aware** hooks (no hard policy yet, but wiring in the data):
-  - [ ] Ensure `MappingResult` can optionally surface `license_tier` / `source_kind` via `reason` or a reserved metadata field if needed in the future.
-  - [ ] Keep behavior deterministic and non-breaking for existing tests.
-- [ ] Optional: add helper to aggregate counts by `CodeKind` and `LicenseTier` for observability.
-
-### TERM-06 - Tests
-- [ ] Unit tests for registries:
-  - [ ] Known URLs (CPT/SNOMED/LOINC/NCIt OBO) resolve with correct `LicenseTier` and `SourceKind`.
-  - [ ] Bogus/non-canonical URLs resolve as `UnknownSystem`.
-- [ ] Unit tests for `EnrichedCode`:
-  - [ ] correct classification into `CodeKind` variants.
-- [ ] Integration tests with `dfps_mapping`:
-  - [ ] Known systems behave as before for mapping outcomes.
-  - [ ] Unknown systems produce `reason = "unknown_code_system"`.
-  - [ ] Ensure OBO-backed concepts are still treated as `Open` and do not flip any licensed flags.
-
-### TERM-07 - Docs (licensed vs unlicensed + OBO)
-- [ ] Add `docs/system-design/clinical/fhir/concepts/terminology-layer.md` describing:
-  - [ ] the **licensed vs unlicensed/open** terminology split,
-  - [ ] the role of OBO Foundry ontologies,
-  - [ ] where this sits between staging and NCIt mapping.
-- [ ] Update:
-  - [ ] `docs/system-design/clinical/fhir/overview.md` to reference the terminology layer and license split.
-  - [ ] `docs/system-design/clinical/ncit/architecture.md` to explicitly call out:
-    - FHIR CodeSystems,
-    - UMLS/NCIm,
-    - OBOFoundry (NCIt OBO, MONDO) as distinct but connected sources.
+- _Empty_
 
 ---
 
@@ -107,6 +76,39 @@
     - [x] `UnknownSystem`
     - [x] `MissingSystemOrCode`.
 
+### TERM-05 - Mapping integration (reason codes, policy hooks)
+- [x] Integrate terminology checks into `dfps_mapping::map_staging_codes`:
+  - [x] For `UnknownSystem` ?+' `MappingResult.state = NoMatch`, `reason = "unknown_code_system"`.
+  - [x] For `MissingSystemOrCode` ?+' `reason = "missing_system_or_code"` (existing behavior).
+- [x] Add **license-aware** hooks (no hard policy yet, but wiring in the data):
+  - [x] Ensure `MappingResult` can optionally surface `license_tier` / `source_kind` via `reason` or a reserved metadata field if needed in the future.
+  - [x] Keep behavior deterministic and non-breaking for existing tests.
+- [x] Optional: add helper to aggregate counts by `CodeKind` and `LicenseTier` for observability.
+
+### TERM-06 - Tests
+- [x] Unit tests for registries:
+  - [x] Known URLs (CPT/SNOMED/LOINC/NCIt OBO) resolve with correct `LicenseTier` and `SourceKind`.
+  - [x] Bogus/non-canonical URLs resolve as `UnknownSystem`.
+- [x] Unit tests for `EnrichedCode`:
+  - [x] correct classification into `CodeKind` variants.
+- [x] Integration tests with `dfps_mapping`:
+  - [x] Known systems behave as before for mapping outcomes.
+  - [x] Unknown systems produce `reason = "unknown_code_system"`.
+  - [x] Ensure OBO-backed concepts are still treated as `Open` and do not flip any licensed flags.
+
+### TERM-07 - Docs (licensed vs unlicensed + OBO)
+- [x] Add `docs/system-design/clinical/fhir/concepts/terminology-layer.md` describing:
+  - [x] the **licensed vs unlicensed/open** terminology split,
+  - [x] the role of OBO Foundry ontologies,
+  - [x] where this sits between staging and NCIt mapping.
+- [x] Update:
+  - [x] `docs/system-design/clinical/fhir/overview.md` to reference the terminology layer and license split.
+  - [x] `docs/system-design/clinical/ncit/architecture.md` to explicitly call out:
+    - FHIR CodeSystems,
+    - UMLS/NCIm,
+    - OBOFoundry (NCIt OBO, MONDO) as distinct but connected sources.
+
+
 ---
 
 ## Acceptance Criteria
@@ -124,7 +126,5 @@
   - where OBO Foundry ontologies plug into the FHIR → NCIt pipeline.
 
 ## Out of Scope
-- Actual license enforcement or distribution logic (legal/compliance layer).
- Out of Scope
 - Actual license enforcement or distribution logic (legal/compliance layer).
 - Full OBO import/parse pipelines or ontology reasoners.

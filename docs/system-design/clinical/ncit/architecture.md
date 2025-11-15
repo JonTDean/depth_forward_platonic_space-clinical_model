@@ -60,8 +60,9 @@ architecture-beta
 
 - **Domain crates**
   - `lib/domain/ingestion` (`dfps_ingestion`) â€” emits `stg_sr_code_exploded` rows.
-  - `lib/domain/mapping` (`dfps_mapping`) â€” lexical/vector rankers, rule rerankers, and `MappingEngine`.
+  - `lib/domain/mapping` (`dfps_mapping`) â€” lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`.
   - `lib/domain/pipeline` (`dfps_pipeline`) â€” composes ingestion + mapping via `bundle_to_mapped_sr`.
+  - `lib/domain/terminology` (`dfps_terminology`) �?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**
   - `lib/platform/observability` â€” metrics/log helpers used by the CLI and tests.
   - `lib/platform/test_suite` â€” regression/property tests and fixtures.
@@ -81,3 +82,8 @@ architecture-beta
 - Thresholds live in `dfps_core::mapping::MappingThresholds`; defaults are surfaced in `MappingResult`.
 - `MappingResult.reason` explains whether a NoMatch came from missing data, low scores, or rule filters.
 - `map_bundles --log-level info â€¦` logs aggregated metrics (`auto_mapped`, `needs_review`, `no_match`) via `dfps_observability`.
+## Terminology instrumentation
+
+- `dfps_terminology::bridge::EnrichedCode` normalises system URLs, classifies codes into a `CodeKind`, and hands license/source metadata to `dfps_mapping`.
+- Every `MappingResult` includes `license_tier` / `source_kind`; NoMatch rows specify whether identifiers were missing or the system was unknown.
+- `dfps_mapping::MappingSummary` tallies counts by `CodeKind` and license tier; `map_staging_codes_with_summary` (used by `map_codes`) prints those tallies for quick observability.

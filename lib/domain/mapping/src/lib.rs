@@ -4,7 +4,7 @@
 //! This crate intentionally keeps the logic deterministic and self-contained so
 //! it can power golden/property tests without external services.
 
-use std::collections::HashSet;
+use std::collections::{BTreeMap, HashSet};
 use std::hash::{Hash, Hasher};
 
 use dfps_core::{
@@ -14,12 +14,31 @@ use dfps_core::{
     },
     staging::StgSrCodeExploded,
 };
+use dfps_terminology::{CodeKind, EnrichedCode};
 
 mod data;
 
 pub use data::{
     NCIT_DATA_VERSION, UMLS_DATA_VERSION, UmlsXref, load_ncit_concepts, load_umls_xrefs,
 };
+
+#[derive(Debug, Default, Clone, PartialEq, Eq)]
+pub struct MappingSummary {
+    pub total: usize,
+    pub by_code_kind: BTreeMap<String, usize>,
+    pub by_license_tier: BTreeMap<String, usize>,
+}
+
+impl MappingSummary {
+    pub fn record(&mut self, kind: CodeKind, license_label: Option<&str>) {
+        self.total += 1;
+        let kind_key = kind.as_str().to_string();
+        *self.by_code_kind.entry(kind_key).or_default() += 1;
+
+        let license_key = license_label.unwrap_or("unknown").to_string();
+        *self.by_license_tier.entry(license_key).or_default() += 1;
+    }
+}
 
 pub trait Mapper {
     fn map(&self, code: &CodeElement) -> MappingResult;
@@ -252,10 +271,38 @@ fn build_result_with_score(
         thresholds,
         source_version: source_versions(),
         reason: final_reason,
+        license_tier: None,
+        source_kind: None,
+    }
+}
+
+fn attach_license_metadata(result: &mut MappingResult, enriched: &EnrichedCode) {
+    if let Some(label) = enriched.license_label() {
+        result.license_tier = Some(label.to_string());
+    }
+    if let Some(label) = enriched.source_label() {
+        result.source_kind = Some(label.to_string());
     }
 }
 
 pub fn map_staging_codes<I>(codes: I) -> (Vec<MappingResult>, Vec<DimNCITConcept>)
+where
+    I: IntoIterator<Item = StgSrCodeExploded>,
+{
+    let (results, dims, _) = map_staging_codes_with_summary(codes);
+    (results, dims)
+}
+
+pub fn map_staging_codes_with_summary<I>(
+    codes: I,
+) -> (Vec<MappingResult>, Vec<DimNCITConcept>, MappingSummary)
+where
+    I: IntoIterator<Item = StgSrCodeExploded>,
+{
+    map_with_summary(codes.into_iter())
+}
+
+fn map_with_summary<I>(codes: I) -> (Vec<MappingResult>, Vec<DimNCITConcept>, MappingSummary)
 where
     I: IntoIterator<Item = StgSrCodeExploded>,
 {
@@ -271,42 +318,56 @@ where
     let xrefs = load_umls_xrefs();
     let engine = default_engine();
     let mut results = Vec::new();
+    let mut summary = MappingSummary::default();
 
     for staging in codes {
-        let element = CodeElement::from(&staging);
-        let system = staging.system.clone().unwrap_or_default();
-        let code_value = staging.code.clone().unwrap_or_default();
-        let key = (system.clone(), code_value.clone());
+        let enriched = EnrichedCode::from_staging(staging.clone());
+        let code_kind = enriched.code_kind();
+        let element = CodeElement::from(staging);
+        let system_value = enriched.staging.system.clone().unwrap_or_default();
+        let code_value = enriched.staging.code.clone().unwrap_or_default();
+        let key = (system_value.clone(), code_value.clone());
 
-        if system.is_empty() || code_value.is_empty() {
-            results.push(build_result_with_score(
+        summary.record(code_kind, enriched.license_label());
+
+        let mut result = match code_kind {
+            CodeKind::MissingSystemOrCode => build_result_with_score(
                 &element,
                 None,
                 None,
                 0.0,
                 MappingStrategy::Unmapped,
                 Some("missing_system_or_code".into()),
-            ));
-            continue;
-        }
-
-        let result = if let Some(xref) = xrefs.get(&key) {
-            build_result_with_score(
+            ),
+            CodeKind::UnknownSystem => build_result_with_score(
                 &element,
-                Some(xref.cui.clone()),
-                Some(xref.ncit_id.clone()),
-                0.99,
-                MappingStrategy::Rule,
-                Some("umls_direct_xref".into()),
-            )
-        } else {
-            engine.map(&element)
+                None,
+                None,
+                0.0,
+                MappingStrategy::Unmapped,
+                Some("unknown_code_system".into()),
+            ),
+            _ => {
+                if let Some(xref) = xrefs.get(&key) {
+                    build_result_with_score(
+                        &element,
+                        Some(xref.cui.clone()),
+                        Some(xref.ncit_id.clone()),
+                        0.99,
+                        MappingStrategy::Rule,
+                        Some("umls_direct_xref".into()),
+                    )
+                } else {
+                    engine.map(&element)
+                }
+            }
         };
 
+        attach_license_metadata(&mut result, &enriched);
         results.push(result);
     }
 
-    (results, dim_concepts)
+    (results, dim_concepts, summary)
 }
 
 #[cfg(test)]
@@ -329,5 +390,38 @@ mod tests {
         assert!(result.score > 0.5);
         assert!(result.ncit_id.unwrap().starts_with("NCIT:"));
         assert_ne!(result.state, MappingState::NoMatch);
+    }
+
+    #[test]
+    fn summary_tracks_code_kind_and_license_counts() {
+        let codes = vec![
+            StgSrCodeExploded {
+                sr_id: "SR-1".into(),
+                system: Some("http://www.ama-assn.org/go/cpt".into()),
+                code: Some("78815".into()),
+                display: None,
+            },
+            StgSrCodeExploded {
+                sr_id: "SR-2".into(),
+                system: Some("http://example.org/custom".into()),
+                code: Some("A1".into()),
+                display: None,
+            },
+            StgSrCodeExploded {
+                sr_id: "SR-3".into(),
+                system: None,
+                code: Some("B1".into()),
+                display: None,
+            },
+        ];
+
+        let (_, _, summary) = map_staging_codes_with_summary(codes);
+
+        assert_eq!(summary.total, 3);
+        assert_eq!(summary.by_code_kind.get("known_licensed_system"), Some(&1));
+        assert_eq!(summary.by_code_kind.get("unknown_system"), Some(&1));
+        assert_eq!(summary.by_code_kind.get("missing_system_or_code"), Some(&1));
+        assert_eq!(summary.by_license_tier.get("licensed"), Some(&1));
+        assert_eq!(summary.by_license_tier.get("unknown"), Some(&2));
     }
 }
