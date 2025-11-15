@@ -30,7 +30,9 @@ against the gold NDJSON fixtures.
    {
      "min_precision": 0.95,
      "min_recall": 0.95,
-     "min_f1": 0.95
+     "min_f1": 0.95,
+     "min_accuracy": 0.95,
+     "min_auto_precision": 0.98
    }
    ```
    ```bash
@@ -38,6 +40,7 @@ against the gold NDJSON fixtures.
      --dataset pet_ct_small \
      --thresholds config/eval_thresholds.json
    ```
+   `min_accuracy` guards overall correctness (regardless of predictions) while `min_auto_precision` focuses on the AutoMapped band specifically.
 5. Persist machine-readable artifacts for dashboards/CI (plus optional Markdown report):
    ```bash
    cargo run -p dfps_cli --bin eval_mapping -- \

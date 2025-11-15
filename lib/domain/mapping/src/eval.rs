@@ -31,6 +31,8 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     let mut score_bucket_map: BTreeMap<BucketKey, BucketTally> = BTreeMap::new();
     let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
     let mut advanced_samples = Vec::with_capacity(cases.len());
+    let mut auto_mapped_total = 0usize;
+    let mut auto_mapped_correct = 0usize;
 
     for (case, mapping) in cases.iter().cloned().zip(mappings.into_iter()) {
         let predicted = mapping.ncit_id.is_some();
@@ -48,6 +50,12 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
 
         let label = state_label(mapping.state).to_string();
         *summary.state_counts.entry(label).or_default() += 1;
+        if matches!(mapping.state, MappingState::AutoMapped) && predicted {
+            auto_mapped_total += 1;
+            if is_correct {
+                auto_mapped_correct += 1;
+            }
+        }
 
         record_stratified(&mut by_system, case.system.clone(), predicted, is_correct);
         record_stratified(
@@ -90,6 +98,18 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     summary.precision = precision;
     summary.recall = recall;
     summary.f1 = f1;
+    summary.accuracy = if summary.total_cases > 0 {
+        summary.correct as f32 / summary.total_cases as f32
+    } else {
+        0.0
+    };
+    summary.auto_mapped_total = auto_mapped_total;
+    summary.auto_mapped_correct = auto_mapped_correct;
+    summary.auto_mapped_precision = if auto_mapped_total > 0 {
+        auto_mapped_correct as f32 / auto_mapped_total as f32
+    } else {
+        0.0
+    };
     summary.by_system = finalize_stratified(by_system);
     summary.by_license_tier = finalize_stratified(by_license);
     summary.score_buckets = finalize_score_buckets(score_bucket_map);
@@ -207,6 +227,9 @@ mod tests {
         assert!(summary.precision >= 0.99);
         assert!(summary.recall >= 0.99);
         assert!(summary.f1 >= 0.99);
+        assert!(summary.accuracy >= 0.99);
+        assert!(summary.auto_mapped_total >= 1);
+        assert!(summary.auto_mapped_precision >= 0.99);
         assert_eq!(summary.state_counts.get("auto_mapped"), Some(&2));
         let system_metrics = summary
             .by_system

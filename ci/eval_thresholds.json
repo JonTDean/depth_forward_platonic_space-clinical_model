@@ -1,0 +1,7 @@
+{
+  "min_precision": 0.95,
+  "min_recall": 0.95,
+  "min_f1": 0.95,
+  "min_accuracy": 0.95,
+  "min_auto_precision": 0.98
+}

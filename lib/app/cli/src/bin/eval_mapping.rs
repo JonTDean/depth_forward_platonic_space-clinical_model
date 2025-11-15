@@ -43,6 +43,10 @@ struct SummaryView<'a> {
     precision: f32,
     recall: f32,
     f1: f32,
+    accuracy: f32,
+    auto_mapped_total: usize,
+    auto_mapped_correct: usize,
+    auto_mapped_precision: f32,
     #[serde(rename = "state_counts")]
     states: &'a std::collections::BTreeMap<String, usize>,
     by_system: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
@@ -60,6 +64,8 @@ struct ThresholdConfig {
     min_precision: Option<f32>,
     min_recall: Option<f32>,
     min_f1: Option<f32>,
+    min_accuracy: Option<f32>,
+    min_auto_precision: Option<f32>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -90,6 +96,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         precision: summary.precision,
         recall: summary.recall,
         f1: summary.f1,
+        accuracy: summary.accuracy,
+        auto_mapped_total: summary.auto_mapped_total,
+        auto_mapped_correct: summary.auto_mapped_correct,
+        auto_mapped_precision: summary.auto_mapped_precision,
         states: &summary.state_counts,
         by_system: &summary.by_system,
         by_license: &summary.by_license_tier,
@@ -187,6 +197,22 @@ fn enforce_thresholds(
             ));
         }
     }
+    if let Some(min) = cfg.min_accuracy {
+        if summary.accuracy < min {
+            return Err(format!(
+                "accuracy {} fell below configured minimum {}",
+                summary.accuracy, min
+            ));
+        }
+    }
+    if let Some(min) = cfg.min_auto_precision {
+        if summary.auto_mapped_precision < min {
+            return Err(format!(
+                "auto-mapped precision {} fell below configured minimum {}",
+                summary.auto_mapped_precision, min
+            ));
+        }
+    }
     Ok(())
 }
 
@@ -229,40 +255,22 @@ fn resolve_out_dir(base: &Path, args: &Args) -> PathBuf {
 }
 
 fn write_report(path: &Path, summary: &SummaryView) -> Result<(), Box<dyn std::error::Error>> {
-    let mut report = String::new();
-    report.push_str("# Mapping Evaluation Report\n\n");
-    report.push_str(&format!(
-        "*Total cases:* {}\n\n*Precision:* {:.3}\n\n*Recall:* {:.3}\n\n*F1:* {:.3}\n\n",
-        summary.total_cases, summary.precision, summary.recall, summary.f1
-    ));
-
-    report.push_str("## Score buckets\n\n| Bucket | Total | Correct | Accuracy |\n| --- | ---: | ---: | ---: |\n");
-    for bucket in summary.buckets {
-        report.push_str(&format!(
-            "| {} | {} | {} | {:.3} |\n",
-            bucket.bucket, bucket.total, bucket.correct, bucket.accuracy
-        ));
-    }
-
-    report.push_str("\n## NoMatch reasons\n\n| Reason | Count |\n| --- | ---: |\n");
-    for (reason, count) in summary.reasons {
-        report.push_str(&format!("| {} | {} |\n", reason, count));
-    }
-
-    if let Some(advanced) = summary.advanced {
-        report.push_str("\n## Confidence intervals\n\n");
-        report.push_str(&format!(
-            "Precision CI (95%): {:.3}–{:.3}\n\nRecall CI (95%): {:.3}–{:.3}\n\nF1 CI (95%): {:.3}–{:.3}\n\nIterations: {}\n",
-            advanced.precision_ci.0,
-            advanced.precision_ci.1,
-            advanced.recall_ci.0,
-            advanced.recall_ci.1,
-            advanced.f1_ci.0,
-            advanced.f1_ci.1,
-            advanced.bootstrap_iterations
-        ));
-    }
-
-    std::fs::write(path, report)?;
+    let mut summary_owned = dfps_eval::EvalSummary::default();
+    summary_owned.total_cases = summary.total_cases;
+    summary_owned.predicted_cases = summary.predicted_cases;
+    summary_owned.correct = summary.correct;
+    summary_owned.incorrect = summary.incorrect;
+    summary_owned.precision = summary.precision;
+    summary_owned.recall = summary.recall;
+    summary_owned.f1 = summary.f1;
+    summary_owned.accuracy = summary.accuracy;
+    summary_owned.auto_mapped_total = summary.auto_mapped_total;
+    summary_owned.auto_mapped_correct = summary.auto_mapped_correct;
+    summary_owned.auto_mapped_precision = summary.auto_mapped_precision;
+    summary_owned.score_buckets = summary.buckets.to_vec();
+    summary_owned.reason_counts = summary.reasons.clone();
+    summary_owned.advanced = summary.advanced.clone();
+    let markdown = dfps_eval::report::render_markdown(&summary_owned);
+    std::fs::write(path, markdown)?;
     Ok(())
 }

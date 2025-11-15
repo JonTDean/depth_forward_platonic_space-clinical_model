@@ -26,6 +26,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-022 – “EVAL-PLAT-02/03 – Advanced metrics & CI guard” (EvalSummary adds F1 + stratified metrics; `dfps_cli eval_mapping` supports `--dataset` + `--thresholds` for regression gates).
 - EVAL-022 – “EVAL-PLAT-04/05 – Artifacts + tiered datasets” (`dfps_cli eval_mapping --out-dir/--report` writes summary/results/report artifacts; nine bronze/silver/gold datasets with updated runbooks/docs/tests; `/api/eval/summary` exposed in `dfps_api`).
 - EVAL-022 – “EVAL-PLAT-02 – Calibration buckets” (`EvalSummary.score_buckets` now capture deterministic 0.1 score bands with accuracy per bucket; Markdown report/runbook document the calibration view).
+- EVAL-022 – “EVAL-PLAT-03 – CI regression gate” (`EvalSummary` tracks overall accuracy and AutoMapped precision; CLI thresholds/CI workflow enforce regression guards on the `gold_pet_ct_small` dataset).
 
 ---
 

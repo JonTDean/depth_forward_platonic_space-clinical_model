@@ -20,19 +20,6 @@
 
 ## TODO
 
-
-### EVAL-PLAT-02 – Advanced metrics
-
-- [x] Advanced stats when the feature flag `eval-advanced` is set:
-  - [x] Bootstrap confidence intervals for key metrics (`dfps_eval::bootstrap_metrics`).
-  - [x] Calibration-style summaries (e.g., score buckets vs correctness).
-
-### EVAL-PLAT-03 – CI & regression gates
-
-- [ ] Wire CI job:
-  - [ ] On each merge to main, run `eval-mapping` against at least one gold set.
-  - [ ] Fail the pipeline if AutoMapped precision or overall accuracy regresses.
-
 ### EVAL-PLAT-04 – Dashboards & reporting
 
 - [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
@@ -199,6 +186,9 @@
     - [x] Code system (CPT/SNOMED/LOINC/NCIt OBO).
     - [x] LicenseTier (licensed vs open).
     - MappingState (AutoMapped/NeedsReview/NoMatch) already present.
+- [x] Advanced stats when the feature flag `eval-advanced` is set:
+  - [x] Bootstrap confidence intervals for key metrics (`dfps_eval::bootstrap_metrics`).
+  - [x] Calibration-style summaries (e.g., score buckets vs correctness).
 
 ### EVAL-PLAT-03 – CI & regression gates
 
@@ -206,7 +196,10 @@
   - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
     - [x] Runs `run_eval` and writes a JSON summary.
     - [x] Exit with non-zero code if metrics drop below configured thresholds.
-
+- [x] Wire CI job:
+  - [x] On each merge to main, run `eval-mapping` against at least one gold set.
+  - [x] Fail the pipeline if AutoMapped precision or overall accuracy regresses.
+  
 ### EVAL-PLAT-04 – Dashboards & reporting
 
 - [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
@@ -221,6 +214,7 @@
 - [x] Tests in `dfps_test_suite`:
   - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
   - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.
+
 
 ---
 

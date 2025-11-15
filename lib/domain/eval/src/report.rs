@@ -5,8 +5,16 @@ pub fn render_markdown(summary: &EvalSummary) -> String {
     let mut out = String::new();
     out.push_str("# Mapping Evaluation Report\n\n");
     out.push_str(&format!(
-        "*Total cases:* {}\\n\n*Precision:* {:.4}\\n\\n*Recall:* {:.4}\\n\\n*F1:* {:.4}\\n\n",
-        summary.total_cases, summary.precision, summary.recall, summary.f1
+        "*Total cases:* {}\\n\n*Precision:* {:.4}\\n\\n*Recall:* {:.4}\\n\\n*Accuracy:* {:.4}\\n\\n*F1:* {:.4}\\n\n\
+*AutoMapped precision:* {:.4} ({} of {})\\n\n",
+        summary.total_cases,
+        summary.precision,
+        summary.recall,
+        summary.accuracy,
+        summary.f1,
+        summary.auto_mapped_precision,
+        summary.auto_mapped_correct,
+        summary.auto_mapped_total
     ));
 
     out.push_str("## Calibration buckets\n\n");
