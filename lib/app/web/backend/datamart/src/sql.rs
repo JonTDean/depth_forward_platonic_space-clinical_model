@@ -1,0 +1,216 @@
+use std::time::Duration;
+
+use dfps_configuration::load_env;
+use dfps_core::mapping::DimNCITConcept;
+use dfps_core::value::{EncounterId, PatientId, ServiceRequestId};
+use dfps_pipeline::PipelineOutput;
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, Pool, Sqlite};
+
+use crate::{DimCode, DimCodeKey, DimEncounter, DimEncounterKey, DimNCIT, DimNCITKey, DimPatient, DimPatientKey, FactServiceRequest};
+
+pub const CREATE_DIM_PATIENT: &str = r#"
+CREATE TABLE IF NOT EXISTS dim_patient (
+  patient_key INTEGER PRIMARY KEY,
+  patient_id TEXT NOT NULL
+);"#;
+
+pub const CREATE_DIM_ENCOUNTER: &str = r#"
+CREATE TABLE IF NOT EXISTS dim_encounter (
+  encounter_key INTEGER PRIMARY KEY,
+  encounter_id TEXT NOT NULL,
+  patient_key INTEGER NOT NULL REFERENCES dim_patient(patient_key)
+);"#;
+
+pub const CREATE_DIM_CODE: &str = r#"
+CREATE TABLE IF NOT EXISTS dim_code (
+  code_key INTEGER PRIMARY KEY,
+  code_element_id TEXT NOT NULL,
+  system TEXT,
+  code TEXT,
+  display TEXT
+);"#;
+
+pub const CREATE_DIM_NCIT: &str = r#"
+CREATE TABLE IF NOT EXISTS dim_ncit (
+  ncit_key INTEGER PRIMARY KEY,
+  ncit_id TEXT NOT NULL,
+  preferred_name TEXT,
+  semantic_group TEXT
+);"#;
+
+pub const CREATE_FACT_SERVICE_REQUEST: &str = r#"
+CREATE TABLE IF NOT EXISTS fact_service_request (
+  sr_id TEXT PRIMARY KEY,
+  patient_key INTEGER NOT NULL REFERENCES dim_patient(patient_key),
+  encounter_key INTEGER REFERENCES dim_encounter(encounter_key),
+  code_key INTEGER NOT NULL REFERENCES dim_code(code_key),
+  ncit_key INTEGER REFERENCES dim_ncit(ncit_key),
+  status TEXT,
+  intent TEXT,
+  description TEXT,
+  ordered_at TEXT
+);"#;
+
+pub fn ddl_statements() -> &'static [&'static str] {
+    &[
+        CREATE_DIM_PATIENT,
+        CREATE_DIM_ENCOUNTER,
+        CREATE_DIM_CODE,
+        CREATE_DIM_NCIT,
+        CREATE_FACT_SERVICE_REQUEST,
+    ]
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WarehouseConfig {
+    pub url: String,
+    pub schema: Option<String>,
+    pub max_connections: u32,
+}
+
+impl WarehouseConfig {
+    pub fn from_env() -> Result<Self, String> {
+        load_env("domain.datamart")
+            .map_err(|err| format!("warehouse env load error: {err}"))
+            .ok();
+        let url = std::env::var("DFPS_WAREHOUSE_URL")
+            .map_err(|_| "DFPS_WAREHOUSE_URL missing".to_string())?;
+        let schema = std::env::var("DFPS_WAREHOUSE_SCHEMA").ok();
+        let max_connections = std::env::var("DFPS_WAREHOUSE_MAX_CONNECTIONS")
+            .ok()
+            .and_then(|raw| raw.parse::<u32>().ok())
+            .unwrap_or(5);
+        Ok(Self {
+            url,
+            schema,
+            max_connections,
+        })
+    }
+}
+
+pub async fn migrate(pool: &Pool<Sqlite>) -> Result<(), sqlx::Error> {
+    for stmt in ddl_statements() {
+        sqlx::query(stmt).execute(pool).await?;
+    }
+    Ok(())
+}
+
+pub async fn connect_sqlite(cfg: &WarehouseConfig) -> Result<Pool<Sqlite>, sqlx::Error> {
+    Pool::<Sqlite>::builder()
+        .max_lifetime(Duration::from_secs(60))
+        .max_size(cfg.max_connections)
+        .after_connect(|conn, _meta| {
+            Box::pin(async move {
+                if let Some(schema) = &cfg.schema {
+                    let _ = sqlx::query(&format!("ATTACH DATABASE '{}' AS '{}';", schema, schema))
+                        .execute(conn)
+                        .await;
+                }
+                Ok(())
+            })
+        })
+        .build(&cfg.url)
+        .await
+}
+
+#[derive(Debug, FromRow)]
+pub struct DimPatientRow {
+    pub patient_key: i64,
+    pub patient_id: String,
+}
+
+impl From<&DimPatient> for DimPatientRow {
+    fn from(dim: &DimPatient) -> Self {
+        Self {
+            patient_key: dim.key.0 as i64,
+            patient_id: dim.patient_id.clone(),
+        }
+    }
+}
+
+#[derive(Debug, FromRow)]
+pub struct DimEncounterRow {
+    pub encounter_key: i64,
+    pub encounter_id: String,
+    pub patient_key: i64,
+}
+
+impl From<&DimEncounter> for DimEncounterRow {
+    fn from(dim: &DimEncounter) -> Self {
+        Self {
+            encounter_key: dim.key.0 as i64,
+            encounter_id: dim.encounter_id.clone(),
+            patient_key: dim.patient_key.0 as i64,
+        }
+    }
+}
+
+#[derive(Debug, FromRow)]
+pub struct DimCodeRow {
+    pub code_key: i64,
+    pub code_element_id: String,
+    pub system: Option<String>,
+    pub code: Option<String>,
+    pub display: Option<String>,
+}
+
+impl From<&DimCode> for DimCodeRow {
+    fn from(dim: &DimCode) -> Self {
+        Self {
+            code_key: dim.key.0 as i64,
+            code_element_id: dim.code_element_id.clone(),
+            system: dim.system.clone(),
+            code: dim.code.clone(),
+            display: dim.display.clone(),
+        }
+    }
+}
+
+#[derive(Debug, FromRow)]
+pub struct DimNCITRow {
+    pub ncit_key: i64,
+    pub ncit_id: String,
+    pub preferred_name: String,
+    pub semantic_group: Option<String>,
+}
+
+impl From<&DimNCIT> for DimNCITRow {
+    fn from(dim: &DimNCIT) -> Self {
+        Self {
+            ncit_key: dim.key.0 as i64,
+            ncit_id: dim.ncit_id.clone(),
+            preferred_name: dim.preferred_name.clone(),
+            semantic_group: dim.semantic_group.clone(),
+        }
+    }
+}
+
+#[derive(Debug, FromRow)]
+pub struct FactServiceRequestRow {
+    pub sr_id: String,
+    pub patient_key: i64,
+    pub encounter_key: Option<i64>,
+    pub code_key: i64,
+    pub ncit_key: Option<i64>,
+    pub status: String,
+    pub intent: String,
+    pub description: String,
+    pub ordered_at: Option<String>,
+}
+
+impl From<&FactServiceRequest> for FactServiceRequestRow {
+    fn from(fact: &FactServiceRequest) -> Self {
+        Self {
+            sr_id: fact.sr_id.clone(),
+            patient_key: fact.patient_key.0 as i64,
+            encounter_key: fact.encounter_key.map(|k| k.0 as i64),
+            code_key: fact.code_key.0 as i64,
+            ncit_key: fact.ncit_key.map(|k| k.0 as i64),
+            status: fact.status.clone(),
+            intent: fact.intent.clone(),
+            description: fact.description.clone(),
+            ordered_at: fact.ordered_at.clone(),
+        }
+    }
+}

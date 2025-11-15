@@ -1,6 +1,7 @@
 pub mod dim;
 pub mod fact;
 pub mod keys;
+pub mod sql;
 
 use std::collections::{BTreeMap, HashMap};
 

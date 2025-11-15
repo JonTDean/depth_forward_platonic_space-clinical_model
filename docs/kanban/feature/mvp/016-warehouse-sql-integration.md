@@ -16,29 +16,29 @@
 
 ### WH-SQL-01 – DB driver & schema definitions
 
-- [ ] Add a DB library to the workspace (e.g., `sqlx` with `postgres` / `sqlite` feature) in `Cargo.toml`.
-- [ ] Under `dfps_datamart`, create a `sql` module with:
+- [x] Add a DB library to the workspace (e.g., `sqlx` with `postgres` / `sqlite` feature) in `Cargo.toml`.
+- [x] Under `dfps_datamart`, create a `sql` module with:
 
-  - [ ] `CREATE TABLE` DDL strings for:
+  - [x] `CREATE TABLE` DDL strings for:
 
     - `dim_patient`, `dim_encounter`, `dim_code`, `dim_ncit`, `fact_service_request`.
 
-  - [ ] Rust structs deriving `sqlx::FromRow` / `sqlx::Type` to map `Dim*` / `FactServiceRequest` into DB rows.
+  - [x] Rust structs deriving `sqlx::FromRow` / `sqlx::Type` to map `Dim*` / `FactServiceRequest` into DB rows.
 
-- [ ] Add env-driven config for DB connection:
+- [x] Add env-driven config for DB connection:
 
   - `DFPS_WAREHOUSE_URL`, `DFPS_WAREHOUSE_SCHEMA`, `DFPS_WAREHOUSE_MAX_CONNECTIONS`.
 
 ### WH-SQL-02 – Migration & setup tooling
 
-- [ ] Provide a minimal migration runner (module or new binary):
+- [x] Provide a minimal migration runner (module or new binary):
 
   - `dfps_datamart::migrate()` or `dfps_cli warehouse-migrate` that:
 
-    - [ ] Applies bundled migrations (offline) to the configured database.
-    - [ ] Is idempotent and safe to run on CI.
+    - [x] Applies bundled migrations (offline) to the configured database.
+    - [x] Is idempotent and safe to run on CI.
 
-- [ ] Store migration files under `data/sql/migrations` with clear naming/versioning.
+- [x] Store migration files under `data/sql/migrations` with clear naming/versioning.
 
 ### WH-SQL-03 – Loader from PipelineOutput -> DB
 
