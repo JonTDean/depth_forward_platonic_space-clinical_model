@@ -1,4 +1,4 @@
-# Kanban — feature/app/desktop-mvp
+# Kanban - feature/app/desktop-mvp
 
 ### Columns
 * **TODO** – Not started yet  
@@ -38,7 +38,7 @@
 
 ### DESK-05 – Docs & architecture alignment
 - [ ] Update `docs/system-design/base/directory-architecture.md` to list `dfps_desktop` explicitly under `lib/app/frontend/desktop`.
-- [ ] Add a short “Desktop shell MVP” section (either here or a new doc) explaining how the desktop app wraps the existing FHIR → NCIt pipeline.
+- [ ] Add a short “Desktop shell MVP” section (either here or a new doc) explaining how the desktop app wraps the existing FHIR -> NCIt pipeline.
 - [ ] Ensure doc comments in `dfps_desktop` link to `docs/system-design/clinical/fhir/*` and `docs/system-design/clinical/ncit/*` where appropriate.
 
 ---

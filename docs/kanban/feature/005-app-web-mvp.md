@@ -1,6 +1,6 @@
-# Kanban — feature/app/web-mvp
+# Kanban - feature/app/web-mvp
 
-**Epic:** Web surface for the FHIR → NCIt pipeline, implemented as:
+**Epic:** Web surface for the FHIR -> NCIt pipeline, implemented as:
 - Backend API: `feature/app/web/backend-mvp`
 - Frontend UI: `feature/app/web/frontend-mvp`
 
@@ -92,7 +92,7 @@ _Working branch: `feature/app/web/backend-mvp`_
 - [x] Add the crate to the root `[workspace].members` under the `app` section.
 - [x] Expose a `run()` function that `main()` delegates to so tests can drive the server in-process.
 
-#### WEB-BE-02 – Core FHIR → NCIt HTTP API
+#### WEB-BE-02 – Core FHIR -> NCIt HTTP API
 - [x] Add dependencies on `dfps_pipeline` and `dfps_observability`.
 - [x] Implement `POST /api/map-bundles`:
   - [x] Accept a single FHIR `Bundle` or an array/NDJSON of Bundles.
@@ -122,7 +122,7 @@ _Working branch: `feature/app/web/backend-mvp`_
 #### WEB-BE-05 – Directory-architecture alignment (backend)
 - [x] Update `docs/system-design/base/directory-architecture.md` to:
   - [x] Add a “web backend” entry under `lib/app` (e.g., `app/web/backend/api`).
-  - [x] Describe its responsibilities as an HTTP gateway over the FHIR → NCIt pipeline.
+  - [x] Describe its responsibilities as an HTTP gateway over the FHIR -> NCIt pipeline.
 
 ---
 

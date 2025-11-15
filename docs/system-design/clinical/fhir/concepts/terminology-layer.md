@@ -22,7 +22,7 @@ DFPS keeps an explicit terminology layer between FHIR staging and NCIt mapping. 
    - surface license context on every `MappingResult` for downstream policy or observability.
 4. OBO-backed concepts (e.g., NCIt OBO, MONDO) are always treated as open.
 
-> When updating the terminology layer, ensure the registries, helper enums, and bridge logic stay consistent with the kanban (TERM-01 … TERM-07) and that `MappingResult` metadata stays in sync with docs.
+> When updating the terminology layer, ensure the registries, helper enums, and bridge logic stay consistent with the kanban (TERM-01 ï¿½ TERM-07) and that `MappingResult` metadata stays in sync with docs.
 ## License-aware mapping outputs
 
 - `dfps_core::mapping::MappingResult` now carries `license_tier` and `source_kind` strings for every emitted row.

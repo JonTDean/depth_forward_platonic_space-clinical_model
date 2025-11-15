@@ -149,7 +149,7 @@ code/lib/domain/
   * Schema/validation for incoming payloads.
 * Examples:
 
-  * FHIR ServiceRequest → internal “procedure request” models.
+  * FHIR ServiceRequest -> internal “procedure request” models.
   * NCIt / UMLS loaders that emit `CodeElement` sets.
 
 #### `mapping/` – Semantic mapping engine
@@ -176,7 +176,7 @@ code/lib/domain/
   * Provide reusable “flows” that `app/` crates can invoke.
 * Examples:
 
-  * “Ingest FHIR ServiceRequests → normalize → map to NCIt → emit structured results.”
+  * “Ingest FHIR ServiceRequests -> normalize -> map to NCIt -> emit structured results.”
   * Job definitions that can be scheduled / invoked from CLI or web.
 
 #### `fake_data/` – Domain-aware generators
@@ -273,20 +273,20 @@ Keep crate names stable (e.g. `dfps_core`, `dfps_mapping`); only the paths chang
 
 ---
 
-## Old → new path mapping
+## Old -> new path mapping
 
 For historical reference:
 
 ```text
 # Before
-code/lib/core           → code/lib/domain/core
-code/lib/fake_data      → code/lib/domain/fake_data
-code/lib/ingestion      → code/lib/domain/ingestion
-code/lib/mapping        → code/lib/domain/mapping
-code/lib/pipeline       → code/lib/domain/pipeline
-code/lib/frontend       → code/lib/app/frontend
-code/lib/observability  → code/lib/platform/observability
-code/lib/test_suite     → code/lib/platform/test_suite
+code/lib/core           -> code/lib/domain/core
+code/lib/fake_data      -> code/lib/domain/fake_data
+code/lib/ingestion      -> code/lib/domain/ingestion
+code/lib/mapping        -> code/lib/domain/mapping
+code/lib/pipeline       -> code/lib/domain/pipeline
+code/lib/frontend       -> code/lib/app/frontend
+code/lib/observability  -> code/lib/platform/observability
+code/lib/test_suite     -> code/lib/platform/test_suite
 ```
 
 ---

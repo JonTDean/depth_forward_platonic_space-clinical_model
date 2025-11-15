@@ -29,10 +29,10 @@
    - Regression fixtures under `lib/platform/test_suite/fixtures/regression/`
 
 6) **Run standard checks**
-   - `cargo make fmt` · `cargo make clippy` · `cargo make test`
+   - `cargo make fmt` ï¿½ `cargo make clippy` ï¿½ `cargo make test`
    - If docs changed: `cargo make docs` (builds mdBook after `docs-sync`)
 
 7) **Update docs, terminology, kanban**
    - Keep behavior and flows aligned; run `docs-sync` + `docs`
    - Update `semantic-relationships.yaml` if semantics changed
-   - Move kanban cards across columns; don’t rewrite checklists—check them off
+   - Move kanban cards across columns; donï¿½t rewrite checklistsï¿½check them off

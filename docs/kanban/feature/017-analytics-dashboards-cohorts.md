@@ -1,6 +1,6 @@
-# Kanban — feature/analytics-dashboards-cohorts (017)
+# Kanban - feature/analytics-dashboards-cohorts (017)
 
-**Theme:** Warehouse & analytics platform — BI-style dashboards & cohort UI  
+**Theme:** Warehouse & analytics platform - BI-style dashboards & cohort UI  
 **Branch:** `feature/app/web/analytics-dashboards-cohorts`  
 **Goal:** Provide a minimal analytics surface (HTTP + web UI) to explore NCIt-coded cohorts and mapping state distributions, and define integration points for external BI tools.
 

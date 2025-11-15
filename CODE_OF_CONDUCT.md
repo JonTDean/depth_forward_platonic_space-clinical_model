@@ -1,6 +1,6 @@
 # Code of Conduct (Academic/Research Projects)
 
-This project is a research‑oriented, open collaboration. We expect all contributors—students, faculty, staff, industry partners, and community members—to uphold professional, inclusive, and ethical behavior consistent with scholarly practice.
+This project is a research‑oriented, open collaboration. We expect all contributors-students, faculty, staff, industry partners, and community members-to uphold professional, inclusive, and ethical behavior consistent with scholarly practice.
 
 ## Our Values
 

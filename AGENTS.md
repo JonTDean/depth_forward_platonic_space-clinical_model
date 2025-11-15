@@ -29,7 +29,7 @@ _All paths relative to `code/`._
 ## System-design docs
 
 ### Base / workspace layout
-- `docs/system-design/base/directory-architecture.md` ó **Read this first** to pick crate homes.  
+- `docs/system-design/base/directory-architecture.md` ÔøΩ **Read this first** to pick crate homes.  
   Buckets: `app/`, `domain/`, `platform/`.
 
 ### FHIR system (selected)
@@ -45,13 +45,13 @@ _All paths relative to `code/`._
 - Overview: `docs/system-design/ncit/index.md`
 
 ## Workspace tooling
-- `Makefile.toml` + `data/makefiles/` ó standardized cargo-make tasks
-- `docs/book/` ó mdBook sources and built HTML
-- `docs/runbook/` ó runbooks (synced into the mdBook)
-- `data/environment/` ó `.env.*.example` templates (loader: `dfps_configuration`)
+- `Makefile.toml` + `data/makefiles/` ÔøΩ standardized cargo-make tasks
+- `docs/book/` ÔøΩ mdBook sources and built HTML
+- `docs/runbook/` ÔøΩ runbooks (synced into the mdBook)
+- `data/environment/` ÔøΩ `.env.*.example` templates (loader: `dfps_configuration`)
 
 ## Binary entrypoint
-- `src/main.rs` ó if used; may compose `lib/pipeline` etc.
+- `src/main.rs` ÔøΩ if used; may compose `lib/pipeline` etc.
 
 
 # General Workflow (Feature / Refactor / Bugfix)
@@ -85,13 +85,78 @@ _All paths relative to `code/`._
    - Regression fixtures under `lib/platform/test_suite/fixtures/regression/`
 
 6) **Run standard checks**
-   - `cargo make fmt` ∑ `cargo make clippy` ∑ `cargo make test`
+   - `cargo make fmt` ÔøΩ `cargo make clippy` ÔøΩ `cargo make test`
    - If docs changed: `cargo make docs` (builds mdBook after `docs-sync`)
 
 7) **Update docs, terminology, kanban**
    - Keep behavior and flows aligned; run `docs-sync` + `docs`
    - Update `semantic-relationships.yaml` if semantics changed
-   - Move kanban cards across columns; donít rewrite checklistsócheck them off
+   - Move kanban cards across columns; donÔøΩt rewrite checklistsÔøΩcheck them off
+
+
+# Kanban Version Sync (Lightweight, Docs‚ÄëOnly)
+
+**Scope:** applies when modifying any file under `docs/kanban/**`.  
+**Goal:** keep **epic-level** versioning in sync **without** bumping Cargo versions on every checkbox.
+
+---
+
+## When you check off a Kanban item
+
+Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/**`:
+
+1) **Read the current workspace version** from `code/Cargo.toml` -> `[workspace.package].version`.  
+   If missing, write `Unreleased` instead of a version number for the steps below.
+
+2) **Update the epic header** in the Kanban you touched:
+   - If the epic is newly started and its ‚ÄúIntroduced in‚Äù is `_TBD_`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
+   - Always set **‚ÄúLast updated in‚Äù** to the current workspace version (or `Unreleased`).
+
+   Example:
+   ```markdown
+   > Status: **In progress**  
+   > Introduced in: `v0.2.0`  
+   > Last updated in: `v0.2.1`
+   ```
+
+3) **Update the cross‚Äëepic index** at `docs/kanban/_epic_versions.yaml`.  
+   Ensure the epic ID is present with `introduced_in` and `last_updated_in`.
+
+   ```yaml
+   epics:
+     FP-07:
+       introduced_in: v0.2.0
+       last_updated_in: v0.2.1
+     MAP-09:
+       introduced_in: v0.2.0
+       last_updated_in: v0.2.1
+   ```
+
+4) **Add/refresh an Unreleased changelog entry** in `CHANGELOG.md` referencing the epic and the exact checklist line you checked:
+   ```markdown
+   ## [Unreleased]
+   ### Changed
+   - FP-07 ‚Äì ‚ÄúNormalize ServiceRequest.status casing‚Äù (checkbox completed)
+   ```
+
+5) **Commit message**  
+   Use a docs‚Äëscoped commit that cites the epic:
+   ```
+   docs(FP-07): check off ‚ÄúNormalize status casing‚Äù; update epic header, versions index, changelog
+   ```
+
+> **No code version bump here.** Actual **SemVer** bumps (patch/minor/major) only happen in release PRs or when the change meets your breaking/feature criteria. See ‚ÄúRelease flow‚Äù below.
+
+---
+
+## Release flow (when you *do* bump versions)
+
+1) Decide the bump: **patch** for backward‚Äëcompatible fixes, **minor** for added functionality, **major** for breaking changes.  
+2) Update `[workspace.package].version` at `code/Cargo.toml` and switch all `Unreleased` epic headers/entries that shipped in this release to that version.  
+3) Convert `## [Unreleased]` bullets into a final `## [X.Y.Z] ‚Äì YYYY‚ÄëMM‚ÄëDD` section.  
+4) Tag: `git tag -a vX.Y.Z -m "..."; git push origin vX.Y.Z`.
+
+*(SemVer definitions; Keep‚Äëa‚ÄëChangelog section structure.)*
 
 
 # Kanban Maintenance
@@ -103,7 +168,7 @@ _All paths relative to `code/`._
 
 ## Adding a card (example)
 ```markdown
-### FP-07 ñ Validation & error surface
+### FP-07 ÔøΩ Validation & error surface
 - [ ] Add `IngestionError` in `lib/domain/ingestion/src/transforms.rs`
 - [ ] Update FHIR semantics in `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [ ] Add regression fixtures under `lib/platform/test_suite/fixtures/regression/`
@@ -148,40 +213,74 @@ When mapping states/semantics change:
 
 A change is acceptable only if:
 
-1. **Tests** ó Unit/integration/e2e/property tests updated; `cargo test --all` passes
-2. **Formatting & linting** ó `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings`
-3. **Docs & terminology** ó System-design docs updated; terminology consistent; module `//!` headers present
-4. **Kanban** ó Cards in correct columns; new work discovered is captured as TODO cards with IDs
+1. **Tests** - Unit/integration/e2e/property tests updated; `cargo test --all` passes
+2. **Formatting & linting** - `cargo fmt --all` and `cargo clippy --all-targets -- -D warnings`
+3. **Docs & terminology** - System-design docs updated; terminology consistent; module `//!` headers present
+4. **Kanban** - Cards in correct columns; new work discovered is captured as TODO cards with IDs
 
 
 # Branching & Commit Conventions
 
 ## Branching
-- Base: `main`; prefer 1 card ? 1 feature branch
+- Base: `main`; prefer **one card -> one feature branch**.
 
-**Name:**
+**Name**
 ```
 <kind>/<card-id>-kebab-summary
 ```
-where `<kind>` ? {`feature`, `bugfix`, `chore`, `docs`, `spike`}
+Where `<kind>` ‚àà {`feature`, `bugfix`, `chore`, `docs`, `spike`} and `<card-id>` is the epic/card ID in Kanban (e.g., `FP-07`, `MAP-03`).
 
-**Examples:**
-- `feature/FP-07-ingestion-error-surface`
-- `bugfix/MAP-03-fix-ncit-concept-id`
-- `docs/DM-05-align-fhir-docs`
+**Branch ‚Üî Epic binding (required)**
+- The **active Git branch must be recorded in the epic Kanban** you are working on.
+- In the epic header, add or update:
+  - `Branch: <branch-name>`
+  - `Branch target version: <semver or Unreleased>`
+- If the branch name does **not** contain the `<card-id>`, rename the branch to match the convention or note the exception in the epic.
 
-**Workflow**
-1. Move card to **DOING**; branch from `main`
-2. Implement code + tests + docs
-3. All checks pass ? move to **REVIEW**
-4. Merge to `main` ? **DONE**
+**Epic header example**
+```markdown
+> Epic: FP-07 ‚Äì Ingestion error surface
+> Branch: feature/FP-07-ingestion-error-surface
+> Branch target version: v0.2.1
+> Status: DOING
+> Introduced in: _TBD_
+> Last updated in: v0.2.1
+```
+
+## Workflow
+
+1. **TODO -> DOING**
+   - Create the branch from `main` using the naming rule.
+   - In the epic Kanban, ensure the header contains:
+     - `Branch: <branch-name>`
+     - `Branch target version: Unreleased` (or seed with the planned semver)
+     - `Status: DOING`
+
+2. **Implement**
+   - Code + tests + docs as usual.
+
+3. **DOING -> REVIEW or DONE (leaving DOING)**
+   - **Update the branch target version in the epic** (metadata only; do **not** bump Cargo here):
+     - **PATCH** - routine/internal change
+     - **MINOR** - user‚Äëvisible addition
+     - **MAJOR** - breaking change
+   - Set `Last updated in` to that version.
+   - Keep `Introduced in: _TBD_` until a release PR.
+
+4. **Merge -> `main`**
+   - Move the card to **DONE**.
+   - In the epic header, mark it as **included in the upcoming release** (e.g., add `Release: Upcoming` or an equivalent line).
+   - Add/refresh a `## [Unreleased]` item in `CHANGELOG.md` referencing the epic ID and the **Branch target version**.
+
+> **Note:** The workspace SemVer in `Cargo.toml` is only bumped in a **release PR** that collects all ‚ÄúUpcoming‚Äù epics. Until then, the epic carries the **Branch target version** as intent.
 
 ## Commits
-**Format:**
+
+**Format**
 ```
 <type>(<card-id>[:<scope>]): short imperative summary
 ```
-`<type>` ? {`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci`}
+`<type>` ‚àà {`feat`, `fix`, `refactor`, `chore`, `docs`, `test`, `ci`}
 
 **Examples**
 ```
@@ -191,23 +290,33 @@ docs(DM-05): document core domain model and invariants
 ```
 
 **Body tips**
-- Bullet points of cross-cutting changes
+- Bullet points of cross‚Äëcutting changes
 - Mention updated docs/fixtures
 - `Tests:` line with what ran
+- If Kanban metadata changed, note it explicitly, e.g.:
+  - `Kanban: record Branch=feature/FP-07-...`
+  - `Kanban: set Branch target version -> v0.2.1`
+  - `CHANGELOG: add Unreleased entry (FP-07)`
+
+## Pre‚Äëmerge checklist
+- Epic Kanban has `Branch:` recorded and `Branch target version` set
+- Card moved to **DONE**; epic marked **Upcoming** (or equivalent)
+- `CHANGELOG.md` updated under `[Unreleased]`
+- `cargo make fmt` ¬∑ `cargo make clippy` ¬∑ `cargo make test` all passing
 
 
 # Example Agent Flow
 
-**Request:** ìAdd a new mapping state ëHeuristicMatchí between NeedsReview and AutoMapped.î
+**Request:** ÔøΩAdd a new mapping state ÔøΩHeuristicMatchÔøΩ between NeedsReview and AutoMapped.ÔøΩ
 
 Steps
-1) Kanban ó Add/Update card `MAP-09 ñ Add HeuristicMatch mapping state`
-2) Read ó NCIt state/behavior docs + terminology YAML + directory architecture
-3) Modify ó `lib/domain/core/src/mapping/mod.rs`, `lib/domain/mapping/src/lib.rs`
-4) Tests ó `lib/platform/test_suite/tests/unit/mapping_properties.rs`, e2e as needed
-5) Run ó fmt, clippy, test
-6) Docs ó Update NCIt behavior docs + terminology YAML
-7) Kanban ó Move `MAP-09` to **REVIEW**/**DONE** with brief note
+1) Kanban ÔøΩ Add/Update card `MAP-09 ÔøΩ Add HeuristicMatch mapping state`
+2) Read ÔøΩ NCIt state/behavior docs + terminology YAML + directory architecture
+3) Modify ÔøΩ `lib/domain/core/src/mapping/mod.rs`, `lib/domain/mapping/src/lib.rs`
+4) Tests ÔøΩ `lib/platform/test_suite/tests/unit/mapping_properties.rs`, e2e as needed
+5) Run ÔøΩ fmt, clippy, test
+6) Docs ÔøΩ Update NCIt behavior docs + terminology YAML
+7) Kanban ÔøΩ Move `MAP-09` to **REVIEW**/**DONE** with brief note
 
 
 # Codex Compatibility Notes
@@ -219,8 +328,8 @@ Steps
 - **Prompting best practices for agents.** Provide clear file/symbol pointers; include verification steps (`fmt`, `clippy`, `test`, mdBook build); split large tasks. (Codex prompting guide)
 
 References:
-- Custom instructions & discovery: Codex ìCustom instructions with AGENTS.mdî.
-- Prompting patterns: Codex ìPrompting guideî.
+- Custom instructions & discovery: Codex ÔøΩCustom instructions with AGENTS.mdÔøΩ.
+- Prompting patterns: Codex ÔøΩPrompting guideÔøΩ.
 
 
 ## Crate Responsibilities

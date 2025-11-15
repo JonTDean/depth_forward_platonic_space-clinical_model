@@ -1,6 +1,6 @@
-# Kanban — feature/mapping-benchmarking-platform (022)
+# Kanban - feature/mapping-benchmarking-platform (022)
 
-**Theme:** Evaluation & benchmarking — large-scale gold sets, advanced metrics  
+**Theme:** Evaluation & benchmarking - large-scale gold sets, advanced metrics  
 **Branch:** `feature/platform/mapping-benchmarking-platform`  
 **Goal:** Evolve the existing mapping eval harness into a small benchmarking platform with larger gold datasets, richer metrics, and CI/Dashboard integration.
 

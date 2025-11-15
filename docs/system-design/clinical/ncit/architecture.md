@@ -2,9 +2,9 @@
 
 ## Legend
 
-- [Square nodes] â€“ entities/tables
-- (Rounded nodes) â€“ services/processes
-- Subgraphs â€“ layers (Staging, Mapping, UMLS/NCIm, OBO, Warehouse)
+- (Square nodes): entities/tables
+- (Rounded nodes): services/processes
+- Subgraphs: layers (Staging, Mapping, UMLS/NCIm, OBO, Warehouse)
 
 ## High-level mapping pipeline
 
@@ -59,24 +59,24 @@ architecture-beta
 ## Implementation layers
 
 - **Domain crates**
-  - `lib/domain/ingestion` (`dfps_ingestion`) â€” emits `stg_sr_code_exploded` rows.
-  - `lib/domain/mapping` (`dfps_mapping`) â€” lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`.
-  - `lib/domain/pipeline` (`dfps_pipeline`) â€” composes ingestion + mapping via `bundle_to_mapped_sr`.
-  - `lib/domain/terminology` (`dfps_terminology`) �?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
+  - `lib/domain/ingestion` (`dfps_ingestion`) : emits `stg_sr_code_exploded` rows.
+  - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`.
+  - `lib/domain/pipeline` (`dfps_pipeline`) : composes ingestion + mapping via `bundle_to_mapped_sr`.
+  - `lib/domain/terminology` (`dfps_terminology`) -?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**
-  - `lib/platform/observability` â€” metrics/log helpers used by the CLI and tests.
-  - `lib/platform/test_suite` â€” regression/property tests and fixtures.
+  - `lib/platform/observability` : metrics/log helpers used by the CLI and tests.
+  - `lib/platform/test_suite` : regression/property tests and fixtures.
 - **Warehouse bridge**
-  - `lib/app/web/backend/datamart` (`dfps_datamart`) �?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
+  - `lib/app/web/backend/datamart` (`dfps_datamart`) -?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**
-  - `lib/app/cli` â€” `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes.
+  - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes.
 
 ## Mapping states & thresholds
 
 | State        | Condition                                  | Action                                             |
 |--------------|--------------------------------------------|----------------------------------------------------|
-| AutoMapped   | Score â‰¥ 0.95 (default)                     | Persist & link to NCIt without manual review       |
-| NeedsReview  | 0.60 â‰¤ score < 0.95                        | Surface to curation queue                          |
+| AutoMapped   | Score >= 0.95 (default)                     | Persist & link to NCIt without manual review       |
+| NeedsReview  | 0.60 >= score < 0.95                        | Surface to curation queue                          |
 | NoMatch      | Score < 0.60 or missing identifiers        | Track with `reason` + provenance for later triage  |
 
 - Thresholds live in `dfps_core::mapping::MappingThresholds`; defaults are surfaced in `MappingResult`.

@@ -1,12 +1,12 @@
 # Example Agent Flow
 
-**Request:** “Add a new mapping state ‘HeuristicMatch’ between NeedsReview and AutoMapped.”
+**Request:** ï¿½Add a new mapping state ï¿½HeuristicMatchï¿½ between NeedsReview and AutoMapped.ï¿½
 
 Steps
-1) Kanban — Add/Update card `MAP-09 – Add HeuristicMatch mapping state`
-2) Read — NCIt state/behavior docs + terminology YAML + directory architecture
-3) Modify — `lib/domain/core/src/mapping/mod.rs`, `lib/domain/mapping/src/lib.rs`
-4) Tests — `lib/platform/test_suite/tests/unit/mapping_properties.rs`, e2e as needed
-5) Run — fmt, clippy, test
-6) Docs — Update NCIt behavior docs + terminology YAML
-7) Kanban — Move `MAP-09` to **REVIEW**/**DONE** with brief note
+1) Kanban ï¿½ Add/Update card `MAP-09 ï¿½ Add HeuristicMatch mapping state`
+2) Read ï¿½ NCIt state/behavior doc+ + terminology YAM+ + directory architecture
+3) Modify ï¿½ `lib/domain/core/src/mapping/mod.rs`, `lib/domain/mapping/src/lib.rs`
+4) Tests ï¿½ `lib/platform/test_suite/tests/unit/mapping_properties.rs`, e2e as needed
+5) Run ï¿½ fmt, clippy, test
+6) Docs ï¿½ Update NCIt behavior doc+ + terminology YAML
+7) Kanban ï¿½ Move `MAP-09` to **REVIEW**/**DONE** with brief note

@@ -1,4 +1,4 @@
-# Kanban — feature/terminology-layer (011)
+# Kanban - feature/terminology-layer (011)
 
 **Branch:** `feature/domain/terminology-layer`  
 **Goal:** Introduce an explicit terminology layer that:
@@ -46,10 +46,10 @@
   - [x] `SourceKind` enum (e.g., `FHIR`, `UMLS`, `OBOFoundry`, `Local`).
   - [x] `CodeSystemMeta { url, name, version, description, license_tier, source_kind }`.
 - [x] Seed registry entries for core systems, with **license-aware** classification:
-  - [x] `http://www.ama-assn.org/go/cpt` → `Licensed`.
-  - [x] `http://snomed.info/sct` → `Licensed`.
-  - [x] `http://loinc.org` → appropriate tier (e.g., `Licensed` or `Open`, per policy).
-  - [x] NCIt OBO IRI(s) → `Open`, `source_kind = OBOFoundry`.
+  - [x] `http://www.ama-assn.org/go/cpt` -> `Licensed`.
+  - [x] `http://snomed.info/sct` -> `Licensed`.
+  - [x] `http://loinc.org` -> appropriate tier (e.g., `Licensed` or `Open`, per policy).
+  - [x] NCIt OBO IRI(s) -> `Open`, `source_kind = OBOFoundry`.
 - [x] Add helper APIs:
   - [x] `lookup_codesystem(url: &str) -> Option<CodeSystemMeta>`
   - [x] `is_licensed(url: &str) -> bool`
@@ -123,7 +123,7 @@
   - open/OBO-backed systems.
 - Docs clearly reflect:
   - how licensed vs unlicensed vocabularies are handled, and
-  - where OBO Foundry ontologies plug into the FHIR → NCIt pipeline.
+  - where OBO Foundry ontologies plug into the FHIR -> NCIt pipeline.
 
 ## Out of Scope
 - Actual license enforcement or distribution logic (legal/compliance layer).

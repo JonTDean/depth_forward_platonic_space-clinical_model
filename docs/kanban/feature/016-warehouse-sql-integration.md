@@ -1,6 +1,6 @@
-# Kanban — feature/warehouse-sql-integration (016)
+# Kanban - feature/warehouse-sql-integration (016)
 
-**Theme:** Warehouse & analytics platform — DB schema, loaders, SQL integration  
+**Theme:** Warehouse & analytics platform - DB schema, loaders, SQL integration  
 **Branch:** `feature/app/web/backend/warehouse-sql-integration`  
 **Goal:** Persist `dfps_datamart` dims/facts into a relational database (e.g., Postgres) with minimal migrations, loaders, and tests, turning the in-memory mart into a queryable warehouse.
 
@@ -40,7 +40,7 @@
 
 - [ ] Store migration files under `data/sql/migrations` with clear naming/versioning.
 
-### WH-SQL-03 – Loader from PipelineOutput → DB
+### WH-SQL-03 – Loader from PipelineOutput -> DB
 
 - [ ] Introduce a new loader API:
 

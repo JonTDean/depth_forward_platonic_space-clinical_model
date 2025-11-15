@@ -1,4 +1,4 @@
-# Kanban — feature/mapping-ncit-skeleton
+# Kanban - feature/mapping-ncit-skeleton
 
 ### Columns
 * **TODO** – Not started yet
@@ -45,12 +45,12 @@
     - [x] `LexicalRanker` (string contains / Jaccard-ish heuristic)
     - [x] `VectorRankerMock` (deterministic “embedding” via hashing; no external deps)
     - [x] `RuleReranker` (prefers NCIt-linked CUIs, bumps SNOMED/CPT priority)
-  - [x] `MappingEngine` composing rankers + rules → `MappingResult`
+  - [x] `MappingEngine` composing rankers + rules -> `MappingResult`
 
 ### MAP-03 – Minimal NCIt/UMLS mock data
 - [x] Tiny embedded tables for tests:
   - [x] `ncit_concepts.json` (e.g., `NCIT:C19951` “Positron Emission Tomography”)
-  - [x] `umls_xrefs.json` linking SNOMED/CPT/LOINC → CUIs → NCIt
+  - [x] `umls_xrefs.json` linking SNOMED/CPT/LOINC -> CUIs -> NCIt
 - [x] Loaders + lookups with stable version identifiers (for provenance)
 
 ### MAP-04 – Pipelines & integration points
@@ -59,8 +59,8 @@
 
 ### MAP-05 – Tests
 - [x] Golden tests (deterministic):
-  - [x] Known input code “78815” → expected NCIt concept
-  - [x] SNOMED PET concept → expected NCIt
+  - [x] Known input code “78815” -> expected NCIt concept
+  - [x] SNOMED PET concept -> expected NCIt
 - [x] Property tests:
   - [x] `score` monotonicity under synonym augmentation
   - [x] Top-1 candidate always ≥ all others
@@ -101,7 +101,7 @@
 ## Acceptance Criteria
 - Mapping crate compiles; traits + engine wired.
 - Golden tests pass with deterministic outputs for the seeded sample codes.
-- End-to-end: `StgSrCodeExploded` → `CodeElement` → `MappingResult (NCIT:Cxxxx)` with provenance.
+- End-to-end: `StgSrCodeExploded` -> `CodeElement` -> `MappingResult (NCIT:Cxxxx)` with provenance.
 - Threshold behavior produces expected states (AutoMapped / NeedsReview / NoMatch).
 
 ## Out of Scope (deferred)

@@ -38,7 +38,7 @@ cd code
 
 ## 3) Environment Configuration
 
-The configuration loader automatically reads namespace‑specific dotenv files from `data/environment/` based on `DFPS_ENV` (default: `dev`). Do **not** commit real secrets—only the `.example` templates.
+The configuration loader automatically reads namespace‑specific dotenv files from `data/environment/` based on `DFPS_ENV` (default: `dev`). Do **not** commit real secrets-only the `.example` templates.
 
 1. Copy templates:
 

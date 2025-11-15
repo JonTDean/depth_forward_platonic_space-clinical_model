@@ -1,7 +1,7 @@
-# Kanban — feature/mapping-eval-harness (012)
+# Kanban - feature/mapping-eval-harness (012)
 
 **Branch:** `feature/platform/mapping-eval-harness`  
-**Goal:** Build a lightweight evaluation harness that measures NCIt mapping quality (precision/recall, state distributions) against gold-standard code → NCIt labels.
+**Goal:** Build a lightweight evaluation harness that measures NCIt mapping quality (precision/recall, state distributions) against gold-standard code -> NCIt labels.
 
 ### Columns
 * **TODO** - Not started yet

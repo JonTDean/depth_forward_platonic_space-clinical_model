@@ -1,6 +1,6 @@
-# Kanban — feature/mapping-vector-backend (013)
+# Kanban - feature/mapping-vector-backend (013)
 
-**Theme:** External infra & heavy services — real vector DB / vector search  
+**Theme:** External infra & heavy services - real vector DB / vector search  
 **Branch:** `feature/mapping-vector-backend`  
 **Goal:** Pluggable vector-store backed ranker for `dfps_mapping` (e.g., pgvector/Qdrant/etc.), wired into `MappingEngine` and CLIs, with clean fallbacks when the backend is unavailable.
 
@@ -18,7 +18,7 @@
 
 - [ ] Add a `VectorStore` trait (and minimal `EmbeddingProvider` if needed) under a new platform crate:
 
-  - `lib/platform/vector_store` → crate `dfps_vector_store`
+  - `lib/platform/vector_store` -> crate `dfps_vector_store`
   - Trait operations:
     - [ ] `index_items(namespace, items: &[(id, text)]) -> Result<()>`
     - [ ] `search(namespace, query_vec, top_k) -> Result<Vec<(id, score)>>`

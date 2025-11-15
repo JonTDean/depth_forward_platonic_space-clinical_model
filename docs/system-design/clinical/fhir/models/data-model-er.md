@@ -1,5 +1,5 @@
 
-# FHIR → staging entity-relationship view
+# FHIR -> staging entity-relationship view
 
 ```mermaid
 erDiagram

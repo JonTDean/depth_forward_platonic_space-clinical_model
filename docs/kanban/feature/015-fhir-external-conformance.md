@@ -1,4 +1,4 @@
-# Kanban — feature/fhir-external-conformance (015)
+# Kanban - feature/fhir-external-conformance (015)
 
 **Themes:** External infra & heavy services; Spec-complete semantics (FHIR)  
 **Branch:** `feature/fhir-external-conformance`  

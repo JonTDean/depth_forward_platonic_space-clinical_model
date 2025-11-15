@@ -1,4 +1,4 @@
-# Makefile Quickstart — DFPS
+# Makefile Quickstart - DFPS
 
 This quickstart lists the most useful `cargo make` commands for day-to-day work.
 

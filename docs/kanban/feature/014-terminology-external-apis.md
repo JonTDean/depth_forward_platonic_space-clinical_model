@@ -1,6 +1,6 @@
-# Kanban — feature/terminology-external-apis (014)
+# Kanban - feature/terminology-external-apis (014)
 
-**Theme:** External infra & heavy services — UMLS/NCIt APIs  
+**Theme:** External infra & heavy services - UMLS/NCIt APIs  
 **Branch:** `feature/terminology-external-apis`  
 **Goal:** Introduce networked terminology clients for UMLS/NCIm/NCIt and wire them into `dfps_terminology` + `dfps_mapping` as an optional fallback for unknown or low-confidence codes.
 

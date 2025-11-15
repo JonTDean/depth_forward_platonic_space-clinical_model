@@ -31,7 +31,7 @@ script = [
 [tasks.codex-sync]
 description = "Concatenate .codex shards into AGENTS.md"
 script = [
-    "powershell -NoLogo -NoProfile -Command \"bash scripts/codex_sync.sh\""
+    "powershell -NoLogo -NoProfile -Command \"bash data/scripts/codex_sync.sh\""
 ]
 
 [tasks.codex-check]

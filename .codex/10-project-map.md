@@ -12,7 +12,7 @@ _All paths relative to `code/`._
 ## System-design docs
 
 ### Base / workspace layout
-- `docs/system-design/base/directory-architecture.md` — **Read this first** to pick crate homes.  
+- `docs/system-design/base/directory-architecture.md` ï¿½ **Read this first** to pick crate homes.  
   Buckets: `app/`, `domain/`, `platform/`.
 
 ### FHIR system (selected)
@@ -28,10 +28,10 @@ _All paths relative to `code/`._
 - Overview: `docs/system-design/ncit/index.md`
 
 ## Workspace tooling
-- `Makefile.toml` + `data/makefiles/` — standardized cargo-make tasks
-- `docs/book/` — mdBook sources and built HTML
-- `docs/runbook/` — runbooks (synced into the mdBook)
-- `data/environment/` — `.env.*.example` templates (loader: `dfps_configuration`)
+- `Makefile.toml` + `data/makefiles/` ï¿½ standardized cargo-make tasks
+- `docs/book/` ï¿½ mdBook sources and built HTML
+- `docs/runbook/` ï¿½ runbooks (synced into the mdBook)
+- `data/environment/` ï¿½ `.env.*.example` templates (loader: `dfps_configuration`)
 
 ## Binary entrypoint
-- `src/main.rs` — if used; may compose `lib/pipeline` etc.
+- `src/main.rs` ï¿½ if used; may compose `lib/pipeline` etc.

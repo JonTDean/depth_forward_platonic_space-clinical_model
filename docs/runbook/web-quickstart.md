@@ -1,6 +1,6 @@
-# Web Quickstart — DFPS Mapping Workbench
+# Web Quickstart - DFPS Mapping Workbench
 
-This runbook teaches new contributors how to run the DFPS web experience locally. It walks through the backend HTTP gateway, the frontend UI shell, the relevant environment variables, and the expected end-to-end flows so you can validate the FHIR → NCIt pipeline in under ten minutes.
+This runbook teaches new contributors how to run the DFPS web experience locally. It walks through the backend HTTP gateway, the frontend UI shell, the relevant environment variables, and the expected end-to-end flows so you can validate the FHIR -> NCIt pipeline in under ten minutes.
 
 ---
 
@@ -10,7 +10,7 @@ This runbook teaches new contributors how to run the DFPS web experience locally
 | --- | --- | --- | --- |
 | Backend API | `code/lib/app/web/backend/api` | `dfps_api` | Axum HTTP gateway that exposes `/api/map-bundles`, `/metrics/summary`, and `/health` by delegating to `dfps_pipeline`. |
 | Frontend UI | `code/lib/app/web/frontend` | `dfps_web_frontend` | Actix server that renders Tailwind/HTMX pages, proxies uploads/paste actions to the backend, and shows metrics/NoMatch explorer views. |
-| Shared fixtures | `code/lib/platform/test_suite/src/regression.rs` | — | Contains helper functions that emit baseline FHIR bundles used in tests and manual runs. |
+| Shared fixtures | `code/lib/platform/test_suite/src/regression.rs` | - | Contains helper functions that emit baseline FHIR bundles used in tests and manual runs. |
 
 Both binaries live in the main Cargo workspace, so `cargo run -p <crate>` works anywhere under `code/`.
 
@@ -153,8 +153,8 @@ cargo test -p dfps_web_frontend
 
 Included tests:
 
-- `routes::tests::submitting_bundle_renders_mapping_rows` — spins up a mocked backend (wiremock) and exercises the `/map/paste` handler.
-- `views::tests::render_page_shows_metrics_and_no_match_details` — snapshot-style assertion that the HTML includes key strings/states.
+- `routes::tests::submitting_bundle_renders_mapping_rows` - spins up a mocked backend (wiremock) and exercises the `/map/paste` handler.
+- `views::tests::render_page_shows_metrics_and_no_match_details` - snapshot-style assertion that the HTML includes key strings/states.
 - `view_model` unit test verifying NoMatch derivation logic.
 
 Backend integration tests live in `lib/platform/test_suite/tests/integration/web_api.rs`. Run them with:
@@ -170,7 +170,7 @@ cargo test -p dfps_test_suite --tests web_api
 | Symptom | Likely cause | Fix |
 | --- | --- | --- |
 | Frontend hero shows “Backend warning: Health endpoint unreachable” | Backend not running or wrong `DFPS_API_BASE_URL`. | Start `dfps_api` and confirm the URL matches the actual port. |
-| Upload/paste returns “Backend error: status 500 …” | Backend rejected the JSON (invalid FHIR or not an array/Bundle). | Validate the payload; compare with `sample-bundle.json` or use fixtures from `dfps_test_suite::regression`. |
+| Upload/paste returns “Backend error: status 500 ...” | Backend rejected the JSON (invalid FHIR or not an array/Bundle). | Validate the payload; compare with `sample-bundle.json` or use fixtures from `dfps_test_suite::regression`. |
 | Curl works but frontend shows blank results | Frontend displays a friendly message when zero `MappingResult` rows come back. | Ensure the bundle includes codes under `stg_sr_code_exploded` by checking backend logs. |
 | Port already in use errors | Another service bound to `8080` or `8090`. | Change the respective env vars to free ports. |
 

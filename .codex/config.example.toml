@@ -1,5 +1,5 @@
-# Place this at: code/.codex/config.toml (optional)
-# Use it by launching: CODEX_HOME=$(pwd)/code/.codex codex exec "Summarize instructions"
+# Place this at: .codex/config.toml (optional)
+# Use it by launching: CODEX_HOME=$(pwd)/.codex codex exec "Summarize instructions"
 
 # Treat old filename as a fallback during migration
 project_doc_fallback_filenames = ["AGENT.md", ".agents.md", "TEAM_GUIDE.md"]

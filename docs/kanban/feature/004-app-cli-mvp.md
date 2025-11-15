@@ -1,4 +1,4 @@
-# Kanban — feature/app/cli-mvp
+# Kanban - feature/app/cli-mvp
 
 ### Columns
 * **TODO** – Not started yet
@@ -15,7 +15,7 @@
 - [ ] Add the crate to the root `[workspace].members` under the `app` bucket.
 - [ ] Expose a `run()` function that `main()` delegates to so tests can exercise CLI logic without spawning a separate process.
 
-### APP-02 – `map-bundles` subcommand (Bundle → NCIt pipeline)
+### APP-02 – `map-bundles` subcommand (Bundle -> NCIt pipeline)
 - [ ] Implement a `map-bundles` subcommand that:
   - [ ] Reads NDJSON FHIR `Bundle`s from stdin or an `--input` path.
   - [ ] Calls `dfps_pipeline::bundle_to_mapped_sr` for each bundle.
@@ -34,7 +34,7 @@
 ### APP-04 – CLI ergonomics & logging (OBS-03 follow-up)
 - [ ] Initialize logging via `env_logger` and respect `RUST_LOG` for `dfps_pipeline` and `dfps_mapping`.
 - [ ] Make `--help` output describe:
-  - [ ] The Bundle → staging → NCIt flow at a high level.
+  - [ ] The Bundle -> staging -> NCIt flow at a high level.
   - [ ] Required/optional flags and relevant environment variables.
 - [ ] Add a short README section (or extend existing docs) describing common CLI invocations and sample pipelines.
 - [ ] Close out `OBS-03` from `feature-base-skeleton` by ensuring CLIs are discoverable and documented.
@@ -48,8 +48,8 @@
 
 ### APP-06 – Tests & CI for CLI surfaces
 - [ ] Add integration tests in `dfps_test_suite` that exercise the CLI `run()` entrypoint with:
-  - [ ] The baseline FHIR bundle fixture → assert NDJSON counts and expected NCIt IDs.
-  - [ ] An “unknown code” bundle → assert `NoMatch` mapping state and corresponding metrics increments.
+  - [ ] The baseline FHIR bundle fixture -> assert NDJSON counts and expected NCIt IDs.
+  - [ ] An “unknown code” bundle -> assert `NoMatch` mapping state and corresponding metrics increments.
 - [ ] Optionally add a small CLI smoke test in CI (e.g., run `dfps_cli generate-fhir-bundles | dfps_cli map-bundles` on 1–2 bundles and assert exit code 0).
 
 ---

@@ -7,5 +7,5 @@
 - **Prompting best practices for agents.** Provide clear file/symbol pointers; include verification steps (`fmt`, `clippy`, `test`, mdBook build); split large tasks. (Codex prompting guide)
 
 References:
-- Custom instructions & discovery: Codex “Custom instructions with AGENTS.md”.
-- Prompting patterns: Codex “Prompting guide”.
+- Custom instructions & discovery: Codex ï¿½Custom instructions with AGENTS.mdï¿½.
+- Prompting patterns: Codex ï¿½Prompting guideï¿½.

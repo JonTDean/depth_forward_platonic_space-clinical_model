@@ -1,4 +1,4 @@
-# State machine: lifecycle of a code → NCIt mapping
+# State machine: lifecycle of a code -> NCIt mapping
 
 ```mermaid
 stateDiagram-v2

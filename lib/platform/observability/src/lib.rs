@@ -1,6 +1,6 @@
 //! Workspace-wide observability helpers for logging and metrics snapshots.
 //!
-//! Hooks into the Bundle → NCIt pipeline so CLIs can emit structured log
+//! Hooks into the Bundle -> NCIt pipeline so CLIs can emit structured log
 //! events and tests can validate mapping state distributions (OBS-01 / OBS-02).
 
 use dfps_core::{

@@ -1,4 +1,4 @@
-﻿# Env Quickstart — DFPS Workspace
+﻿# Env Quickstart - DFPS Workspace
 
 This runbook explains how environment profiles are organized across the DFPS workspace, how the `dfps_configuration` loader discovers `.env` files, and how to create local overrides for dev/test/prod.
 
@@ -12,7 +12,7 @@ Every crate calls `dfps_configuration::load_env(<namespace>)` during startup. Th
 2. Determines the workspace root (walks up until it finds `Cargo.lock` unless `DFPS_WORKSPACE_ROOT` is set).
 3. Searches `data/environment/` (or `DFPS_ENV_DIR`) for `.env.<namespace>.<profile>`. If missing, it also checks `.env.<namespace>.local` in the same directory.
 4. Loads the first file it finds; if none exist and `DFPS_ENV_STRICT=1` (or `CI` is set), the process aborts with a helpful error listing every path that was attempted.
-5. `DFPS_ENV_FILE` overrides the filename entirely—useful for pointing at deployment-specific secrets.
+5. `DFPS_ENV_FILE` overrides the filename entirely-useful for pointing at deployment-specific secrets.
 
 ## 2. Namespace map
 
@@ -49,7 +49,7 @@ Each namespace-specific `.env` file can also hold logging directives (`RUST_LOG`
 1. Navigate to `code/data/environment/`.
 2. Copy the relevant `.env.<namespace>.example` file to `.env.<namespace>.<profile>` (e.g., `.env.app.web.api.dev`).
 3. Fill in any secrets or overrides.
-4. Keep real `.env.*` files untracked—only the `.example` templates live in git.
+4. Keep real `.env.*` files untracked-only the `.example` templates live in git.
 
 Example (`.env.app.web.frontend.dev`):
 
@@ -66,6 +66,6 @@ RUST_LOG=dfps_web_frontend=info
 - Set `DFPS_ENV_STRICT=1` (or let `CI` do it) so missing env files break fast with a detailed error.
 - In CI, copy production-safe templates into `data/environment/` before running binaries, or set `DFPS_ENV_FILE` to point at a secure secret mount.
 - For deployments, provide the env files via your orchestration layer (Kubernetes ConfigMap/Secret, GitHub Actions `env` file, etc.) and set `DFPS_ENV_DIR` accordingly.
-- Avoid storing credentials in the repo—use the `.example` files purely as documentation of required keys.
+- Avoid storing credentials in the repo-use the `.example` files purely as documentation of required keys.
 
 For web-specific startup instructions, see `docs/runbook/web-quickstart.md`.

@@ -7,7 +7,7 @@
 
 ## Adding a card (example)
 ```markdown
-### FP-07 – Validation & error surface
+### FP-07 ï¿½ Validatio& & error surface
 - [ ] Add `IngestionError` in `lib/domain/ingestion/src/transforms.rs`
 - [ ] Update FHIR semantics in `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [ ] Add regression fixtures under `lib/platform/test_suite/fixtures/regression/`

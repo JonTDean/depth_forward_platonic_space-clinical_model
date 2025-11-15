@@ -1,4 +1,4 @@
-# Kanban — feature/fhir-pipeline-mvp
+# Kanban - feature/fhir-pipeline-mvp
 
 ### Columns
 * **TODO** – Not started yet
@@ -40,10 +40,10 @@
 
 ### FP-02 – Ingestion crate: transforms
 - [x] New crate `dfps_ingestion`
-  - [x] `sr_to_staging(sr)` → `(StgServiceRequestFlat, Vec<StgSrCodeExploded>)`
-  - [x] `sr_to_domain(sr)` → `dfps_core::order::ServiceRequest` (normalize `status`/`intent`)
+  - [x] `sr_to_staging(sr)` -> `(StgServiceRequestFlat, Vec<StgSrCodeExploded>)`
+  - [x] `sr_to_domain(sr)` -> `dfps_core::order::ServiceRequest` (normalize `status`/`intent`)
   - [x] `bundle_to_staging(bundle)` + `bundle_to_domain(bundle)`
-  - [x] Helper to parse FHIR `Reference` `"Type/ID"` → `ID`
+  - [x] Helper to parse FHIR `Reference` `"Type/ID"` -> `ID`
 
 ### FP-03 – Fake raw FHIR generators
 - [x] Extend `dfps_fake_data` with `raw_fhir` module:
@@ -56,8 +56,8 @@
 ### FP-04 – Tests: e2e, properties, regression
 - [x] Add `dfps_test_suite` dependency on `dfps_ingestion`
 - [x] E2E: `fhir_ingest_flow.rs`
-  - [x] bundle → staging rows (1 flat per SR; N exploded rows = `coding.len()`)
-  - [x] bundle → domain aggregate matches IDs & normalized status/intent
+  - [x] bundle -> staging rows (1 flat per SR; N exploded rows = `coding.len()`)
+  - [x] bundle -> domain aggregate matches IDs & normalized status/intent
 - [x] Property test: for random seeds, `exploded.len() == sum(coding.len())`
 - [x] Regression fixture: `fixtures/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
 
@@ -72,12 +72,12 @@
   - [x] `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [x] Short “ingestion MVP” note in `docs/system-design/fhir/index.md`
 
-### E2E-01 – Bundle → mapped concepts facade
+### E2E-01 – Bundle -> mapped concepts facade
 - [x] Add a public entrypoint (new crate `dfps_pipeline` or module in `dfps_mapping`) that composes `bundle_to_staging` and `map_staging_codes`:
   - [x] `bundle_to_mapped_sr(bundle) -> (Vec<StgServiceRequestFlat>, Vec<MappingResult>, Vec<DimNCITConcept>)`
   - [x] Return structured errors for ingestion/mapping failures.
 
-### E2E-02 – End-to-end test: FHIR → staging → NCIt
+### E2E-02 – End-to-end test: FHIR -> staging -> NCIt
 - [x] In `dfps_test_suite`, load the regression bundle fixture, run the facade, and assert:
   - [x] Flat/exploded counts match the staging invariants.
   - [x] PET codes resolve to the expected NCIt IDs and mapping states.
@@ -113,5 +113,5 @@
 
 ### FP-09 – Quickstart docs & CLI usage
 - [x] Update `docs/system-design/fhir/index.md` (or crate README) with copy/paste snippets:
-  - [x] Example: load bundle JSON → call `bundle_to_staging`.
+  - [x] Example: load bundle JSON -> call `bundle_to_staging`.
   - [x] Document `generate_fhir_bundle` CLI usage for devs.

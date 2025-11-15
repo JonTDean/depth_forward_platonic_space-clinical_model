@@ -1,6 +1,6 @@
-# Kanban — feature/docs-hosting-and-search (021)
+# Kanban - feature/docs-hosting-and-search (021)
 
-**Theme:** Docs polish — public hosting, full-text search, theming  
+**Theme:** Docs polish - public hosting, full-text search, theming  
 **Branch:** `feature/meta/docs-hosting-and-search`  
 **Goal:** Turn the local mdBook into a searchable, themed, publicly hosted documentation site, integrated with `/docs` in the frontend.
 

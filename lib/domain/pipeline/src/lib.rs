@@ -2,7 +2,7 @@
 //!
 //! Matches the flows in `docs/system-design/fhir/index.md#quickstart` and
 //! `docs/system-design/ncit/behavior/sequence-servicerequest.md` by exposing a
-//! single entrypoint from Bundle → staging → NCIt concepts.
+//! single entrypoint from Bundle -> staging -> NCIt concepts.
 
 use dfps_core::{
     fhir::Bundle,

@@ -1,7 +1,7 @@
 # dfps_api (Axum backend)
 
 Endpoints:
-- `POST /api/map-bundles` — accepts a Bundle, array of Bundles, or NDJSON
+- `POST /api/map-bundles` - accepts a Bundle, array of Bundles, or NDJSON
 - `GET /metrics/summary`
 - `GET /health`
 

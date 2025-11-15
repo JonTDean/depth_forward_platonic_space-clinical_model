@@ -1,6 +1,6 @@
-# Kanban — feature/fhir-profiles-and-structuredefinition (018)
+# Kanban - feature/fhir-profiles-and-structuredefinition (018)
 
-**Theme:** Spec-complete semantics — FHIR profiling & conformance metadata  
+**Theme:** Spec-complete semantics - FHIR profiling & conformance metadata  
 **Branch:** `feature/domain/fhir-profiles-structuredefinition`  
 **Goal:** Represent core FHIR `StructureDefinition` metadata in code and wire it into ingestion validation, so requirements and profile constraints stay aligned.
 

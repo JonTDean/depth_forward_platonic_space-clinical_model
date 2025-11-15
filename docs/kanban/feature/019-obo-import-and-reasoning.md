@@ -1,6 +1,6 @@
-# Kanban — feature/obo-import-and-reasoning (019)
+# Kanban - feature/obo-import-and-reasoning (019)
 
-**Theme:** Spec-complete semantics — full(er) OBO import & lightweight reasoning  
+**Theme:** Spec-complete semantics - full(er) OBO import & lightweight reasoning  
 **Branch:** `feature/domain/obo-import-and-reasoning`  
 **Goal:** Import NCIt OBO (and at least one companion OBO ontology) into a graph representation and expose simple reasoning utilities (transitive closure, synonym expansion) for mapping and analytics.
 

@@ -1,4 +1,4 @@
-﻿# Kanban â€” feature/fhir-validation-profiles (010)
+﻿# Kanban - feature/fhir-validation-profiles (010)
 
 **Branch:** `feature/domain/fhir-validation-profiles`  
 **Goal:** Turn FHIR ingestion requirements into executable validation logic that annotates ServiceRequests with requirement-linked issues before staging/mapping.
