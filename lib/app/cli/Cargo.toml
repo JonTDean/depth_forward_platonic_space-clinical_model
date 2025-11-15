@@ -11,6 +11,10 @@ path = "src/bin/map_bundles.rs"
 name = "map_codes"
 path = "src/bin/map_codes.rs"
 
+[[bin]]
+name = "eval_mapping"
+path = "src/bin/eval_mapping.rs"
+
 [dependencies]
 dfps_core = { path = "../../domain/core" }
 dfps_pipeline = { path = "../../domain/pipeline" }

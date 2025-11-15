@@ -20,6 +20,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-012 – “EVAL-01 – Gold standard format” (documented NDJSON schema + PET/CT gold sample).
 - EVAL-012 – “EVAL-02 – Evaluation core API” (`dfps_mapping::eval::{EvalCase, EvalResult, EvalSummary, run_eval}` powering precision/recall + MappingState confusion metrics).
 - EVAL-012 – “EVAL-03 – Test harness integration” (dfps_test_suite fixture loader + `mapping_eval` integration tests asserting precision + NoMatch coverage).
+- EVAL-012 – “EVAL-04 – CLI wrapper” (`dfps_cli eval_mapping` reads gold NDJSON and prints summary + optional EvalResult lines).
 
 ---
 

@@ -49,12 +49,13 @@
   - [ ] label-mismatched golds never report as correct.
 
 ### EVAL-04 - CLI wrapper
-- [ ] Introduce a small CLI binary, e.g.:
-  - [ ] Integrate a new `dfps_cli` subcommand `eval-mapping`.
-- [ ] CLI behavior:
-  - [ ] Accepts an NDJSON gold file path (`--input`).
-  - [ ] Prints summary metrics (precision, recall, counts by MappingState).
-  - [ ] Optional `--dump-details` flag to emit per-code results.
+- [x] Introduce a small CLI binary, e.g.:
+  - [x] Integrate a new `dfps_cli` subcommand `eval-mapping`.
+- [x] CLI behavior:
+  - [x] Accepts an NDJSON gold file path (`--input`).
+  - [x] Prints summary metrics (precision, recall, counts by MappingState).
+  - [x] Optional `--dump-details` flag to emit per-code results.
+- [x] `lib/app/cli/src/bin/eval_mapping.rs` streams JSON summary rows that CI/scripts can consume.
 
 ### EVAL-05 - Docs & requirements link
 - [ ] Add `docs/runbook/mapping-eval-quickstart.md` describing:

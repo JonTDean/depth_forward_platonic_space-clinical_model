@@ -367,6 +367,14 @@ Small CLIs for local ingestion + mapping workflows.
     cd code
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
+- **`eval_mapping`** — run `dfps_mapping::eval::run_eval` against a gold NDJSON file.
+  - Flags: `--input <path>` (required), `--dump-details` (emit per-case `EvalResult` rows).
+  - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
+  - Example:
+    ```bash
+    cd code
+    cargo run -p dfps_cli --bin eval_mapping -- --input lib/platform/test_suite/fixtures/eval/pet_ct_small.ndjson --dump-details
+    ```
 
 
 # Crate: lib/app/web/backend/api — `dfps_api`
