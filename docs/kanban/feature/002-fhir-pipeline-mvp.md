@@ -59,7 +59,7 @@
   - [x] bundle -> staging rows (1 flat per SR; N exploded rows = `coding.len()`)
   - [x] bundle -> domain aggregate matches IDs & normalized status/intent
 - [x] Property test: for random seeds, `exploded.len() == sum(coding.len())`
-- [x] Regression fixture: `fixtures/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
+- [x] Regression fixture: `lib/domain/fake_data/data/regression/fhir_bundle_sr.json` (1 SR with 2 codings)
 
 ### FP-05 – Workspace & CI wiring
 - [x] Add `"lib/ingestion"` to root `[workspace].members`

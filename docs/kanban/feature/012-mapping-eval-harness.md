@@ -37,7 +37,7 @@
 ## REVIEW
 
 ### EVAL-01 - Gold standard format
-- [x] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `data/eval/`:
+- [x] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `lib/domain/fake_data/data/eval/`:
   - [x] `{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}`
 - [x] Include a small PET/CT-focused sample:
   - [x] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.

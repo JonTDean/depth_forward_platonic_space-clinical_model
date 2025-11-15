@@ -13,7 +13,7 @@ Field meanings:
 - `display` – human-friendly label shown in fixtures
 - `expected_ncit_id` – NCIt concept ID the mapping engine should return for the code
 
-Set `DFPS_EVAL_DATA_ROOT` to override the default (`data/eval/`) when loading datasets.
+Set `DFPS_EVAL_DATA_ROOT` to override the default (`lib/domain/fake_data/data/eval/`) when loading datasets.
 
 ## Available datasets
 

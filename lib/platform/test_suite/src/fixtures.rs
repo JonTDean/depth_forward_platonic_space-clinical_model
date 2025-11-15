@@ -1,9 +1,13 @@
 use dfps_core::{order::ServiceRequest, staging::StgSrCodeExploded};
 use dfps_eval::EvalCase;
 use dfps_fake_data::{
+    fixtures::{self, Registry},
     ServiceRequestScenario, fake_service_request_for,
     scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed},
 };
+use once_cell::sync::Lazy;
+
+static MAPPING_REGISTRY: Lazy<Registry> = Lazy::new(|| Registry::default());
 
 pub fn service_request_scenario() -> ServiceRequestScenario {
     fake_service_request_scenario()
@@ -26,38 +30,42 @@ pub fn standalone_service_request() -> ServiceRequest {
     fake_service_request_for(&scenario.patient.id, Some(&scenario.encounter.id))
 }
 
+fn mapping_registry() -> &'static Registry {
+    Lazy::force(&MAPPING_REGISTRY)
+}
+
+fn load_mapping_code(name: &str) -> StgSrCodeExploded {
+    let case = fixtures::mapping::load(mapping_registry(), name)
+        .unwrap_or_else(|err| panic!("mapping fixture {name} should load: {err}"));
+    StgSrCodeExploded {
+        sr_id: case.sr_id,
+        system: case.system,
+        code: case.code,
+        display: case.display,
+    }
+}
+
 pub fn mapping_cpt_code() -> StgSrCodeExploded {
-    serde_json::from_str(include_str!(
-        "../fixtures/regression/mapping_cpt_78815.json"
-    ))
-    .expect("mapping CPT fixture should parse")
+    load_mapping_code("mapping_cpt_78815")
 }
 
 pub fn mapping_snomed_code() -> StgSrCodeExploded {
-    serde_json::from_str(include_str!(
-        "../fixtures/regression/mapping_snomed_pet.json"
-    ))
-    .expect("mapping SNOMED fixture should parse")
+    load_mapping_code("mapping_snomed_pet")
 }
 
 pub fn mapping_unknown_code() -> StgSrCodeExploded {
-    serde_json::from_str(include_str!("../fixtures/regression/mapping_unknown.json"))
-        .expect("mapping unknown fixture should parse")
+    load_mapping_code("mapping_unknown")
 }
 
 pub fn mapping_unknown_system_code() -> StgSrCodeExploded {
-    serde_json::from_str(include_str!(
-        "../fixtures/regression/mapping_unknown_system.json"
-    ))
-    .expect("mapping unknown system fixture should parse")
+    load_mapping_code("mapping_unknown_system")
 }
 
 pub fn mapping_ncit_obo_code() -> StgSrCodeExploded {
-    serde_json::from_str(include_str!("../fixtures/regression/mapping_ncit_obo.json"))
-        .expect("mapping NCIt OBO fixture should parse")
+    load_mapping_code("mapping_ncit_obo")
 }
 
 pub fn eval_pet_ct_small_cases() -> Vec<EvalCase> {
     dfps_eval::load_dataset("pet_ct_small")
-        .expect("pet_ct_small dataset should load from data/eval")
+        .expect("pet_ct_small dataset should load from lib/domain/fake_data/data/eval")
 }

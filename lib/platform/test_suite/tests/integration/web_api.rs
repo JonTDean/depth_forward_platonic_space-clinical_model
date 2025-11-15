@@ -46,7 +46,9 @@ fn ensure_eval_data_root() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
         let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-        let data_root = manifest.join("../../..").join("data/eval");
+        let data_root = manifest
+            .join("../../..")
+            .join("lib/domain/fake_data/data/eval");
         let data_root = data_root.canonicalize().unwrap_or(data_root);
         unsafe {
             std::env::set_var("DFPS_EVAL_DATA_ROOT", data_root);

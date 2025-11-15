@@ -20,15 +20,6 @@
 
 ## TODO
 
-### EVAL-PLAT-04 – Dashboards & reporting
-
-- [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
-- [x] Simple Markdown report via `dfps_cli eval_mapping --report <path>` (temporary CLI-side generator until a richer HTMX/dfps_eval report lands).
-- [x] Add a small HTMX/markdown report generator in `dfps_eval` and `dfps_web_frontend`:
-  - [x] Renders tables of metrics and a short changelog comparing against a baseline.
-- [x] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI (`GET /api/eval/summary?dataset=...`).
-
-
 ### EVAL-PLAT-06 – Migrate/unwrap 012 harness into `dfps_eval`
 
 * [ ] Create new crate `lib/domain/eval` (`dfps_eval`).
@@ -44,11 +35,11 @@
 
 ### EVAL-PLAT-07 – Dataset manifests, versioning & licensing
 
-* [ ] New directory: `data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
+* [ ] New directory: `lib/domain/fake_data/data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
 * [ ] Manifest schema:
   * [ ] `{ "name": "...", "version": "YYYYMMDD", "license": "…", "source": "…", "n_cases": N, "sha256": "<file hash>", "notes": "…" }`
 * [ ] Add a loader in `dfps_eval::datasets` that:
-  * [ ] Resolves data root via `DFPS_EVAL_DATA_ROOT` (falls back to `data/eval`).
+  * [ ] Resolves data root via `DFPS_EVAL_DATA_ROOT` (falls back to `lib/domain/fake_data/data/eval`).
   * [ ] Validates `sha256` on load; fails fast if mismatched.
   * [ ] Warns if `license` is missing/unknown.
 * [ ] Provide manifests for:
@@ -89,7 +80,7 @@
 ### EVAL-PLAT-10 – CLI thresholds & CI gate (first cut)
 
 * [ ] New crate: `lib/app/cli` (`dfps_cli`) with subcommand:
-  * [ ] `dfps_cli eval-mapping --input data/eval/pet_ct_small.ndjson --thresholds config/eval_thresholds.json --out target/eval/pet_ct_small.json`
+  * [ ] `dfps_cli eval-mapping --input lib/domain/fake_data/data/eval/pet_ct_small.ndjson --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json --out target/eval/pet_ct_small.json`
 * [ ] Thresholds schema (JSON):
   ```json
   {
@@ -176,7 +167,7 @@
   - [x] Add support for multiple datasets:
     - Named splits (e.g., `pet_ct_small`, `pet_ct_extended`, `mixed_modalities`).
     - Config-driven dataset root (`DFPS_EVAL_DATA_ROOT`).
-- [x] Store gold-standard files under `data/eval/*.ndjson`.
+- [x] Store gold-standard files under `lib/domain/fake_data/data/eval/*.ndjson`.
 
 ### EVAL-PLAT-02 – Advanced metrics
 
@@ -193,7 +184,7 @@
 ### EVAL-PLAT-03 – CI & regression gates
 
 - [x] Add a CLI entrypoint:
-  - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
+- `dfps_cli eval-mapping --dataset pet_ct_small --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json`:
     - [x] Runs `run_eval` and writes a JSON summary.
     - [x] Exit with non-zero code if metrics drop below configured thresholds.
 - [x] Wire CI job:
@@ -203,6 +194,11 @@
 ### EVAL-PLAT-04 – Dashboards & reporting
 
 - [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
+- [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
+- [x] Simple Markdown report via `dfps_cli eval_mapping --report <path>` (temporary CLI-side generator until a richer HTMX/dfps_eval report lands).
+- [x] Add a small HTMX/markdown report generator in `dfps_eval` and `dfps_web_frontend`:
+  - [x] Renders tables of metrics and a short changelog comparing against a baseline.
+- [x] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI (`GET /api/eval/summary?dataset=...`).
 
 ### EVAL-PLAT-05 – Datasets & tests
 
@@ -210,7 +206,7 @@
   - Bronze: `bronze_pet_ct_small`, `bronze_pet_ct_unknowns`, `bronze_pet_ct_mixed`.
   - Silver: `silver_pet_ct_small`, `silver_pet_ct_extended`, `silver_pet_ct_obo`.
   - Gold: `gold_pet_ct_small`, `gold_pet_ct_extended`, `gold_pet_ct_comprehensive`.
-  - Updated `data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
+  - Updated `lib/domain/fake_data/data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
 - [x] Tests in `dfps_test_suite`:
   - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
   - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.

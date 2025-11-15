@@ -61,7 +61,7 @@ architecture-beta
 - **Domain crates**
   - `lib/domain/ingestion` (`dfps_ingestion`) : emits `stg_sr_code_exploded` rows.
   - `lib/domain/mapping` (`dfps_mapping`) : lexical/vector rankers, rule rerankers, `MappingEngine`, plus the license-aware `map_staging_codes_with_summary` helper that produces `MappingSummary`. `dfps_mapping::eval::run_eval` remains the orchestration surface.
-  - `lib/domain/eval` (`dfps_eval`) : owns `EvalCase`/`EvalSummary` types and dataset helpers (`DFPS_EVAL_DATA_ROOT`, default `data/eval`).
+  - `lib/domain/eval` (`dfps_eval`) : owns `EvalCase`/`EvalSummary` types and dataset helpers (`DFPS_EVAL_DATA_ROOT`, default `lib/domain/fake_data/data/eval`).
   - `lib/domain/pipeline` (`dfps_pipeline`) : composes ingestion + mapping via `bundle_to_mapped_sr`.
   - `lib/domain/terminology` (`dfps_terminology`) -?" license-aware CodeSystem/ValueSet registries plus staging-code enrichment.
 - **Platform crates**

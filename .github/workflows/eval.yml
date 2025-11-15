@@ -16,5 +16,5 @@ jobs:
         run: |
           cargo run -p dfps_cli --bin eval_mapping -- \
             --dataset gold_pet_ct_small \
-            --thresholds ci/eval_thresholds.json \
+            --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json \
             --out-dir target/eval/gold_pet_ct_small

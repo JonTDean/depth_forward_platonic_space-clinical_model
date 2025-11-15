@@ -64,7 +64,7 @@
 - [x] Property tests:
   - [x] `score` monotonicity under synonym augmentation
   - [x] Top-1 candidate always ≥ all others
-- [x] Regression fixtures under `test_suite/fixtures/regression/mapping_*`
+- [x] Regression fixtures under `lib/domain/fake_data/data/regression/mapping_*`
 
 ### MAP-07 – Provenance & thresholds
 - [x] Add `strategy`, `source_version`, `thresholds` notes to `MappingResult`

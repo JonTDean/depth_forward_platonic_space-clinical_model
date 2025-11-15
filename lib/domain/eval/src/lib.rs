@@ -12,7 +12,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub const DEFAULT_DATA_ROOT: &str = "data/eval";
+pub const DEFAULT_DATA_ROOT: &str = "lib/domain/fake_data/data/eval";
 
 #[derive(Debug)]
 pub enum DatasetError {
@@ -311,7 +311,10 @@ mod tests {
                 .expect("workspace root")
                 .to_path_buf();
             unsafe {
-                std::env::set_var("DFPS_EVAL_DATA_ROOT", root.join("data/eval"));
+                std::env::set_var(
+                    "DFPS_EVAL_DATA_ROOT",
+                    root.join("lib/domain/fake_data/data/eval"),
+                );
             }
         });
     }

@@ -82,7 +82,7 @@ _All paths relative to `code/`._
 5) **Update tests**
    - Unit tests (per crate)
    - Integration & e2e in `lib/platform/test_suite/tests/**`
-   - Regression fixtures under `lib/platform/test_suite/fixtures/regression/`
+   - Regression fixtures under `lib/domain/fake_data/data/regression/`
 
 6) **Run standard checks**
    - `cargo make fmt` � `cargo make clippy` � `cargo make test`
@@ -171,7 +171,7 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
 ### FP-07 � Validatio& & error surface
 - [ ] Add `IngestionError` in `lib/domain/ingestion/src/transforms.rs`
 - [ ] Update FHIR semantics in `docs/system-design/fhir/behavior/sequence-servicerequest.md`
-- [ ] Add regression fixtures under `lib/platform/test_suite/fixtures/regression/`
+- [ ] Add regression fixtures under `lib/domain/fake_data/data/regression/`
 - [ ] Document error codes in `docs/reference-terminology/semantic-relationships.yaml`
 ```
 
@@ -368,7 +368,7 @@ Small CLIs for local ingestion + mapping workflows.
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
 - **`eval_mapping`** — run `dfps_mapping::eval::run_eval` against a gold NDJSON file.
-  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--out-dir <dir>` (write `eval_summary.json` + `eval_results.ndjson`), `--dump-details` (emit per-case `EvalResult` rows).
+  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--out-dir <dir>` (write `eval_summary.json` + `eval_results.ndjson`), `--report <path>` (Markdown summary), `--dump-details` (emit per-case `EvalResult` rows).
   - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
   - Example:
     ```bash
@@ -376,7 +376,7 @@ Small CLIs for local ingestion + mapping workflows.
     cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-details
     ```
   - Runbook: `docs/runbook/mapping-eval-quickstart.md`; requirements trace: `MAP_ACCURACY` in `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md`.
-  - Dataset tiers: bronze/silver/gold splits (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) are documented in `data/eval/README.md`.
+  - Dataset tiers: bronze/silver/gold splits (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) are documented in `lib/domain/fake_data/data/eval/README.md`.
 
 
 # Crate: lib/app/web/backend/api — `dfps_api`
@@ -815,6 +815,6 @@ cargo test -p dfps_test_suite
 Owns the reusable evaluation types (`EvalCase`, `EvalSummary`, etc.) and dataset loaders.
 
 **Responsibilities**
-- Load NDJSON gold datasets from `DFPS_EVAL_DATA_ROOT` (default `data/eval`).
+- Load NDJSON gold datasets from `DFPS_EVAL_DATA_ROOT` (default `lib/domain/fake_data/data/eval`).
 - Provide stratified metric helpers (`StratifiedMetrics`) used by `dfps_mapping::eval::run_eval`.
 - Surface `compute_metrics` for CLI/test consumers.

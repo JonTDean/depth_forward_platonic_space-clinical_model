@@ -2,6 +2,7 @@
 name = "dfps_fake_data"
 version.workspace = true
 edition.workspace = true
+include = ["src/**", "data/**", "Cargo.toml", "README.md"]
 
 [dependencies]
 dfps_core = { path = "../core", features = ["dummy"] }
