@@ -58,11 +58,12 @@
 - [x] `lib/app/cli/src/bin/eval_mapping.rs` streams JSON summary rows that CI/scripts can consume.
 
 ### EVAL-05 - Docs & requirements link
-- [ ] Add `docs/runbook/mapping-eval-quickstart.md` describing:
-  - [ ] how to run the CLI over the gold file,
-  - [ ] how to interpret metrics.
-- [ ] Update `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md` (e.g., requirement `MAP_ACCURACY`):
-  - [ ] reference the eval harness as the primary verification method.
+- [x] Add `docs/runbook/mapping-eval-quickstart.md` describing:
+  - [x] how to run the CLI over the gold file,
+  - [x] how to interpret metrics.
+- [x] Update `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md` (e.g., requirement `MAP_ACCURACY`):
+  - [x] reference the eval harness as the primary verification method.
+- [x] Runbook also mirrored into `docs/book/src/runbook/mapping-eval-quickstart.md`.
 
 ---
 

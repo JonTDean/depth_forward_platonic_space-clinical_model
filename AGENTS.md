@@ -375,6 +375,7 @@ Small CLIs for local ingestion + mapping workflows.
     cd code
     cargo run -p dfps_cli --bin eval_mapping -- --input lib/platform/test_suite/fixtures/eval/pet_ct_small.ndjson --dump-details
     ```
+  - Runbook: `docs/runbook/mapping-eval-quickstart.md`; requirements trace: `MAP_ACCURACY` in `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md`.
 
 
 # Crate: lib/app/web/backend/api — `dfps_api`
