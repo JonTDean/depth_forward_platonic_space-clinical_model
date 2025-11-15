@@ -19,8 +19,10 @@ code/
     runbook/
     kanban/
     book/           # mdBook sources + build output (via cargo make docs)
+    
   data/
     makefiles/      # cargo-make task shards (core/docs/apps)
+
   lib/
     app/
         cli/
