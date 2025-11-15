@@ -1,6 +1,7 @@
 use dfps_core::mapping::MappingState;
 use dfps_mapping::eval::{run_eval, EvalCase};
 use dfps_test_suite::{init_environment, fixtures};
+use dfps_eval;
 
 fn custom_no_match_case() -> EvalCase {
     EvalCase {
@@ -63,4 +64,19 @@ fn eval_summary_flags_no_match_cases() {
         custom_result.mapping.ncit_id.is_none(),
         "custom no-match case should not have an NCIt ID"
     );
+}
+
+#[test]
+fn tiered_datasets_load() {
+    init_environment();
+    for dataset in [
+        "bronze_pet_ct_small",
+        "bronze_pet_ct_unknowns",
+        "silver_pet_ct_small",
+        "gold_pet_ct_small",
+    ] {
+        let cases =
+            dfps_eval::load_dataset(dataset).unwrap_or_else(|_| panic!("{dataset} should load"));
+        assert!(!cases.is_empty(), "{dataset} should contain rows");
+    }
 }

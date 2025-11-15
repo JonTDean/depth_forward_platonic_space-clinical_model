@@ -1,6 +1,6 @@
-use std::fs::File;
-use std::io::{BufRead, BufReader};
-use std::path::PathBuf;
+use std::fs::{File, create_dir_all};
+use std::io::{BufRead, BufReader, Write};
+use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use dfps_configuration::load_env;
@@ -20,6 +20,9 @@ struct Args {
     /// Named dataset under DFPS_EVAL_DATA_ROOT (e.g., pet_ct_small)
     #[arg(long, value_name = "NAME", conflicts_with = "input")]
     dataset: Option<String>,
+    /// Directory for machine-readable artifacts (summary/results)
+    #[arg(long, value_name = "DIR")]
+    out_dir: Option<PathBuf>,
     /// Threshold JSON file enforcing minimum metrics
     #[arg(long, value_name = "PATH")]
     thresholds: Option<PathBuf>,
@@ -104,6 +107,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     }
 
+    if let Some(base_dir) = &args.out_dir {
+        persist_artifacts(base_dir, &args, &summary_view, &summary.results)?;
+    }
+
     if let Some(path) = &args.thresholds {
         let file = File::open(path)?;
         let cfg: ThresholdConfig = serde_json::from_reader(file)?;
@@ -166,4 +173,42 @@ fn enforce_thresholds(
         }
     }
     Ok(())
+}
+
+fn persist_artifacts(
+    base_dir: &Path,
+    args: &Args,
+    summary_view: &SummaryView,
+    results: &[dfps_eval::EvalResult],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let dir = resolve_out_dir(base_dir, args);
+    create_dir_all(&dir)?;
+    let summary_payload = serde_json::json!({
+        "dataset": args.dataset,
+        "input": args.input.as_ref().map(|p| p.display().to_string()),
+        "summary": summary_view
+    });
+
+    let mut summary_file = File::create(dir.join("eval_summary.json"))?;
+    serde_json::to_writer_pretty(&mut summary_file, &summary_payload)?;
+    summary_file.write_all(b"\n")?;
+
+    let mut results_file = File::create(dir.join("eval_results.ndjson"))?;
+    for result in results {
+        serde_json::to_writer(&mut results_file, result)?;
+        results_file.write_all(b"\n")?;
+    }
+    Ok(())
+}
+
+fn resolve_out_dir(base: &Path, args: &Args) -> PathBuf {
+    let mut dir = base.to_path_buf();
+    if let Some(name) = &args.dataset {
+        dir = dir.join(name);
+    } else if let Some(input) = &args.input {
+        if let Some(stem) = input.file_stem() {
+            dir = dir.join(stem);
+        }
+    }
+    dir
 }

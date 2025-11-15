@@ -6,6 +6,7 @@ against the gold NDJSON fixtures.
 ## Prerequisites
 - Rust toolchain (install via `data/scripts/install_rust_tooling.sh`).
 - Gold dataset: `data/eval/pet_ct_small.ndjson` (or your custom NDJSON with `EvalCase` rows). Override the root with `DFPS_EVAL_DATA_ROOT` if you keep datasets elsewhere.
+- Tiered splits: bronze/silver/gold datasets (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) live under `data/eval/README.md`.
 
 ## Steps
 1. Build/run the CLI using a named dataset
@@ -36,7 +37,15 @@ against the gold NDJSON fixtures.
      --dataset pet_ct_small \
      --thresholds config/eval_thresholds.json
    ```
-5. Use `jq`/scripts to parse outputs (e.g., to gate CI metrics or persist reports).
+5. Persist machine-readable artifacts for dashboards/CI:
+   ```bash
+   cargo run -p dfps_cli --bin eval_mapping -- \
+     --dataset gold_pet_ct_comprehensive \
+     --out-dir target/eval \
+     --dump-details
+   ```
+   This writes `eval_summary.json` + `eval_results.ndjson` under `target/eval/gold_pet_ct_comprehensive/`.
+6. Use `jq`/scripts to parse outputs (e.g., to gate CI metrics or persist reports).
 
 ## Requirements references
 - `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md` (MAP_ACCURACY) now points to `eval_mapping` as the verification method.

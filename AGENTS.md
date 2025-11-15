@@ -368,7 +368,7 @@ Small CLIs for local ingestion + mapping workflows.
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
 - **`eval_mapping`** — run `dfps_mapping::eval::run_eval` against a gold NDJSON file.
-  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--dump-details` (emit per-case `EvalResult` rows).
+  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--out-dir <dir>` (write `eval_summary.json` + `eval_results.ndjson`), `--dump-details` (emit per-case `EvalResult` rows).
   - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
   - Example:
     ```bash
@@ -376,6 +376,7 @@ Small CLIs for local ingestion + mapping workflows.
     cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-details
     ```
   - Runbook: `docs/runbook/mapping-eval-quickstart.md`; requirements trace: `MAP_ACCURACY` in `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md`.
+  - Dataset tiers: bronze/silver/gold splits (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) are documented in `data/eval/README.md`.
 
 
 # Crate: lib/app/web/backend/api — `dfps_api`

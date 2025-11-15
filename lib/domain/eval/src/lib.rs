@@ -210,3 +210,41 @@ pub fn compute_metrics(correct: usize, predicted: usize, total: usize) -> (f32, 
     };
     (precision, recall, f1)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+    use std::sync::Once;
+
+    static INIT: Once = Once::new();
+
+    fn ensure_dataset_env() {
+        INIT.call_once(|| {
+            let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+            let root = manifest_dir
+                .ancestors()
+                .nth(3)
+                .expect("workspace root")
+                .to_path_buf();
+            unsafe {
+                std::env::set_var("DFPS_EVAL_DATA_ROOT", root.join("data/eval"));
+            }
+        });
+    }
+
+    #[test]
+    fn load_sample_datasets() {
+        ensure_dataset_env();
+        for dataset in [
+            "pet_ct_small",
+            "bronze_pet_ct_small",
+            "silver_pet_ct_small",
+            "gold_pet_ct_small",
+        ] {
+            let cases =
+                load_dataset(dataset).unwrap_or_else(|_| panic!("dataset {dataset} should load"));
+            assert!(!cases.is_empty(), "dataset {dataset} should include cases");
+        }
+    }
+}

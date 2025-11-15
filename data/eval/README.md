@@ -1,14 +1,10 @@
 # Mapping evaluation fixtures
 
-This directory contains gold-standard mapping datasets that power epic EVAL-012 and EVAL-022.
+This directory contains gold-standard mapping datasets that power epics EVAL-012 and EVAL-022.
 All files use **NDJSON** (one JSON object per line) with the schema below:
 
-```json
-{
-    "system": "...", 
-    "code": "...", 
-    "display": "...", 
-    "expected_ncit_id": "NCIT:Cxxxx"}
+```
+{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}
 ```
 
 Field meanings:
@@ -17,12 +13,24 @@ Field meanings:
 - `display` – human-friendly label shown in fixtures
 - `expected_ncit_id` – NCIt concept ID the mapping engine should return for the code
 
+Set `DFPS_EVAL_DATA_ROOT` to override the default (`data/eval/`) when loading datasets.
+
 ## Available datasets
 
-- Default root is this directory; override with `DFPS_EVAL_DATA_ROOT` (used by `dfps_cli eval_mapping --dataset ...` and the new `dfps_eval` crate).
+### Default set
+- `pet_ct_small.ndjson` – compact PET/CT sample reused across epics; mirrors the regression fixtures (`mapping_cpt_78815.json`, etc.).
 
-### pet_ct_small.ndjson
-Compact PET/CT-focused sample derived from existing regression fixtures:
-- CPT `78815` (`mapping_cpt_78815.json`) ➜ `NCIT:C19951`
-- SNOMED `441567006` (`mapping_snomed_pet.json`) ➜ `NCIT:C19951`
-- LOINC `24606-6` (appears in raw FHIR generators) ➜ `NCIT:C17747`
+### Bronze tier
+- `bronze_pet_ct_small.ndjson` – smallest bronze slice (3 rows) mirroring CPT/SNOMED/LOINC cases.
+- `bronze_pet_ct_unknowns.ndjson` – bronze-focused mix with NCIt OBO + FDG uptake scenarios.
+- `bronze_pet_ct_mixed.ndjson` – evenly mixes CPT, SNOMED, and NCIt OBO rows for smoke tests.
+
+### Silver tier
+- `silver_pet_ct_small.ndjson` – bronze coverage plus an NCIt OBO entry.
+- `silver_pet_ct_extended.ndjson` – adds extended NCIt FDG concepts and mixed displays.
+- `silver_pet_ct_obo.ndjson` – emphasizes OBO-sourced concepts with a CPT sanity check.
+
+### Gold tier
+- `gold_pet_ct_small.ndjson` – high-confidence sample with dual NCIt concepts.
+- `gold_pet_ct_extended.ndjson` – larger gold set for regression sweeps.
+- `gold_pet_ct_comprehensive.ndjson` – most exhaustive tier; multiple entries per system.

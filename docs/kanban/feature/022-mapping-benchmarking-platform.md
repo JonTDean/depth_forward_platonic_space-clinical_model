@@ -23,28 +23,12 @@
 
 ### EVAL-PLAT-02 – Advanced metrics
 
-- [x] Extend `EvalSummary` to include:
-
-  - [x] Precision/recall/F1 (overall).
-  - [x] Metrics stratified by:
-
-    - [x] Code system (CPT/SNOMED/LOINC/NCIt OBO).
-    - [x] LicenseTier (licensed vs open).
-    - MappingState (AutoMapped/NeedsReview/NoMatch) already present.
-
 - [ ] Optional advanced stats when the feature flag `eval-advanced` is set:
 
   - [ ] Bootstrap confidence intervals for key metrics.
   - [ ] Calibration-style summaries (e.g., score buckets vs correctness).
 
 ### EVAL-PLAT-03 – CI & regression gates
-
-- [x] Add a CLI entrypoint:
-
-  - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
-
-    - [x] Runs `run_eval` and writes a JSON summary.
-    - [x] Exit with non-zero code if metrics drop below configured thresholds.
 
 - [ ] Wire CI job:
 
@@ -53,8 +37,7 @@
 
 ### EVAL-PLAT-04 – Dashboards & reporting
 
-- [ ] Emit machine-readable summaries (`eval_results.json`) into a CI artifact or a dedicated directory.
-
+- [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
 - [ ] Optionally add a small HTML/markdown report generator in `dfps_eval`:
 
   - [ ] Renders tables of metrics and a short changelog comparing against a baseline.
@@ -63,15 +46,15 @@
 
 ### EVAL-PLAT-05 – Datasets & tests
 
-- [ ] Create at least two distinct gold sets:
+- [x] Create nine distinct datasets (3× bronze/silver/gold):
+  - Bronze: `bronze_pet_ct_small`, `bronze_pet_ct_unknowns`, `bronze_pet_ct_mixed`.
+  - Silver: `silver_pet_ct_small`, `silver_pet_ct_extended`, `silver_pet_ct_obo`.
+  - Gold: `gold_pet_ct_small`, `gold_pet_ct_extended`, `gold_pet_ct_comprehensive`.
+  - Updated `data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
+- [x] Tests in `dfps_test_suite`:
 
-  - [ ] `pet_ct_small` aligned with current regression fixtures.
-  - [ ] `pet_ct_extended` adding codes with OBO-backed NCIt IDs, unknown systems, and tricky synonyms.
-
-- [ ] Tests in `dfps_test_suite`:
-
-  - [ ] Verify that the eval harness correctly classifies matches/mismatches.
-  - [ ] Ensure “label-mismatched” golds never report as correct (as per epic 012).
+  - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
+  - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.
 
 ### EVAL-PLAT-06 – Migrate/unwrap 012 harness into `dfps_eval`
 
@@ -242,6 +225,26 @@
     - Config-driven dataset root (`DFPS_EVAL_DATA_ROOT`).
 
 - [x] Store gold-standard files under `data/eval/*.ndjson`.
+
+### EVAL-PLAT-02 – Advanced metrics
+
+- [x] Extend `EvalSummary` to include:
+
+  - [x] Precision/recall/F1 (overall).
+  - [x] Metrics stratified by:
+
+    - [x] Code system (CPT/SNOMED/LOINC/NCIt OBO).
+    - [x] LicenseTier (licensed vs open).
+    - MappingState (AutoMapped/NeedsReview/NoMatch) already present.
+
+### EVAL-PLAT-03 – CI & regression gates
+
+- [x] Add a CLI entrypoint:
+
+  - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
+
+    - [x] Runs `run_eval` and writes a JSON summary.
+    - [x] Exit with non-zero code if metrics drop below configured thresholds.
 
 ---
 

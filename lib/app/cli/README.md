@@ -34,4 +34,10 @@ cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-detail
 cargo run -p dfps_cli --bin eval_mapping -- \
   --dataset pet_ct_small \
   --thresholds config/eval_thresholds.json
+
+# Persist machine-readable artifacts (summary/results)
+cargo run -p dfps_cli --bin eval_mapping -- \
+  --dataset gold_pet_ct_comprehensive \
+  --out-dir target/eval \
+  --dump-details
 ```
