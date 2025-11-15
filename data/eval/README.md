@@ -1,6 +1,6 @@
 # Mapping evaluation fixtures
 
-This directory contains gold-standard mapping datasets that power epic EVAL-012.
+This directory contains gold-standard mapping datasets that power epic EVAL-012 and EVAL-022.
 All files use **NDJSON** (one JSON object per line) with the schema below:
 
 ```json
@@ -18,6 +18,8 @@ Field meanings:
 - `expected_ncit_id` – NCIt concept ID the mapping engine should return for the code
 
 ## Available datasets
+
+- Default root is this directory; override with `DFPS_EVAL_DATA_ROOT` (used by `dfps_cli eval_mapping --dataset ...` and the new `dfps_eval` crate).
 
 ### pet_ct_small.ndjson
 Compact PET/CT-focused sample derived from existing regression fixtures:

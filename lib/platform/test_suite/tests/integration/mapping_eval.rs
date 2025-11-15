@@ -19,10 +19,23 @@ fn pet_ct_eval_sample_has_high_precision() {
 
     assert_eq!(summary.total_cases, cases.len());
     assert!(summary.precision >= 0.95);
+    assert!(summary.recall >= 0.95);
+    assert!(summary.f1 >= 0.95);
     assert_eq!(
         summary.state_counts.get("auto_mapped"),
         Some(&(cases.len()))
     );
+    let system_metrics = summary
+        .by_system
+        .get("http://www.ama-assn.org/go/cpt")
+        .expect("system metrics for CPT");
+    assert_eq!(system_metrics.total_cases, 1);
+    assert!(system_metrics.precision >= 0.95);
+    let license_metrics = summary
+        .by_license_tier
+        .get("licensed")
+        .expect("licensed tier metrics");
+    assert!(license_metrics.precision >= 0.95);
 }
 
 #[test]

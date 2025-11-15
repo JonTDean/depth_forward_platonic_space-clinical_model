@@ -368,7 +368,7 @@ Small CLIs for local ingestion + mapping workflows.
     cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
     ```
 - **`eval_mapping`** — run `dfps_mapping::eval::run_eval` against a gold NDJSON file.
-  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--dump-details` (emit per-case `EvalResult` rows).
+  - Flags: `--dataset <name>` (uses `DFPS_EVAL_DATA_ROOT`), `--input <path>` (direct NDJSON), `--thresholds <config.json>` (enforce min precision/recall/F1), `--dump-details` (emit per-case `EvalResult` rows).
   - Stdout: `{"kind":"eval_summary","value":{...}}` + optional `{"kind":"eval_result","value":{...}}`.
   - Example:
     ```bash
@@ -807,3 +807,12 @@ cd code
 cargo test -p dfps_test_suite
 ```
 
+# Crate: lib/domain/eval — `dfps_eval`
+
+**Purpose**  
+Owns the reusable evaluation types (`EvalCase`, `EvalSummary`, etc.) and dataset loaders.
+
+**Responsibilities**
+- Load NDJSON gold datasets from `DFPS_EVAL_DATA_ROOT` (default `data/eval`).
+- Provide stratified metric helpers (`StratifiedMetrics`) used by `dfps_mapping::eval::run_eval`.
+- Surface `compute_metrics` for CLI/test consumers.

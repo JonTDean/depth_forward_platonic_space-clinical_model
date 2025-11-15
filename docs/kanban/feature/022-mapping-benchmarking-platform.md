@@ -20,46 +20,31 @@
 
 ## TODO
 
-### EVAL-PLAT-01 – Eval crate & dataset handling
-
-- [x] Introduce a dedicated eval crate `lib/domain/eval` (`dfps_eval`):
-
-  - [x] Move or wrap the core types from epic 012:
-
-    - `EvalCase { system, code, display, expected_ncit_id }`
-    - `EvalResult`, `EvalSummary`.
-
-  - [x] Add support for multiple datasets:
-
-    - Named splits (e.g., `pet_ct_small`, `pet_ct_extended`, `mixed_modalities`).
-    - Config-driven dataset root (`DFPS_EVAL_DATA_ROOT`).
-
-- [x] Store gold-standard files under `data/eval/*.ndjson`.
 
 ### EVAL-PLAT-02 – Advanced metrics
 
-- [ ] Extend `EvalSummary` to include:
+- [x] Extend `EvalSummary` to include:
 
-  - [ ] Precision/recall/F1 (overall).
-  - [ ] Metrics stratified by:
+  - [x] Precision/recall/F1 (overall).
+  - [x] Metrics stratified by:
 
-    - Code system (CPT/SNOMED/LOINC/NCIt OBO).
-    - LicenseTier (licensed vs open).
-    - MappingState (AutoMapped/NeedsReview/NoMatch).
+    - [x] Code system (CPT/SNOMED/LOINC/NCIt OBO).
+    - [x] LicenseTier (licensed vs open).
+    - MappingState (AutoMapped/NeedsReview/NoMatch) already present.
 
-- [ ] Add optional advanced stats when the feature flag `eval-advanced` is set:
+- [ ] Optional advanced stats when the feature flag `eval-advanced` is set:
 
   - [ ] Bootstrap confidence intervals for key metrics.
   - [ ] Calibration-style summaries (e.g., score buckets vs correctness).
 
 ### EVAL-PLAT-03 – CI & regression gates
 
-- [ ] Add a CLI entrypoint:
+- [x] Add a CLI entrypoint:
 
-  - `dfps_cli eval-mapping --input data/eval/pet_ct_small.ndjson --thresholds config/eval_thresholds.json`:
+  - `dfps_cli eval-mapping --dataset pet_ct_small --thresholds config/eval_thresholds.json`:
 
-    - [ ] Runs `run_eval` and writes a JSON/YAML summary.
-    - [ ] Exit with non-zero code if metrics drop below configured thresholds.
+    - [x] Runs `run_eval` and writes a JSON summary.
+    - [x] Exit with non-zero code if metrics drop below configured thresholds.
 
 - [ ] Wire CI job:
 
@@ -74,7 +59,7 @@
 
   - [ ] Renders tables of metrics and a short changelog comparing against a baseline.
 
-- [ ] Add endpoints (optional) in `dfps_api` to expose latest eval summaries to the web UI or external dashboards.
+- [ ] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI.
 
 ### EVAL-PLAT-05 – Datasets & tests
 
@@ -241,7 +226,22 @@
 ---
 
 ## REVIEW
-- _Empty_
+
+### EVAL-PLAT-01 – Eval crate & dataset handling
+
+- [x] Introduce a dedicated eval crate `lib/domain/eval` (`dfps_eval`):
+
+  - [x] Move or wrap the core types from epic 012:
+
+    - `EvalCase { system, code, display, expected_ncit_id }`
+    - `EvalResult`, `EvalSummary`.
+
+  - [x] Add support for multiple datasets:
+
+    - Named splits (e.g., `pet_ct_small`, `pet_ct_extended`, `mixed_modalities`).
+    - Config-driven dataset root (`DFPS_EVAL_DATA_ROOT`).
+
+- [x] Store gold-standard files under `data/eval/*.ndjson`.
 
 ---
 

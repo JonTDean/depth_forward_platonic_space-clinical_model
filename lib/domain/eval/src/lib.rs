@@ -3,6 +3,7 @@
 use dfps_core::staging::StgSrCodeExploded;
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::BTreeMap,
     env,
     fs::File,
     io::{self, BufRead, BufReader},
@@ -125,7 +126,10 @@ pub struct EvalSummary {
     pub incorrect: usize,
     pub precision: f32,
     pub recall: f32,
-    pub state_counts: std::collections::BTreeMap<String, usize>,
+    pub f1: f32,
+    pub state_counts: BTreeMap<String, usize>,
+    pub by_system: BTreeMap<String, StratifiedMetrics>,
+    pub by_license_tier: BTreeMap<String, StratifiedMetrics>,
     pub results: Vec<EvalResult>,
 }
 
@@ -138,8 +142,71 @@ impl Default for EvalSummary {
             incorrect: 0,
             precision: 0.0,
             recall: 0.0,
-            state_counts: std::collections::BTreeMap::new(),
+            f1: 0.0,
+            state_counts: BTreeMap::new(),
+            by_system: BTreeMap::new(),
+            by_license_tier: BTreeMap::new(),
             results: Vec::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StratifiedMetrics {
+    pub total_cases: usize,
+    pub predicted_cases: usize,
+    pub correct: usize,
+    pub precision: f32,
+    pub recall: f32,
+    pub f1: f32,
+}
+
+impl StratifiedMetrics {
+    pub fn new() -> Self {
+        Self {
+            total_cases: 0,
+            predicted_cases: 0,
+            correct: 0,
+            precision: 0.0,
+            recall: 0.0,
+            f1: 0.0,
+        }
+    }
+
+    pub fn record(&mut self, predicted: bool, correct: bool) {
+        self.total_cases += 1;
+        if predicted {
+            self.predicted_cases += 1;
+        }
+        if correct {
+            self.correct += 1;
+        }
+    }
+
+    pub fn finalize(&mut self) {
+        let (precision, recall, f1) =
+            compute_metrics(self.correct, self.predicted_cases, self.total_cases);
+        self.precision = precision;
+        self.recall = recall;
+        self.f1 = f1;
+    }
+}
+
+pub fn compute_metrics(correct: usize, predicted: usize, total: usize) -> (f32, f32, f32) {
+    let precision = if predicted > 0 {
+        correct as f32 / predicted as f32
+    } else {
+        0.0
+    };
+    let recall = if total > 0 {
+        correct as f32 / total as f32
+    } else {
+        0.0
+    };
+    let f1 = if precision + recall > 0.0 {
+        2.0 * precision * recall / (precision + recall)
+    } else {
+        0.0
+    };
+    (precision, recall, f1)
 }

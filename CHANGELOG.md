@@ -23,6 +23,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-012 – “EVAL-04 – CLI wrapper” (`dfps_cli eval_mapping` reads gold NDJSON and prints summary + optional EvalResult lines).
 - EVAL-012 – “EVAL-05 – Docs & requirements link” (`mapping-eval-quickstart` runbook + MAP_ACCURACY verification update).
 - EVAL-022 – “EVAL-PLAT-01 – Eval crate & datasets” (`dfps_eval` crate, `DFPS_EVAL_DATA_ROOT`, datasets now in `data/eval/`, CLI/test suite wired to named datasets).
+- EVAL-022 – “EVAL-PLAT-02/03 – Advanced metrics & CI guard” (EvalSummary adds F1 + stratified metrics; `dfps_cli eval_mapping` supports `--dataset` + `--thresholds` for regression gates).
 
 ---
 

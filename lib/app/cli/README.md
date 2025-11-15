@@ -29,4 +29,9 @@ NDJSON path via `--input`.
 ```bash
 cd code
 cargo run -p dfps_cli --bin eval_mapping -- --dataset pet_ct_small --dump-details
+
+# Gate CI with thresholds
+cargo run -p dfps_cli --bin eval_mapping -- \
+  --dataset pet_ct_small \
+  --thresholds config/eval_thresholds.json
 ```
