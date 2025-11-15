@@ -5,5 +5,7 @@ edition.workspace = true
 
 [dependencies]
 dfps_core = { path = "../core" }
+reqwest = { workspace = true, features = ["blocking"] }
 serde.workspace = true
 serde_json.workspace = true
+thiserror = "1.0"

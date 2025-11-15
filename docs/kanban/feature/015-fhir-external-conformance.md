@@ -1,7 +1,13 @@
 # Kanban - feature/fhir-external-conformance (015)
 
+> Epic: 015 – External FHIR conformance  
+> Branch: `feature/EVAL-015-fhir-external-conformance`  
+> Branch target version: `Unreleased`  
+> Status: DOING  
+> Introduced in: `v0.1.0`  
+> Last updated in: `v0.1.0`
+
 **Themes:** External infra & heavy services; Spec-complete semantics (FHIR)  
-**Branch:** `feature/fhir-external-conformance`  
 **Goal:** Integrate an external FHIR validator/server into the ingestion flow, producing rich `ValidationIssue`s backed by FHIR `OperationOutcome` results.
 
 ### Columns
@@ -13,33 +19,6 @@
 ---
 
 ## TODO
-
-### FHIR-CONF-01 – External validation model
-
-- [ ] Add a small `external` module under `dfps_ingestion::validation` or a new crate `lib/domain/fhir_validation` (`dfps_fhir_validation`):
-
-  - [ ] Represent a subset of FHIR `OperationOutcome`:
-
-    - `OperationOutcomeIssue { severity, code, diagnostics, expression[] }`
-    - `OperationOutcome { issues: Vec<OperationOutcomeIssue> }`
-
-  - [ ] Introduce `ExternalValidationReport` with:
-
-    - `operation_outcome: Option<OperationOutcome>`
-    - Mappings to `ValidationIssue` (reusing `RequirementRef` where possible).
-
-### FHIR-CONF-02 – HTTP client & configuration
-
-- [ ] Implement `validate_bundle_external(bundle: &Bundle, profile_url: Option<&str>) -> Result<ExternalValidationReport, ExternalValidationError>`:
-
-  - [ ] Use `reqwest` to hit a configured `$validate` endpoint.
-  - [ ] Env-driven config:
-
-    - `DFPS_FHIR_VALIDATOR_BASE_URL`
-    - `DFPS_FHIR_VALIDATOR_TIMEOUT_SECS`
-    - `DFPS_FHIR_VALIDATOR_PROFILE` (default profile URL).
-
-- [ ] Add `.env.domain.fhir_validation.dev/example` documenting these keys.
 
 ### FHIR-CONF-03 – Blending internal & external validation
 
@@ -97,7 +76,33 @@
 ---
 
 ## REVIEW
-- _Empty_
+
+### FHIR-CONF-01 – External validation model
+
+- [x] Add a small `external` module under `dfps_ingestion::validation` or a new crate `lib/domain/fhir_validation` (`dfps_fhir_validation`):
+
+  - [x] Represent a subset of FHIR `OperationOutcome`:
+
+    - `OperationOutcomeIssue { severity, code, diagnostics, expression[] }`
+    - `OperationOutcome { issues: Vec<OperationOutcomeIssue> }`
+
+  - [x] Introduce `ExternalValidationReport` with:
+
+    - `operation_outcome: Option<OperationOutcome>`
+    - Mappings to `ValidationIssue` (reusing `RequirementRef` where possible).
+
+### FHIR-CONF-02 – HTTP client & configuration
+
+- [x] Implement `validate_bundle_external(bundle: &Bundle, profile_url: Option<&str>) -> Result<ExternalValidationReport, ExternalValidationError>`:
+
+  - [x] Use `reqwest` to hit a configured `$validate` endpoint.
+  - [x] Env-driven config:
+
+    - `DFPS_FHIR_VALIDATOR_BASE_URL`
+    - `DFPS_FHIR_VALIDATOR_TIMEOUT_SECS`
+    - `DFPS_FHIR_VALIDATOR_PROFILE` (default profile URL).
+
+- [x] Add `.env.domain.fhir_validation.dev/example` documenting these keys.
 
 ---
 

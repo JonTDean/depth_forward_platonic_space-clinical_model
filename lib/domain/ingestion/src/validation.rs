@@ -10,6 +10,8 @@ use serde::{Deserialize, Serialize};
 
 use crate::reference::reference_id_from_str;
 
+pub mod external;
+
 /// Requirement identifiers mirrored from the ingestion requirements doc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -20,6 +22,8 @@ pub enum RequirementRef {
     RStatus,
     /// Requirement ensuring provenance/trace identifiers are present.
     RTrace,
+    /// Requirement representing external validator findings.
+    RExternal,
 }
 
 impl RequirementRef {
@@ -29,6 +33,7 @@ impl RequirementRef {
             RequirementRef::RSubject => "R_Subject",
             RequirementRef::RStatus => "R_Status",
             RequirementRef::RTrace => "R_Trace",
+            RequirementRef::RExternal => "R_External",
         }
     }
 }

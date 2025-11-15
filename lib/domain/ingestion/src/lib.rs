@@ -16,5 +16,10 @@ pub use transforms::{
 
 pub use validation::{
     RequirementRef, Validated, ValidationIssue, ValidationMode, ValidationReport,
-    ValidationSeverity, validate_bundle, validate_sr,
+    ValidationSeverity,
+    external::{
+        ExternalValidationError, ExternalValidationReport, ExternalValidatorConfig,
+        OperationOutcome, OperationOutcomeIssue, validate_bundle_external,
+    },
+    validate_bundle, validate_sr,
 };
