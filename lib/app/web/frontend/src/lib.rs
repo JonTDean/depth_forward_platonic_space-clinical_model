@@ -29,14 +29,15 @@ pub async fn run() -> std::io::Result<()> {
             format!("failed to create backend client: {err}"),
         )
     })?;
-    let state = AppState::new(config.clone(), client);
+    let listen_addr = config.listen_addr.clone();
+    let state = AppState::new(config, client);
 
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
             .configure(routes::configure)
     })
-    .bind(&config.listen_addr)?
+    .bind(&listen_addr)?
     .run()
     .await
 }

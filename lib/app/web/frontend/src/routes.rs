@@ -1,5 +1,5 @@
 use actix_multipart::Multipart;
-use actix_web::{HttpRequest, HttpResponse, Result, web};
+use actix_web::{HttpRequest, HttpResponse, Result, http::header, web};
 use bytes::BytesMut;
 use futures_util::TryStreamExt;
 use serde::{Deserialize, Serialize};
@@ -15,6 +15,7 @@ const MAX_UPLOAD_BYTES: usize = 512 * 1024; // 512KiB bundles are enough for MVP
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/").route(web::get().to(index)))
+        .service(web::resource("/docs").route(web::get().to(docs_redirect)))
         .service(web::resource("/map/paste").route(web::post().to(map_from_paste)))
         .service(web::resource("/map/upload").route(web::post().to(map_from_upload)));
 }
@@ -210,6 +211,17 @@ fn summarize_client_error(err: ClientError) -> String {
         ClientError::EmptyBundle => "No bundle payload supplied".to_string(),
     }
 }
+
+async fn docs_redirect(state: web::Data<AppState>) -> Result<HttpResponse> {
+    if let Some(url) = &state.config.docs_url {
+        Ok(HttpResponse::Found()
+            .append_header((header::LOCATION, url.as_str()))
+            .finish())
+    } else {
+        Ok(HttpResponse::NotFound().body("Docs URL not configured for this environment."))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -302,6 +314,7 @@ mod tests {
             listen_addr: "127.0.0.1:0".into(),
             backend_base_url: backend.uri(),
             client_timeout: Duration::from_secs(5),
+            docs_url: None,
         };
         let client = BackendClient::from_config(&config).expect("client");
         let state = web::Data::new(AppState::new(config.clone(), client));
@@ -324,3 +337,4 @@ mod tests {
         assert!(html.contains("AutoMapped"));
     }
 }
+

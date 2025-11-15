@@ -8,8 +8,13 @@ Monorepo with a small DFPS pipeline & web UI:
 ## Getting started
 
 1. Install Rust (`rustup`). The workspace pins the toolchain in `.rust-toolchain.toml`.
-2. Copy env templates in `code/data/environment` to real `.env.*.<profile>` files (see `docs/runbook/web-quickstart.md`).
-3. Build & test:
+2. Install helper tooling:
+   ```bash
+   cargo install cargo-make
+   cargo install mdbook
+   ```
+3. Copy env templates in `code/data/environment` to real `.env.*.<profile>` files (see `docs/runbook/web-quickstart.md`).
+4. Build & test:
 
 ```bash
 cd code
@@ -31,9 +36,10 @@ cargo test --all
   cd code
   DFPS_API_BASE_URL=http://127.0.0.1:8080 \
   DFPS_FRONTEND_LISTEN_ADDR=127.0.0.1:8090 \
+  DFPS_DOCS_URL=http://127.0.0.1:3000 \
   cargo run -p dfps_web_frontend --bin dfps_web_frontend
   ```
 
-Then open [http://127.0.0.1:8090/](http://127.0.0.1:8090/)
+Run `cargo make docs-serve` in a separate terminal to serve the mdBook at `http://127.0.0.1:3000`, then open [http://127.0.0.1:8090/](http://127.0.0.1:8090/). Visiting `/docs` redirects to the mdBook URL when `DFPS_DOCS_URL` is set.
 
 More detail: `docs/runbook/web-quickstart.md`

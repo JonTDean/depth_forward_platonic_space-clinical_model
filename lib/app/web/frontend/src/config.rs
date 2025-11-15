@@ -5,6 +5,7 @@ pub struct AppConfig {
     pub listen_addr: String,
     pub backend_base_url: String,
     pub client_timeout: Duration,
+    pub docs_url: Option<String>,
 }
 
 impl AppConfig {
@@ -19,6 +20,7 @@ impl AppConfig {
             listen_addr,
             backend_base_url,
             client_timeout: Duration::from_secs(timeout),
+            docs_url: env::var("DFPS_DOCS_URL").ok(),
         })
     }
 }
