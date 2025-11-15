@@ -4,7 +4,13 @@ pub mod keys;
 
 use std::collections::HashMap;
 
-use dfps_core::{mapping::CodeElement, staging::StgServiceRequestFlat};
+use dfps_core::{
+    encounter::Encounter,
+    mapping::CodeElement,
+    patient::Patient,
+    staging::StgServiceRequestFlat,
+    value::{EncounterId, PatientId},
+};
 use dfps_pipeline::PipelineOutput;
 
 pub use dim::*;
@@ -35,21 +41,15 @@ pub fn from_pipeline_output(output: &PipelineOutput) -> DatamartBundle {
     let mut ncit_lookup: HashMap<String, DimNCITKey> = HashMap::new();
     let mut sr_lookup: HashMap<String, &StgServiceRequestFlat> = HashMap::new();
 
-    let mut patient_seq = 0u64;
-    let mut encounter_seq = 0u64;
-    let mut code_seq = 0u64;
-    let mut ncit_seq = 0u64;
-
     for flat in &output.flats {
         sr_lookup.insert(flat.sr_id.clone(), flat);
         let patient_key = *patient_lookup
             .entry(flat.patient_id.clone())
             .or_insert_with(|| {
-                let key = DimPatientKey::next(&mut patient_seq);
-                dims.patients.push(DimPatient {
-                    key,
-                    patient_id: flat.patient_id.clone(),
-                });
+                let patient = Patient::new(PatientId(flat.patient_id.clone()));
+                let dim = DimPatient::from_patient(&patient);
+                let key = dim.key;
+                dims.patients.push(dim);
                 key
             });
 
@@ -57,42 +57,38 @@ pub fn from_pipeline_output(output: &PipelineOutput) -> DatamartBundle {
             encounter_lookup
                 .entry(encounter_id.clone())
                 .or_insert_with(|| {
-                    let key = DimEncounterKey::next(&mut encounter_seq);
-                    dims.encounters.push(DimEncounter {
-                        key,
-                        encounter_id: encounter_id.clone(),
-                        patient_key,
-                    });
+                    let encounter = Encounter::new(
+                        EncounterId(encounter_id.clone()),
+                        PatientId(flat.patient_id.clone()),
+                    );
+                    let dim = DimEncounter::from_encounter(&encounter, patient_key);
+                    let key = dim.key;
+                    dims.encounters.push(dim);
                     key
                 });
         }
     }
 
     for exploded in &output.exploded_codes {
-        let element = CodeElement::from(exploded.clone());
-        let sr_id = exploded.sr_id.clone();
-        code_lookup.entry(element.id.clone()).or_insert_with(|| {
-            let key = DimCodeKey::next(&mut code_seq);
-            dims.codes.push(DimCode {
-                key,
-                sr_id: sr_id.clone(),
-                system: element.system.clone(),
-                code: element.code.clone(),
-                display: element.display.clone(),
-            });
-            (key, sr_id)
-        });
+        let element = CodeElement::from(exploded);
+        if !code_lookup.contains_key(&element.id) {
+            let dim = DimCode::from_code_element(exploded, &element);
+            let key = dim.key;
+            let sr_id = dim.sr_id.clone();
+            code_lookup.insert(element.id.clone(), (key, sr_id));
+            dims.codes.push(dim);
+        }
     }
 
     for concept in &output.dim_concepts {
-        let key = DimNCITKey::next(&mut ncit_seq);
-        dims.ncit.push(DimNCIT {
-            key,
-            ncit_id: concept.ncit_id.clone(),
-            preferred_name: concept.preferred_name.clone(),
-            semantic_group: concept.semantic_group.clone(),
-        });
-        ncit_lookup.insert(concept.ncit_id.clone(), key);
+        ncit_lookup
+            .entry(concept.ncit_id.clone())
+            .or_insert_with(|| {
+                let dim = DimNCIT::from_concept(concept);
+                let key = dim.key;
+                dims.ncit.push(dim);
+                key
+            });
     }
 
     for result in &output.mapping_results {
@@ -116,6 +112,7 @@ pub fn from_pipeline_output(output: &PipelineOutput) -> DatamartBundle {
                     status: flat.status.clone(),
                     intent: flat.intent.clone(),
                     description: flat.description.clone(),
+                    ordered_at: flat.ordered_at.clone(),
                 })
             }
         }
@@ -144,6 +141,7 @@ mod tests {
                 status: "active".into(),
                 intent: "order".into(),
                 description: "PET-CT".into(),
+                ordered_at: Some("2024-05-01T12:00:00Z".into()),
             }],
             exploded_codes: vec![StgSrCodeExploded {
                 sr_id: "SR-1".into(),

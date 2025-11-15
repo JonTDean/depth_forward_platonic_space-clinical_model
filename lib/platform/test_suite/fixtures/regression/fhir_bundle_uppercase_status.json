@@ -18,7 +18,8 @@
             }
           ],
           "text": "Uppercase status regression"
-        }
+        },
+        "authoredOn": "2024-05-01T12:00:00Z"
       }
     },
     { "resource": { "resourceType": "Patient", "id": "PAT-UPPER" } }

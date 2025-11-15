@@ -21,6 +21,7 @@ pub struct StgServiceRequestFlat {
     pub status: String,
     pub intent: String,
     pub description: String,
+    pub ordered_at: Option<String>,
 }
 
 /// Exploded coding row (`stg_sr_code_exploded`) linking back to ServiceRequest.

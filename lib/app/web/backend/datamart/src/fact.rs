@@ -12,4 +12,5 @@ pub struct FactServiceRequest {
     pub status: String,
     pub intent: String,
     pub description: String,
+    pub ordered_at: Option<String>,
 }

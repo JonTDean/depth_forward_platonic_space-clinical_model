@@ -81,6 +81,7 @@ pub fn sr_to_staging(
         status,
         intent,
         description,
+        ordered_at: sr.authored_on.clone(),
     };
 
     let exploded = sr
@@ -260,6 +261,7 @@ mod tests {
             }),
             category: vec![],
             description: Some("Preferred".into()),
+            authored_on: Some("2024-05-01T12:00:00Z".into()),
         };
 
         assert_eq!(description_from_sr(&sr), "Preferred");
@@ -311,6 +313,7 @@ mod tests {
             code: None,
             category: vec![],
             description: None,
+            authored_on: Some("2024-05-01T12:00:00Z".into()),
         }
     }
 }

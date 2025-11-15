@@ -34,7 +34,8 @@
           ],
           "text": "Unknown PET/CT order"
         },
-        "description": "Bundle that should surface a NoMatch state"
+        "description": "Bundle that should surface a NoMatch state",
+        "authoredOn": "2024-05-01T12:00:00Z"
       }
     }
   ]

@@ -82,6 +82,7 @@ pub struct ServiceRequest {
     #[serde(default)]
     pub category: Vec<CodeableConcept>,
     pub description: Option<String>,
+    pub authored_on: Option<String>,
 }
 
 /// Bundle entry that stores passthrough JSON resources.

@@ -232,6 +232,7 @@ mod tests {
                 status: "active".into(),
                 intent: "order".into(),
                 description: "PET-CT".into(),
+                ordered_at: Some("2024-05-01T12:00:00Z".into()),
             },
             StgServiceRequestFlat {
                 sr_id: "SR-2".into(),
@@ -240,6 +241,7 @@ mod tests {
                 status: "completed".into(),
                 intent: "order".into(),
                 description: "Unknown".into(),
+                ordered_at: None,
             },
         ];
 

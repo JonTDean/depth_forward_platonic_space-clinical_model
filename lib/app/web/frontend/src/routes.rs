@@ -255,6 +255,7 @@ mod tests {
                 status: "active".into(),
                 intent: "order".into(),
                 description: "PET-CT".into(),
+                ordered_at: Some("2024-05-01T12:00:00Z".into()),
             }],
             exploded_codes: vec![StgSrCodeExploded {
                 sr_id: "SR-1".into(),

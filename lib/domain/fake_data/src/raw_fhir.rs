@@ -172,6 +172,7 @@ fn fake_fhir_servicerequest_with_rng<R: Rng + ?Sized>(
             text: None,
         }],
         description: Some("PET/CT order from fake data".into()),
+        authored_on: Some("2024-05-01T12:00:00Z".into()),
     }
 }
 
