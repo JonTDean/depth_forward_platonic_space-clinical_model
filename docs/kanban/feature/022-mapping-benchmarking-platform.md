@@ -24,8 +24,8 @@
 
 - [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
 - [x] Simple Markdown report via `dfps_cli eval_mapping --report <path>` (temporary CLI-side generator until a richer HTMX/dfps_eval report lands).
-- [ ] Add a small HTMX/markdown report generator in `dfps_eval` and `dfps_web_frontend`:
-  - [ ] Renders tables of metrics and a short changelog comparing against a baseline.
+- [x] Add a small HTMX/markdown report generator in `dfps_eval` and `dfps_web_frontend`:
+  - [x] Renders tables of metrics and a short changelog comparing against a baseline.
 - [x] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI (`GET /api/eval/summary?dataset=...`).
 
 

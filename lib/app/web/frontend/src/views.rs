@@ -1,8 +1,8 @@
 use dfps_core::mapping::MappingState;
 use dfps_observability::PipelineMetrics;
-use maud::{DOCTYPE, Markup, html};
+use maud::{DOCTYPE, Markup, PreEscaped, html};
 
-use crate::view_model::{AlertKind, AlertMessage, MappingResultsView, PageContext};
+use crate::view_model::{AlertKind, AlertMessage, EVAL_DATASETS, MappingResultsView, PageContext};
 
 pub fn render_page(ctx: &PageContext) -> String {
     html! {
@@ -119,6 +119,7 @@ pub fn render_page(ctx: &PageContext) -> String {
                         (render_results(ctx))
                     }
                     (render_metrics_dashboard(ctx.metrics.as_ref()))
+                    (render_eval_panel(ctx))
                     (render_no_match_explorer(ctx.results.as_ref()))
                 }
             }
@@ -168,6 +169,38 @@ fn render_metrics_dashboard(metrics: Option<&PipelineMetrics>) -> Markup {
             } @else {
                 p class="text-sm text-slate-500" {
                     "Run a mapping request to populate live metrics. The dashboard refreshes on each page load."
+                }
+            }
+        }
+    }
+}
+
+fn render_eval_panel(ctx: &PageContext) -> Markup {
+    html! {
+        section class="bg-white shadow-sm rounded-xl p-6 space-y-4" id="eval-panel" {
+            div class="flex items-center justify-between" {
+                h2 class="text-xl font-semibold" { "Mapping evaluation snapshot" }
+                span class="text-sm text-slate-500" { "HTMX fragment from dfps_eval::report" }
+            }
+            div class="flex flex-wrap items-center gap-3 text-sm" {
+                label class="text-slate-600" for="eval-dataset" { "Dataset" }
+                select id="eval-dataset" name="dataset" class="rounded-lg border border-slate-300 px-3 py-2 text-sm"
+                    hx-get="/eval/report"
+                    hx-target="#eval-report-fragment"
+                    hx-swap="innerHTML"
+                    hx-trigger="change" {
+                    @for dataset in EVAL_DATASETS {
+                        option value=(dataset) selected[(ctx.selected_eval_dataset == *dataset)] { (dataset) }
+                    }
+                }
+            }
+            div id="eval-report-fragment" class="rounded-lg border border-slate-200 bg-slate-50 p-4" {
+                @if let Some(html) = &ctx.eval_report_html {
+                    (PreEscaped(html))
+                } @else if let Some(err) = &ctx.eval_panel_error {
+                    p class="text-sm text-rose-700" { (err) }
+                } @else {
+                    p class="text-sm text-slate-500" { "Run dfps_cli eval_mapping --out-dir to populate eval artifacts, then reload this page." }
                 }
             }
         }
@@ -443,13 +476,12 @@ mod tests {
             }],
         };
 
-        let ctx = PageContext {
-            health: None,
-            health_error: Some("Health endpoint unreachable: test".into()),
-            metrics: Some(metrics),
-            alert: None,
-            results: Some(results),
-        };
+        let mut ctx = PageContext::default();
+        ctx.health = None;
+        ctx.health_error = Some("Health endpoint unreachable: test".into());
+        ctx.metrics = Some(metrics);
+        ctx.results = Some(results);
+        ctx.eval_report_html = Some("<div>Eval report</div>".into());
 
         let html = render_page(&ctx);
         assert!(html.contains("Pipeline metrics"));
@@ -457,5 +489,7 @@ mod tests {
         assert!(html.contains("MappingResult.reason"));
         assert!(html.contains("missing_system_or_code"));
         assert!(html.contains("Backend warning"));
+        assert!(html.contains("Mapping evaluation snapshot"));
+        assert!(html.contains("Eval report"));
     }
 }

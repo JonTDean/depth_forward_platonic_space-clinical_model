@@ -34,3 +34,8 @@ Set `DFPS_EVAL_DATA_ROOT` to override the default (`data/eval/`) when loading da
 - `gold_pet_ct_small.ndjson` – high-confidence sample with dual NCIt concepts.
 - `gold_pet_ct_extended.ndjson` – larger gold set for regression sweeps.
 - `gold_pet_ct_comprehensive.ndjson` – most exhaustive tier; multiple entries per system.
+
+## Reporting baselines & artifacts
+- Baseline summaries live next to the NDJSON files as `<dataset>.baseline.json`. Each snapshot captures the `EvalSummary` structure (with empty `results`) plus metadata (`dataset`, `recorded_at`).
+- The CLI and frontend look for baseline files automatically to render Markdown + HTMX reports with deltas. Add new baselines when introducing fresh datasets (e.g., modalities beyond PET/CT) so regressions remain explainable.
+- When curating additional datasets (MRI, CT-only, oncology panels, etc.), keep the NDJSON schema identical and describe modality/licensing nuances inside the README so downstream consumers understand the artifact’s specificity.

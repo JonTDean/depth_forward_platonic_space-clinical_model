@@ -2,6 +2,7 @@ use dfps_core::{
     mapping::{DimNCITConcept, MappingResult},
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
+use dfps_eval::EvalSummary;
 use dfps_observability::PipelineMetrics;
 use reqwest::{Client, Response, StatusCode};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
@@ -42,6 +43,16 @@ impl BackendClient {
         let response = self
             .client
             .get(self.endpoint("/metrics/summary"))
+            .send()
+            .await?;
+        Self::handle_json(response).await
+    }
+
+    pub async fn eval_summary(&self, dataset: &str) -> Result<EvalSummary, ClientError> {
+        let response = self
+            .client
+            .get(self.endpoint("/api/eval/summary"))
+            .query(&[("dataset", dataset)])
             .send()
             .await?;
         Self::handle_json(response).await

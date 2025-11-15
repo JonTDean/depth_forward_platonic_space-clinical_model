@@ -52,5 +52,10 @@ against the gold NDJSON fixtures.
    This writes `eval_summary.json` + `eval_results.ndjson` under `target/eval/gold_pet_ct_comprehensive/`.
 6. Use `jq`/scripts (or the generated report) to gate CI metrics or share summaries.
 
+## Dashboards & reporting
+- `dfps_eval::report` now emits Markdown (for CLI artifacts) plus an HTML fragment consumed by the web frontend's HTMX panel.
+- Run `dfps_cli eval_mapping --dataset <name> --report target/eval/report.md` to include the Markdown summary and baseline delta (if a `<dataset>.baseline.json` exists under `data/eval/`).
+- The web frontend automatically loads the `gold_pet_ct_small` baseline and exposes a dataset picker that swaps the HTMX fragment served from `/eval/report`.
+
 ## Requirements references
 - `docs/system-design/clinical/ncit/requirements/ingestion-requirements.md` (MAP_ACCURACY) now points to `eval_mapping` as the verification method.

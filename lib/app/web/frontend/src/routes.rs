@@ -7,9 +7,13 @@ use serde::{Deserialize, Serialize};
 use crate::{
     client::{BackendClient, ClientError},
     state::AppState,
-    view_model::{AlertKind, AlertMessage, HealthOverview, MappingResultsView, PageContext},
+    view_model::{
+        AlertKind, AlertMessage, DEFAULT_EVAL_DATASET, HealthOverview, MappingResultsView,
+        PageContext,
+    },
     views,
 };
+use dfps_eval::report;
 
 const MAX_UPLOAD_BYTES: usize = 512 * 1024; // 512KiB bundles are enough for MVP use.
 
@@ -17,7 +21,8 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(web::resource("/").route(web::get().to(index)))
         .service(web::resource("/docs").route(web::get().to(docs_redirect)))
         .service(web::resource("/map/paste").route(web::post().to(map_from_paste)))
-        .service(web::resource("/map/upload").route(web::post().to(map_from_upload)));
+        .service(web::resource("/map/upload").route(web::post().to(map_from_upload)))
+        .service(web::resource("/eval/report").route(web::get().to(eval_report)));
 }
 
 async fn index(state: web::Data<AppState>) -> Result<HttpResponse> {
@@ -150,7 +155,62 @@ async fn build_base_context(client: &BackendClient) -> PageContext {
         }
     }
     ctx.metrics = client.metrics_summary().await.ok();
+    match build_eval_report_fragment(client, DEFAULT_EVAL_DATASET).await {
+        Ok(html) => {
+            ctx.eval_report_html = Some(html);
+            ctx.selected_eval_dataset = DEFAULT_EVAL_DATASET.to_string();
+        }
+        Err(err) => {
+            ctx.eval_panel_error = Some(err);
+        }
+    }
     ctx
+}
+
+#[derive(Deserialize)]
+struct EvalReportQuery {
+    dataset: Option<String>,
+}
+
+async fn eval_report(
+    state: web::Data<AppState>,
+    query: web::Query<EvalReportQuery>,
+) -> Result<HttpResponse> {
+    let dataset = query
+        .dataset
+        .as_deref()
+        .unwrap_or(DEFAULT_EVAL_DATASET)
+        .to_string();
+    match build_eval_report_fragment(&state.client, &dataset).await {
+        Ok(html) => Ok(HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(html)),
+        Err(err) => Ok(HttpResponse::InternalServerError()
+            .content_type("text/plain; charset=utf-8")
+            .body(format!("Eval report error: {err}"))),
+    }
+}
+
+async fn build_eval_report_fragment(
+    client: &BackendClient,
+    dataset: &str,
+) -> Result<String, String> {
+    let summary = client
+        .eval_summary(dataset)
+        .await
+        .map_err(|err| format!("Backend eval error: {err}"))?;
+    let baseline = match report::load_baseline_snapshot(dataset) {
+        Ok(snapshot) => Some(snapshot),
+        Err(err) => {
+            eprintln!("warning: baseline load failed for {dataset}: {err}");
+            None
+        }
+    };
+    let html = report::render_html(
+        &summary,
+        baseline.as_ref().map(|snapshot| &snapshot.summary),
+    );
+    Ok(html)
 }
 
 fn respond(ctx: PageContext, hx: bool) -> HttpResponse {

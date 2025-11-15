@@ -133,7 +133,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if let Some(report_path) = &args.report {
-        write_report(report_path, &summary_view)?;
+        write_report(report_path, &summary_view, args.dataset.as_deref())?;
     }
 
     if let Some(path) = &args.thresholds {
@@ -254,7 +254,11 @@ fn resolve_out_dir(base: &Path, args: &Args) -> PathBuf {
     dir
 }
 
-fn write_report(path: &Path, summary: &SummaryView) -> Result<(), Box<dyn std::error::Error>> {
+fn write_report(
+    path: &Path,
+    summary: &SummaryView,
+    dataset: Option<&str>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut summary_owned = dfps_eval::EvalSummary::default();
     summary_owned.total_cases = summary.total_cases;
     summary_owned.predicted_cases = summary.predicted_cases;
@@ -270,7 +274,19 @@ fn write_report(path: &Path, summary: &SummaryView) -> Result<(), Box<dyn std::e
     summary_owned.score_buckets = summary.buckets.to_vec();
     summary_owned.reason_counts = summary.reasons.clone();
     summary_owned.advanced = summary.advanced.clone();
-    let markdown = dfps_eval::report::render_markdown(&summary_owned);
+    let baseline = dataset.and_then(
+        |name| match dfps_eval::report::load_baseline_snapshot(name) {
+            Ok(snapshot) => Some(snapshot),
+            Err(err) => {
+                eprintln!("warning: could not load baseline for {name}: {err}");
+                None
+            }
+        },
+    );
+    let markdown = dfps_eval::report::render_markdown_with_baseline(
+        &summary_owned,
+        baseline.as_ref().map(|snap| &snap.summary),
+    );
     std::fs::write(path, markdown)?;
     Ok(())
 }

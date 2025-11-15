@@ -22,11 +22,12 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-012 – “EVAL-03 – Test harness integration” (dfps_test_suite fixture loader + `mapping_eval` integration tests asserting precision + NoMatch coverage).
 - EVAL-012 – “EVAL-04 – CLI wrapper” (`dfps_cli eval_mapping` reads gold NDJSON and prints summary + optional EvalResult lines).
 - EVAL-012 – “EVAL-05 – Docs & requirements link” (`mapping-eval-quickstart` runbook + MAP_ACCURACY verification update).
-- EVAL-022 – “EVAL-PLAT-01 – Eval crate & datasets” (`dfps_eval` crate, `DFPS_EVAL_DATA_ROOT`, datasets now in `data/eval/`, CLI/test suite wired to named datasets).
+- EVAL-022 – “EVAL-PLAT-01 – Eval crate & datasets” (`dfps_eval` crate, `DFPS_EVAL_DATA_ROOT`, datasets now in `lib/domain/fake_data/data/eval/`, CLI/test suite wired to named datasets).
 - EVAL-022 – “EVAL-PLAT-02/03 – Advanced metrics & CI guard” (EvalSummary adds F1 + stratified metrics; `dfps_cli eval_mapping` supports `--dataset` + `--thresholds` for regression gates).
 - EVAL-022 – “EVAL-PLAT-04/05 – Artifacts + tiered datasets” (`dfps_cli eval_mapping --out-dir/--report` writes summary/results/report artifacts; nine bronze/silver/gold datasets with updated runbooks/docs/tests; `/api/eval/summary` exposed in `dfps_api`).
 - EVAL-022 – “EVAL-PLAT-02 – Calibration buckets” (`EvalSummary.score_buckets` now capture deterministic 0.1 score bands with accuracy per bucket; Markdown report/runbook document the calibration view).
 - EVAL-022 – “EVAL-PLAT-03 – CI regression gate” (`EvalSummary` tracks overall accuracy and AutoMapped precision; CLI thresholds/CI workflow enforce regression guards on the `gold_pet_ct_small` dataset).
+- EVAL-022 – “EVAL-PLAT-04 – Dashboards & reporting” (`dfps_eval::report` loads baseline snapshots and renders Markdown + HTML fragments; `dfps_web_frontend` exposes an HTMX dataset picker backed by `/eval/report`; baseline fixtures documented in `lib/domain/fake_data/data/eval/README.md`).
 
 ---
 

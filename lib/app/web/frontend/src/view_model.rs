@@ -8,13 +8,44 @@ use dfps_observability::PipelineMetrics;
 
 use crate::client::MapBundlesResponse;
 
-#[derive(Debug, Default, Clone)]
+pub const DEFAULT_EVAL_DATASET: &str = "gold_pet_ct_small";
+pub const EVAL_DATASETS: &[&str] = &[
+    "gold_pet_ct_small",
+    "gold_pet_ct_extended",
+    "gold_pet_ct_comprehensive",
+    "silver_pet_ct_small",
+    "silver_pet_ct_extended",
+    "silver_pet_ct_obo",
+    "bronze_pet_ct_small",
+    "bronze_pet_ct_mixed",
+    "bronze_pet_ct_unknowns",
+];
+
+#[derive(Debug, Clone)]
 pub struct PageContext {
     pub health: Option<HealthOverview>,
     pub health_error: Option<String>,
     pub metrics: Option<PipelineMetrics>,
     pub alert: Option<AlertMessage>,
     pub results: Option<MappingResultsView>,
+    pub selected_eval_dataset: String,
+    pub eval_report_html: Option<String>,
+    pub eval_panel_error: Option<String>,
+}
+
+impl Default for PageContext {
+    fn default() -> Self {
+        Self {
+            health: None,
+            health_error: None,
+            metrics: None,
+            alert: None,
+            results: None,
+            selected_eval_dataset: DEFAULT_EVAL_DATASET.to_string(),
+            eval_report_html: None,
+            eval_panel_error: None,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
