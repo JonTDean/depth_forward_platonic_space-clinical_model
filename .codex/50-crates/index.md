@@ -1,34 +1,36 @@
 # 50‑crates — Workspace Codex Index
 
-**Path:** `code/.codex/50-crates/index.md`  
-This index summarizes every crate documented under `50-crates/` and links to their Codex shards. It’s organized by layer: **Domain**, **App**, and **Platform**.
+*Path:* `code/.codex/50-crates/index.md`  
+This index summarizes every crate documented under `50-crates/` and links to their Codex shards. It’s organized by layer: *Domain*, *App*, and *Platform*.
 
 ---
 
 ## Quick Nav
 
-- **Domain**
+- *Domain*
   - [`dfps_core`](domain/core.md)
   - [`dfps_fake_data`](domain/fake_data.md)
   - [`dfps_ingestion`](domain/ingestion.md)
   - [`dfps_mapping`](domain/mapping.md)
   - [`dfps_pipeline`](domain/pipeline.md)
   - [`dfps_terminology`](domain/terminology.md)
-- **App**
-  - [`dfps_cli`](app_cli.md)
-  - [`dfps_api`](web_api.md)
-  - [`dfps_datamart`](web_datamart.md)
-  - [`dfps_web_frontend`](web_frontend.md)
-- **Platform**
-  - [`dfps_configuration`](platform_configuration.md)
-  - [`dfps_observability`](platform_observability.md)
-  - [`dfps_test_suite`](test_suite.md)
+- *App*
+  - [`dfps_cli`](app/cli.md)
+  - *Web*
+    - *Backend*
+        - [`dfps_api`](app/web/backend/api.md)
+        - [`dfps_datamart`](app/web/backend/datamart.md)
+  - [`dfps_web_frontend`](app/web/frontend.md)
+- *Platform*
+  - [`dfps_configuration`](platform/configuration.md)
+  - [`dfps_observability`](platform/observability.md)
+  - [`dfps_test_suite`](platform/test_suite.md)
 
 ---
 
 ## Big Picture
 
-```
+```raw
                        ┌────────────────────┐
                        │     dfps_core      │
                        └─────────┬──────────┘
@@ -74,13 +76,13 @@ Canonical domain/FHIR/staging/mapping/value types with `serde` support. Foundati
 Deterministic generators (with seeds) for domain entities and minimal FHIR Bundles; used by tests and demos.
 
 ### [`dfps_ingestion`](domain/ingestion.md)
-FHIR → staging → domain normalization + validation. Clear, typed errors and strict/lenient validation modes.
+FHIR -> staging -> domain normalization + validation. Clear, typed errors and strict/lenient validation modes.
 
 ### [`dfps_mapping`](domain/mapping.md)
 Deterministic NCIt mapping engine (lexical + mock vector + rules), UMLS xref shortcuts, and summary tallies.
 
 ### [`dfps_pipeline`](domain/pipeline.md)
-Thin façade that wires **ingestion + mapping** and returns `{ flats, exploded_codes, mapping_results, dim_concepts }`.
+Thin façade that wires *ingestion + mapping* and returns `{ flats, exploded_codes, mapping_results, dim_concepts }`.
 
 ### [`dfps_terminology`](domain/terminology.md)
 Code‑system registry/normalization and license/source classification; OBO hints for NCIt.
@@ -89,24 +91,24 @@ Code‑system registry/normalization and license/source classification; OBO hint
 
 ## App Layer
 
-### [`dfps_cli`](app_cli.md)
+### [`dfps_cli`](app/cli.md)
 Shell‑friendly tools:
 - `map_bundles`: ingest + map Bundles; emits NDJSON records (including `metrics_summary`).
 - `map_codes`: map `StgSrCodeExploded` rows; optional explanation output.
 
-### [`dfps_api`](web_api.md)
+### [`dfps_api`](app/web/backend/api.md)
 Axum HTTP gateway:
 - `POST /api/map-bundles` (Bundle object/array/NDJSON)
 - `GET /metrics/summary`
 - `GET /health`
 Maintains global `PipelineMetrics`.
 
-### [`dfps_datamart`](web_datamart.md)
+### [`dfps_datamart`](app/web/backend/datamart.md)
 Builds a small star schema (Dims + Facts) from `PipelineOutput`, including a `NO_MATCH` sentinel concept.
 
-### [`dfps_web_frontend`](web_frontend.md)
+### [`dfps_web_frontend`](app/web/frontend.md)
 Actix + Maud + HTMX UI:
-- Paste/upload Bundle → show `MappingResult` rows
+- Paste/upload Bundle -> show `MappingResult` rows
 - Metrics dashboard
 - “NoMatch explorer”
 Proxies to `dfps_api`.
@@ -115,13 +117,13 @@ Proxies to `dfps_api`.
 
 ## Platform Layer
 
-### [`dfps_configuration`](platform_configuration.md)
+### [`dfps_configuration`](platform/configuration.md)
 Workspace‑aware, namespaced env loader (`.env.<namespace>.<profile>`), strict mode, and root discovery.
 
-### [`dfps_observability`](platform_observability.md)
+### [`dfps_observability`](platform/observability.md)
 Shared logging hooks and `PipelineMetrics` counters; emits per‑bundle summaries and warns on `NoMatch`.
 
-### [`dfps_test_suite`](test_suite.md)
+### [`dfps_test_suite`](platform/test_suite.md)
 Fixtures, assertions, property tests, plus E2E/Integration suites covering ingestion, mapping, datamart, and web API.
 
 ---
@@ -142,15 +144,15 @@ Fixtures, assertions, property tests, plus E2E/Integration suites covering inges
 
 ## Change Impact Cheatsheet
 
-- **`dfps_core`** → ripples to *everything*.
-- **`dfps_ingestion`** → affects pipeline, CLI `map_bundles`, API, and tests.
-- **`dfps_mapping`** → affects pipeline, CLI `map_codes`, API, datamart facts, and tests; update thresholds and summaries accordingly.
-- **`dfps_pipeline`** → affects CLI/API outputs and datamart transformation.
-- **`dfps_terminology`** → impacts mapping result metadata (license/source).
-- **`dfps_configuration`** → env filenames/dirs; update app READMEs and CI.
-- **`dfps_observability`** → metrics schema; update API/Frontend dashboards and tests.
-- **`dfps_datamart`** → schema changes require test and consumer updates.
-- **`dfps_web_frontend`** ↔ **`dfps_api`** → keep `MapBundlesResponse` and UI renderers in sync.
+- *`dfps_core`* -> ripples to *everything*.
+- *`dfps_ingestion`* -> affects pipeline, CLI `map_bundles`, API, and tests.
+- *`dfps_mapping`* -> affects pipeline, CLI `map_codes`, API, datamart facts, and tests; update thresholds and summaries accordingly.
+- *`dfps_pipeline`* -> affects CLI/API outputs and datamart transformation.
+- *`dfps_terminology`* -> impacts mapping result metadata (license/source).
+- *`dfps_configuration`* -> env filenames/dirs; update app READMEs and CI.
+- *`dfps_observability`* -> metrics schema; update API/Frontend dashboards and tests.
+- *`dfps_datamart`* -> schema changes require test and consumer updates.
+- *`dfps_web_frontend`* ↔ *`dfps_api`* -> keep `MapBundlesResponse` and UI renderers in sync.
 
 ---
 
@@ -170,7 +172,6 @@ cargo run -p dfps_web_frontend --bin dfps_web_frontend
 # Test suite
 cargo test -p dfps_test_suite
 ```
-
 ---
 
 ## Doc Files (this folder)
