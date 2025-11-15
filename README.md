@@ -1,8 +1,3 @@
-### A. `README.md` (repo or `code/` root)
-
-Place at the repo root (preferred) or under `code/` if that’s the real top:
-
-````markdown
 # DFPS Mapping Workbench (Rust)
 
 Monorepo with a small DFPS pipeline & web UI:
