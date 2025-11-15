@@ -168,7 +168,7 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
 
 ## Adding a card (example)
 ```markdown
-### FP-07 � Validation & error surface
+### FP-07 � Validatio& & error surface
 - [ ] Add `IngestionError` in `lib/domain/ingestion/src/transforms.rs`
 - [ ] Update FHIR semantics in `docs/system-design/fhir/behavior/sequence-servicerequest.md`
 - [ ] Add regression fixtures under `lib/platform/test_suite/fixtures/regression/`
@@ -311,11 +311,11 @@ docs(DM-05): document core domain model and invariants
 
 Steps
 1) Kanban � Add/Update card `MAP-09 � Add HeuristicMatch mapping state`
-2) Read � NCIt state/behavior docs + terminology YAML + directory architecture
+2) Read � NCIt state/behavior doc+ + terminology YAM+ + directory architecture
 3) Modify � `lib/domain/core/src/mapping/mod.rs`, `lib/domain/mapping/src/lib.rs`
 4) Tests � `lib/platform/test_suite/tests/unit/mapping_properties.rs`, e2e as needed
 5) Run � fmt, clippy, test
-6) Docs � Update NCIt behavior docs + terminology YAML
+6) Docs � Update NCIt behavior doc+ + terminology YAML
 7) Kanban � Move `MAP-09` to **REVIEW**/**DONE** with brief note
 
 
@@ -334,60 +334,467 @@ References:
 
 ## Crate Responsibilities
 
-# Crate: lib/domain/core (dfps_core)
+# Crate: lib/app/cli — `dfps_cli`
 
-Responsibilities
-- Domain/FHIR/staging/mapping/value types
-- Strong typing, serde derives, JSON round-trip tests
-- `//!` docs linking to FHIR & NCIt design docs + terminology schema
+**Purpose**  
+Small CLIs for local ingestion + mapping workflows.
 
-Keep models consistent with:
-- FHIR & NCIt system-design docs
-- `docs/reference-terminology/semantic-relationships.yaml`
+**Env & logging**
+- Loads `app.cli` via `dfps_configuration`.
+- `env_logger` with `--log-level` on `map_bundles`.
 
-
-# Crate: lib/domain/fake_data (dfps_fake_data)
-
-Responsibilities
-- Deterministic, seeded generators for domain + FHIR data
-- Respect invariants from `lib/domain/core` and system-design behavior
-- Update NCIt mock data and terminology semantics when introducing new systems
-
-
-# Crate: lib/domain/ingestion (dfps_ingestion)
-
-Responsibilities
-- FHIR ? staging ? domain transforms with clear error semantics
-- Enforce `docs/system-design/fhir/requirements/ingestion-requirements.md`
-- Predictable error types for malformed FHIR
-
-
-# Crate: lib/domain/mapping (dfps_mapping)
-
-Responsibilities
-- Mapping logic (CPT/HCPCS/SNOMED/NCIt)
-- Rankers (lexical + vector) and rule-based re-rankers
-- Deterministic behavior against embedded mock data
-
-States & thresholds
-- Enforce `AutoMapped`, `NeedsReview`, `NoMatch` (and any new states) per NCIt docs
-- Keep golden tests & regression fixtures updated
+**Bins**
+- **`map_bundles`** — read Bundle(s) (object/array/NDJSON) from file/stdin → emit rows.
+  - Output (NDJSON to stdout; each line wraps the record):
+    - `{"kind":"validation_issue", ...}`
+    - `{"kind":"staging_flat", ...}`
+    - `{"kind":"staging_code", ...}`
+    - `{"kind":"mapping_result", ...}`
+    - `{"kind":"dim_concept", ...}` (deduped by `ncit_id`)
+    - `{"kind":"metrics_summary", ...}` (final)
+  - Logs pipeline summaries and `NoMatch` reasons via `dfps_observability`.
+  - Example:
+    ```bash
+    cd code
+    cargo run -p dfps_cli --bin map_bundles -- ./bundle.ndjson
+    ```
+- **`map_codes`** — map `StgSrCodeExploded` rows.
+  - Flags: `--explain` (emit candidate explanations), `--explain-top N` (default 5).
+  - Stdout: one `MappingResult` JSON per line (+ optional `{"kind":"explanation",...}`).
+  - Stderr: summary (`total`, `by_code_kind`, `by_license_tier`).
+  - Example:
+    ```bash
+    cd code
+    cargo run -p dfps_cli --bin map_codes -- --explain --explain-top 5 ./codes.ndjson
+    ```
 
 
-# Crate: lib/domain/pipeline (dfps_pipeline)
+# Crate: lib/app/web/backend/api — `dfps_api`
 
-Responsibilities
-- Compose ingestion + mapping + downstream steps into end-to-end jobs
-- Expose library functions and CLI (`map_bundles`) that match high-level design flows
-- Ensure e2e tests cover the pipeline
+**Purpose**  
+Axum HTTP API for mapping requests and metrics.
+
+**Env & config**
+- Loads `app.web.api` via `dfps_configuration`.
+- `ApiServerConfig` (defaults): `DFPS_API_HOST=127.0.0.1`, `DFPS_API_PORT=8080`.
+- `init_logging()` bootstraps `env_logger` once.
+
+**Routes**
+- `GET /health` → `{"status":"ok"}` (logs `request_id`)
+- `GET /metrics/summary` → `PipelineMetrics`
+- `POST /api/map-bundles` → `MapBundlesResponse`
+  - Accepts: **Bundle object**, **array**, or **NDJSON**.
+  - For each bundle: `bundle_to_mapped_sr` → aggregate `flats`, `exploded_codes`, `mapping_results`, `dim_concepts`.
+  - Dedupes concepts by `ncit_id`; updates global `PipelineMetrics`.
+
+**Errors**
+- `400 invalid_json`, `422 invalid_fhir`, `500 internal_error` — all include `request_id`.
+
+**Run**
+```bash
+cd code
+cargo run -p dfps_api --bin dfps_api
+```
+
+**Notes**
+- `parse_bundles` rejects empty/whitespace bodies; auto‑detects NDJSON.
+- Warns per `NoMatch` via `dfps_observability::log_no_match`.
 
 
-# Crate: lib/platform/test_suite (dfps_test_suite)
+# Crate: lib/app/web/backend/datamart — `dfps_datamart`
 
-Responsibilities
-- Shared fixtures, assertions, regression/property tests
-- e2e pipelines (`fhir_ingest_flow.rs`, `mapping_pipeline.rs`, `service_request_flow.rs`)
+**Purpose**  
+Build a small star schema from `PipelineOutput` for analytics/UI rendering.
 
-Rules
-- When bugs are fixed, add/update fixtures and regression tests here
+**Key types**
+- `Dims { patients, encounters, codes, ncit }` (all deduped via `BTreeMap`)
+- `DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`
+- `FactServiceRequest { sr_id, patient_key, encounter_key, code_key, ncit_key, status, intent, description, ordered_at }`
+
+**Keys**
+- `DimPatientKey::from_patient_id`
+- `DimEncounterKey::from_encounter_id`
+- `DimCodeKey::from_code_element_id`
+- `DimNCITKey::from_ncit_id` / `DimNCITKey::no_match()`
+
+**Behavior**
+- Code dims derive from `CodeElement::from(StgSrCodeExploded)`.
+- Missing or `NoMatch` → `ncit_key = NO_MATCH` sentinel with `ncit_id="NO_MATCH"`.
+- Returns `(Dims, Vec<FactServiceRequest>)`.
+
+**Tests**
+- Integrity + NO_MATCH sentinel coverage included.
+
+
+# Crate: lib/app/web/frontend — `dfps_web_frontend`
+
+**Purpose**  
+Actix‑Web UI (HTMX + Tailwind) that talks to the backend.
+
+**Env**
+- Loads `app.web.frontend` via `dfps_configuration`.
+- `AppConfig`:
+  - `DFPS_FRONTEND_LISTEN_ADDR` (default `127.0.0.1:8090`)
+  - `DFPS_API_BASE_URL` (default `http://127.0.0.1:8080`)
+  - `DFPS_API_CLIENT_TIMEOUT_SECS` (default `15`)
+  - `DFPS_DOCS_URL` (optional `/docs` redirect)
+
+**Backend client**
+- `GET /health` → `HealthResponse`
+- `GET /metrics/summary` → `PipelineMetrics`
+- `POST /api/map-bundles` → `MapBundlesResponse`
+- Friendly `ClientError` → alert text for the UI.
+
+**Routes**
+- `GET /` — base page with health + metrics
+- `POST /map/paste` — parse JSON from textarea; HTMX fragment swap
+- `POST /map/upload` — multipart file read (UTF‑8 JSON only; **max 512 KiB**)
+- `GET /docs` — redirect to `DFPS_DOCS_URL` if present, else 404
+
+**UI**
+- Results panel with `MappingResult` rows and state chips:
+  - AutoMapped / Needs review / No match
+- Metrics dashboard from `PipelineMetrics`
+- “NoMatch explorer” (SR, code, reason)
+
+**Run**
+```bash
+cd code
+cargo run -p dfps_web_frontend --bin dfps_web_frontend
+```
+
+**Tests**
+- Route tests w/ Wiremock backend
+- Template rendering assertions (metrics + NoMatch)
+
+
+# Crate: lib/domain/core - `dfps_core`
+
+**Path:** `code/lib/domain/core`  
+**Purpose:** canonical domain/FHIR/staging/mapping/value types with `serde` support.  
+**Feature flags:** `dummy` (enables `fake` derives for many types).
+
+## Responsibilities
+- Define the **domain model** (entities, value objects) and **FHIR-minimal** structs.
+- Provide **staging rows** used by ingestion and mapping.
+- Provide **mapping domain types** (`CodeElement`, `MappingResult`, etc.).
+- Keep all public types serializable + testable (JSON round‑trip, doc tests).
+
+## Modules & key types
+- `value/` - `PatientId`, `EncounterId`, `ServiceRequestId` newtypes.
+- `patient/` - `Patient` aggregate (minimal, expandable).
+- `encounter/` - `Encounter` entity linking patient to context.
+- `order/` - `ServiceRequest` aggregate + `ServiceRequestStatus/Intent` enums.
+- `fhir/` - minimal FHIR R4/R5 structs (`Bundle`, `ServiceRequest`, `Reference`, ...) + `Bundle::iter_servicerequests()`.
+- `staging/` - `StgServiceRequestFlat`, `StgSrCodeExploded` for landing tables.
+- `mapping/` - `CodeElement`, `MappingCandidate`, `MappingResult`, `MappingState`, `MappingThresholds`, `MappingSourceVersion`, `NCItConcept`, `DimNCITConcept`.
+
+## Cross‑links
+- FHIR flows & requirements: `docs/system-design/fhir/**`
+- NCIt flows & states: `docs/system-design/ncit/**`
+- Terminology semantics: `docs/reference-terminology/semantic-relationships.yaml`
+
+## Tests
+- Keep unit tests co‑located (e.g., `fhir::Bundle` iteration test, `mapping` ID stability).
+- Prefer deterministic seeds when using `#[cfg(feature = "dummy")]` generators.
+
+
+# Crate: lib/domain/fake_data - `dfps_fake_data`
+
+**Path:** `code/lib/domain/fake_data`  
+**Depends on:** `dfps_core` (with `dummy`), `rand`, `fake`, `serde(_json)`, `dfps_configuration`.
+
+## Responsibilities
+- Deterministic, **seeded** generators for domain + minimal FHIR.
+- CLI tools for generating **scenarios** and **raw FHIR Bundles** as JSON/NDJSON.
+
+## Modules & bins
+- `value.rs` - ID/status/intent/description fakers; seeded helpers.
+- `patient.rs`, `encounter.rs`, `order.rs` - domain entity generators.
+- `scenarios.rs` - cohesive `ServiceRequestScenario { patient, encounter, service_request }`.
+- `raw_fhir.rs` - fake **FHIR** `Patient`, `Encounter`, `ServiceRequest`, and `Bundle` with plausible codings (SNOMED/CPT/LOINC); includes normalization to keep intent/status coherent.
+- `bin/generate_sample.rs` - emits **domain** scenarios (reads env via `dfps_configuration`).
+- `bin/generate_fhir_bundle.rs` - emits **FHIR Bundle** NDJSON; supports `--seed`, `--count`.
+
+## Conventions
+- Always provide `*_with_seed` and `*_with_rng` for determinism.
+- Prefer minimal surface area for FHIR mock data; keep display/system/code realistic.
+
+## Tests
+- Round‑trip serde tests where helpful.
+- Keep RNG usage explicit in tests (`StdRng::seed_from_u64`).
+
+
+# Crate: lib/domain/ingestion - `dfps_ingestion`
+
+**Path:** `code/lib/domain/ingestion`  
+**Depends on:** `dfps_core`, `serde(_json)`.
+
+## Responsibilities
+- Normalize **FHIR -> staging -> domain** (`ServiceRequest`) with clear, typed errors.
+- Provide **validation** utilities aligned with FHIR ingestion requirements.
+- Keep behavior predictable; **strict** vs **lenient** modes available.
+
+## Public API (re‑exports in `lib.rs`)
+- `reference::{reference_id, reference_id_from_str}` - parse `"Type/id"` from `Reference`.
+- `transforms::{ sr_to_staging, sr_to_domain, bundle_to_staging(_with_validation), bundle_to_domain(_with_validation), IngestionError }`
+- `validation::{ validate_bundle, validate_sr, ValidationMode, ValidationReport, ValidationIssue, ValidationSeverity, RequirementRef, Validated }`
+
+## Key rules
+- `IngestionError` surfaces missing/invalid fields, invalid resource types, invalid status/intent, decode failures, and **validation** failures.
+- `ValidationMode::Strict` blocks bundles with errors; `Lenient` returns a report alongside values.
+- `description_from_sr` falls back: `ServiceRequest.description` -> `code.text` -> first `coding.display` -> `"unspecified service request"`.
+
+## Tests
+- Unit tests cover invalid resource types, invalid status/intent, strict/lenient validation, and relationship checks (missing Patient/Encounter in Bundle).
+
+## Cross‑links
+- FHIR ingestion MVP: `docs/kanban/feature/002-fhir-pipeline-mvp.md`
+- FHIR behavior & requirements: `docs/system-design/fhir/**`
+
+
+# Crate: lib/domain/mapping — `dfps_mapping`
+
+**Path:** `code/lib/domain/mapping`  
+**Depends on:** `dfps_core`, `dfps_terminology`, `serde(_json)`.
+
+## Responsibilities
+- Map staging codes to **NCIt** concepts; keep logic **deterministic and local**.
+- Combine lexical + vector mock rankers with a rule re‑ranker; use **UMLS cross‑refs** where available.
+- Attach **license/source** metadata using `dfps_terminology`.
+
+## Modules & data
+- `data.rs`
+  - `load_ncit_concepts()` → `Vec<(NCItConcept, DimNCITConcept)>` (embedded JSON).
+  - `load_umls_xrefs()` → `HashMap<(system, code), UmlsXref>` (embedded JSON).
+  - Version constants: `NCIT_DATA_VERSION`, `UMLS_DATA_VERSION`.
+- `lib.rs`
+  - Rankers: `LexicalRanker`, `VectorRankerMock`, `RuleReranker`.
+  - Engine: `MappingEngine<L,V>` with `ranked_candidates()` and `explain()`.
+  - API: `map_staging_codes(...)`, `map_staging_codes_with_summary(...)`, `explain_staging_code(...)`.
+  - Summary: `MappingSummary { total, by_code_kind, by_license_tier }`.
+  - Classification helpers: `classify(score, thresholds)` → `MappingState`.
+  - Result assembly: `build_result_with_score(...)`, `source_versions()`.
+
+## Behavior
+- For (system, code) present in `umls_xrefs.json` → emit **rule‑based** high‑score mapping (`0.99`) with `reason = "umls_direct_xref"`.
+- Else → combine lexical/vector candidates; `RuleReranker` nudges **NCIT** upward slightly.
+- Final `MappingResult` includes `state` by threshold, `source_version`, and, via `terminology::EnrichedCode`, `license_tier` and `source_kind`.
+
+## Tests
+- Determinism checks for engine outputs.
+- Data loaders parse and include expected rows.
+- Summary tallies by `CodeKind` (`known_licensed_system`, `unknown_system`, etc.) and license tiers.
+
+## Cross‑links
+- NCIt architecture & states: `docs/system-design/ncit/**`
+- Terminology/registry semantics: `docs/reference-terminology/semantic-relationships.yaml`
+
+
+# Crate: lib/domain/pipeline — `dfps_pipeline`
+
+**Path:** `code/lib/domain/pipeline`  
+**Depends on:** `dfps_ingestion`, `dfps_mapping`, `dfps_core`, `dfps_observability` (logging), `serde(_json)`, `thiserror`, `log`, `env_logger`.
+
+## Responsibilities
+- Provide a **single façade** from FHIR `Bundle` → staging → mapping → NCIt dims.
+- Keep orchestration thin; **no business logic** beyond composition and error plumbing.
+
+## Public API
+- `bundle_to_mapped_sr(bundle: &Bundle) -> Result<PipelineOutput, PipelineError>`
+  - Output: `{ flats, exploded_codes, mapping_results, dim_concepts }`
+  - Error: `PipelineError::Ingestion(dfps_ingestion::IngestionError)`
+
+## Cross‑links
+- FHIR quickstart & NCIt sequence: `docs/system-design/fhir/index.md`, `docs/system-design/ncit/behavior/sequence-servicerequest.md`
+
+## Tests
+- Add e2e tests as surfaces grow; today, lean on ingestion + mapping unit tests.
+
+
+# Crate: lib/domain/terminology — `dfps_terminology`
+
+**Path:** `code/lib/domain/terminology`  
+**Depends on:** `dfps_core`, `serde`.
+
+## Responsibilities
+- Normalize and classify **code systems**; provide lightweight **registry** and **OBO** metadata.
+- Bridge staging codes to enriched context (license tier, source kind, canonical system).
+- Supply **value set** metadata for groupings used elsewhere.
+
+## Modules & key types
+- `registry.rs`
+  - `list_code_systems()`, `lookup_codesystem(url)`, `is_licensed(url)`, `is_open(url)`.
+  - Includes CPT, SNOMED CT, LOINC, and NCIt (OBO) entries.
+- `codesystem.rs`
+  - `CodeSystemMeta` + enums `LicenseTier { licensed | open | internal_only }`, `SourceKind { fhir | umls | obo_foundry | local }`.
+- `bridge.rs`
+  - `EnrichedCode::from_staging(StgSrCodeExploded)` → attaches `codesystem`, `license_tier`, `source_kind`, and a **canonical system URL**.
+  - `CodeKind` classification: `KnownLicensedSystem | KnownOpenSystem | OboBacked | UnknownSystem | MissingSystemOrCode`.
+  - Internal canonicalizer maps OIDs to URLs (e.g., SNOMED, LOINC).
+- `obo.rs`
+  - Minimal ontology records (`OboOntology`), list/lookup for NCIt/MONDO.
+- `valueset.rs`
+  - `ValueSetMeta` records for PET imaging subsets combining CPT/SNOMED, LOINC/NCIt.
+
+## How mapping uses this
+- `dfps_mapping` calls `EnrichedCode::from_staging(...)` to:
+  - Classify by `CodeKind` for **summary** tallies.
+  - Attach `license_tier`/`source_kind` into `MappingResult` for downstream filtering.
+
+## Tests
+- Verify known systems resolve with expected license/source attributes.
+- Verify OBO lookups and value set presence.
+- Keep canonicalization stable for OID → URL normalization.
+
+## Cross‑links
+- Terminology semantics & policies: `docs/reference-terminology/semantic-relationships.yaml`
+
+
+
+
+# Crate: lib/platform/configuration — `dfps_configuration`
+
+**Purpose**  
+Workspace‑wide env loader. Resolves a namespaced `.env` and loads it with `dotenvy`.
+
+**Primary API**
+```rust
+pub fn load_env(namespace: &str) -> Result<EnvLoadOutcome, EnvLoadError>;
+```
+- `namespace`: dotted path reflecting crate location (e.g., `app.web.api`).
+- `EnvLoadOutcome { namespace, profile, files }`, where `profile` = `DFPS_ENV` → `APP_ENV` → `"dev"`.
+
+**Resolution rules**
+1. If `DFPS_ENV_FILE` is set → resolve relative to workspace root and load that file only.
+2. Else search directories (in order):
+   - `<workspace>/data/environment`
+   - `<workspace>`
+3. In each dir, try `.env.<namespace>.<profile>` then fallback `.env.<namespace>.local`.
+
+**Workspace root discovery**
+- `DFPS_WORKSPACE_ROOT` (if exists) or walk up from `current_dir()` until a `Cargo.lock` is found.
+
+**Strict mode**
+- If nothing loads **and** `DFPS_ENV_STRICT` or `CI` is truthy, return:
+  `EnvLoadError::FileMissing { namespace, profile, attempted }`.
+
+**Error variants**
+```
+CurrentDir(io::Error)
+WorkspaceRootNotFound
+DotEnv { path, source }
+FileMissing { namespace, profile, attempted: Vec<PathBuf> }
+```
+
+**Notes & gotchas**
+- Boolean envs: empty value counts as **true**; only `false|0|off` (case‑insensitive) are false.
+- Paths are resolved relative to **workspace root**, not process CWD.
+
+**Used by**
+- `platform.observability`, `platform.test_suite`
+- `app.cli`, `app.web.api`, `app.web.frontend`
+
+
+# Crate: lib/platform/observability — `dfps_observability`
+
+**Purpose**  
+Shared logging + metrics for the Bundle → NCIt mapping pipeline.
+
+**Env**
+- Loads `platform.observability` via `dfps_configuration::load_env("platform.observability")`.
+
+**Types & functions**
+```rust
+pub fn init_environment();
+
+#[derive(Default, Serialize, Deserialize, Clone, PartialEq)]
+pub struct PipelineMetrics {
+  pub bundle_count: usize,
+  pub flats_count: usize,
+  pub exploded_count: usize,
+  pub mapping_count: usize,
+  pub auto_mapped: usize,
+  pub needs_review: usize,
+  pub no_match: usize,
+}
+impl PipelineMetrics {
+  pub fn record(&mut self,
+    flats: &[StgServiceRequestFlat],
+    codes: &[StgSrCodeExploded],
+    mappings: &[MappingResult],
+  );
+}
+
+pub fn log_pipeline_output(
+  flats: &[StgServiceRequestFlat],
+  codes: &[StgSrCodeExploded],
+  mappings: &[MappingResult],
+  metrics: &mut PipelineMetrics,
+);
+
+pub fn log_no_match(result: &MappingResult);
+```
+
+**Logging targets**
+- `dfps_pipeline` (info): per‑bundle summary (flats, mappings, cumulative state counts).
+- `dfps_mapping` (warn): each `MappingState::NoMatch` with a reason.
+
+**Used by**
+- `dfps_cli`, `dfps_api`, tests in `dfps_test_suite`.
+
+
+# Crate: lib/platform/test_suite — `dfps_test_suite`
+
+**Purpose**  
+Reusable fixtures/assertions and a full test harness (unit, integration, E2E) spanning ingestion → mapping → datamart → web API.
+
+**Env**
+- Eagerly loads `platform.test_suite` via `dfps_configuration`.
+- `ping()` returns `"test-suite-ready"` post‑init.
+
+**Exports**
+- `assertions`:
+  - `assert_json_roundtrip<T>(&T)`
+  - `assert_service_request_integrity(&ServiceRequest)`
+  - `assert_scenario_consistency(&ServiceRequestScenario)`
+- `fixtures`:
+  - Scenario builders (seeded helpers)
+  - Mapping fixtures for CPT/SNOMED/NCIt/unknown (`mapping_*` fns)
+- `regression`:
+  - Accessors for embedded JSON fixtures:
+    - `baseline_service_request()`
+    - `baseline_fhir_bundle()`
+    - `fhir_bundle_missing_subject()`
+    - `fhir_bundle_invalid_status()`
+    - `fhir_bundle_extra_codings()`
+    - `fhir_bundle_uppercase_status()`
+    - `fhir_bundle_unknown_code()`
+    - `fhir_bundle_missing_encounter()`
+
+**Test suites**
+- **E2E** (`tests/e2e/`):
+  - `fhir_ingest_flow.rs` — flats vs coding counts; ID normalization checks
+  - `mapping_pipeline.rs` — end‑to‑end NCIt mapping (expects `NCIT:C19951`)
+  - `observability_metrics.rs` — metrics snapshot after pipeline run
+  - `service_request_flow.rs` — scenario invariants + serde round‑trip
+- **Integration** (`tests/integration/`):
+  - `fhir_ingest.rs` — strict validation errors/warnings (issue IDs)
+  - `mapping.rs` — state + metadata (license_tier, source_kind)
+  - `datamart.rs` — dims/facts wiring + `NO_MATCH` sentinel
+  - `validation.rs` — missing subject/encounter/status cases
+  - `web_api.rs` — `/api/map-bundles`, `/metrics/summary`, `/health` via Axum
+- **Unit** (`tests/unit/`):
+  - `mapping_properties.rs` — property‑based ranking invariants
+  - `property_roundtrip.rs` — seeded scenario invariants
+
+**Dev deps**
+- `axum`, `tokio`, `reqwest`, `http-body-util`, `tower`
+- `proptest` (property tests)
+
+**Run**
+```bash
+cd code
+cargo test -p dfps_test_suite
+```
 
