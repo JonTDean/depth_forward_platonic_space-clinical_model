@@ -26,16 +26,17 @@
   - [x] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.
 
 ### EVAL-02 - Evaluation core API
-- [ ] New module or crate (e.g., `lib/platform/eval`):
-  - [ ] `EvalCase` struct mirroring the fixture shape.
-  - [ ] `EvalResult` / `EvalSummary` with:
-    - [ ] counts of correct / incorrect mappings,
-    - [ ] precision/recall,
-    - [ ] confusion by `MappingState` (`AutoMapped`, `NeedsReview`, `NoMatch`).
-- [ ] Provide a function:
-  - [ ] `run_eval(cases: &[EvalCase]) -> EvalSummary` that:
-    - [ ] runs each case through `map_staging_codes` (or equivalent),
-    - [ ] compares `expected_ncit_id` to the top `MappingResult`.
+- [x] New module or crate (e.g., `lib/platform/eval`):
+  - [x] `EvalCase` struct mirroring the fixture shape.
+  - [x] `EvalResult` / `EvalSummary` with:
+    - [x] counts of correct / incorrect mappings,
+    - [x] precision/recall,
+    - [x] confusion by `MappingState` (`AutoMapped`, `NeedsReview`, `NoMatch`).
+- [x] Provide a function:
+  - [x] `run_eval(cases: &[EvalCase]) -> EvalSummary` that:
+    - [x] runs each case through `map_staging_codes` (or equivalent),
+    - [x] compares `expected_ncit_id` to the top `MappingResult`.
+- [x] Implementation lives at `lib/domain/mapping/src/eval.rs` and is re-exported via `dfps_mapping::eval`.
 
 ### EVAL-03 - Test harness integration
 - [ ] Add evaluation tests in `dfps_test_suite`:
