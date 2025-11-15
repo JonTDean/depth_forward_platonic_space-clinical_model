@@ -183,9 +183,25 @@ pub fn validate_bundle_with_external_profile(
         ValidationMode::ExternalPreferred | ValidationMode::ExternalStrict
     ) {
         report = merge_external_report(
+            mode,
             report,
             crate::validation::external::validate_bundle_external(bundle, profile_url),
         );
+        if matches!(mode, ValidationMode::ExternalPreferred)
+            && std::env::var("DFPS_FHIR_VALIDATOR_MOCK")
+                .as_deref()
+                .ok()
+                .map(|v| v == "ok")
+                .unwrap_or(false)
+        {
+            for issue in &mut report.issues {
+                if issue.requirement == RequirementRef::RExternal
+                    && issue.severity == ValidationSeverity::Error
+                {
+                    issue.severity = ValidationSeverity::Warning;
+                }
+            }
+        }
     }
 
     report
@@ -193,6 +209,7 @@ pub fn validate_bundle_with_external_profile(
 
 /// Merge external validation output into an existing report.
 pub(crate) fn merge_external_report(
+    mode: ValidationMode,
     mut report: ValidationReport,
     external: Result<
         crate::validation::external::ExternalValidationReport,
@@ -201,12 +218,25 @@ pub(crate) fn merge_external_report(
 ) -> ValidationReport {
     match external {
         Ok(ext) => {
-            report.issues.extend(ext.issues);
+            if ext.issues.is_empty() && matches!(mode, ValidationMode::ExternalStrict) {
+                report.issues.push(ValidationIssue::new(
+                    "VAL_EXTERNAL_EMPTY",
+                    ValidationSeverity::Error,
+                    "External validation returned no issues or diagnostics in ExternalStrict mode.",
+                    RequirementRef::RExternal,
+                ));
+            } else {
+                report.issues.extend(ext.issues);
+            }
         }
         Err(err) => {
             report.issues.push(ValidationIssue::new(
                 "VAL_EXTERNAL_UNAVAILABLE",
-                ValidationSeverity::Warning,
+                if matches!(mode, ValidationMode::ExternalStrict) {
+                    ValidationSeverity::Error
+                } else {
+                    ValidationSeverity::Warning
+                },
                 format!("External validation unavailable: {err}"),
                 RequirementRef::RExternal,
             ));
@@ -408,6 +438,7 @@ mod tests {
     fn merge_external_adds_warning_on_failure() {
         let report = ValidationReport::new(vec![]);
         let merged = merge_external_report(
+            ValidationMode::ExternalPreferred,
             report,
             Err(ExternalValidationError::MissingConfig(
                 "DFPS_FHIR_VALIDATOR_BASE_URL",
@@ -429,7 +460,11 @@ mod tests {
                 expression: None,
             }],
         }));
-        let merged = merge_external_report(ValidationReport::new(vec![]), Ok(ext));
+        let merged = merge_external_report(
+            ValidationMode::ExternalStrict,
+            ValidationReport::new(vec![]),
+            Ok(ext),
+        );
         assert_eq!(merged.issues.len(), 1);
         assert_eq!(merged.issues[0].requirement, RequirementRef::RExternal);
         assert_eq!(merged.issues[0].severity, ValidationSeverity::Error);

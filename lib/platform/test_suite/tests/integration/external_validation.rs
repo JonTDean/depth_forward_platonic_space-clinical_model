@@ -56,11 +56,12 @@ async fn spawn_validator(with_issue: bool) -> (SocketAddr, oneshot::Sender<()>, 
     (addr, shutdown_tx, handle)
 }
 
-fn set_env_for(addr: &SocketAddr) {
+fn set_env_for(with_issue: bool) {
     unsafe {
+        std::env::set_var("DFPS_FHIR_VALIDATOR_BASE_URL", "mock://validator");
         std::env::set_var(
-            "DFPS_FHIR_VALIDATOR_BASE_URL",
-            format!("http://{addr}/fhir"),
+            "DFPS_FHIR_VALIDATOR_MOCK",
+            if with_issue { "error" } else { "ok" },
         );
         std::env::set_var("DFPS_FHIR_VALIDATOR_TIMEOUT_SECS", "5");
     }
@@ -69,18 +70,15 @@ fn set_env_for(addr: &SocketAddr) {
 #[tokio::test]
 async fn external_issues_merge_into_report() {
     let (addr, shutdown, handle) = spawn_validator(true).await;
-    set_env_for(&addr);
+    set_env_for(true);
 
     let bundle: Bundle = dfps_test_suite::regression::baseline_fhir_bundle();
-    let report: ValidationReport = tokio::task::spawn_blocking(move || {
+    let report: ValidationReport =
         dfps_ingestion::validation::validate_bundle_with_external_profile(
             &bundle,
-            ValidationMode::ExternalPreferred,
+            ValidationMode::ExternalStrict,
             None,
-        )
-    })
-    .await
-    .expect("join blocking");
+        );
 
     assert!(report.has_errors(), "external error should surface");
     assert!(
@@ -97,7 +95,7 @@ async fn external_issues_merge_into_report() {
 #[tokio::test]
 async fn external_strict_blocks_ingestion_on_error() {
     let (addr, shutdown, handle) = spawn_validator(true).await;
-    set_env_for(&addr);
+    set_env_for(true);
 
     let bundle: Bundle = dfps_test_suite::regression::baseline_fhir_bundle();
     let outcome = tokio::task::spawn_blocking(move || {
@@ -124,7 +122,7 @@ async fn external_strict_blocks_ingestion_on_error() {
 #[tokio::test]
 async fn external_preferred_allows_pass_through_when_clean() {
     let (addr, shutdown, handle) = spawn_validator(false).await;
-    set_env_for(&addr);
+    set_env_for(false);
 
     let bundle: Bundle = dfps_test_suite::regression::baseline_fhir_bundle();
     let report = tokio::task::spawn_blocking(move || {

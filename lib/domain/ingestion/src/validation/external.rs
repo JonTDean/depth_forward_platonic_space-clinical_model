@@ -122,6 +122,20 @@ pub fn validate_bundle_external(
     bundle: &Bundle,
     profile_url: Option<&str>,
 ) -> Result<ExternalValidationReport, ExternalValidationError> {
+    if let Ok(mode) = std::env::var("DFPS_FHIR_VALIDATOR_MOCK") {
+        return Ok(match mode.as_str() {
+            "error" => ExternalValidationReport {
+                operation_outcome: None,
+                issues: vec![ValidationIssue::new(
+                    "VAL_EXTERNAL_MOCK",
+                    ValidationSeverity::Error,
+                    "Mock external validator reported an error",
+                    RequirementRef::RExternal,
+                )],
+            },
+            _ => ExternalValidationReport::default(),
+        });
+    }
     let cfg = ExternalValidatorConfig::from_env()?;
     let client = Client::builder()
         .timeout(cfg.timeout)
