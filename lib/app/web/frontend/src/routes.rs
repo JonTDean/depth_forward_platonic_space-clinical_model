@@ -273,6 +273,8 @@ mod tests {
                 thresholds: MappingThresholds::default(),
                 source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
                 reason: None,
+                license_tier: None,
+                source_kind: None,
             }],
             dim_concepts: vec![DimNCITConcept {
                 ncit_id: "C1234".into(),

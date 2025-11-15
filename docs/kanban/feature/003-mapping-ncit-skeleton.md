@@ -30,7 +30,7 @@
 - [x] Add `dfps_core::mapping` module:
   - [x] `CodeElement { id, system, code, display }`
   - [x] `MappingCandidate { target_system, target_code, cui, score }`
-  - [x] `MappingResult { code_element_id, cui, ncit_id, score, strategy }`
+  - [x] `MappingResult { code_element_id, cui, ncit_id, score, strategy, license_tier?, source_kind? }`
   - [x] `NCItConcept { ncit_id, preferred_name, synonyms[] }`
   - [x] `DimNCITConcept { ncit_id, preferred_name, semantic_group }`
 - [x] From-staging conversion:

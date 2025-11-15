@@ -795,6 +795,7 @@ name = "dfps_mapping"
 version = "0.1.0"
 dependencies = [
  "dfps_core",
+ "dfps_terminology",
  "serde",
  "serde_json",
 ]

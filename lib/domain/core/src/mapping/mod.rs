@@ -104,6 +104,8 @@ pub struct MappingResult {
     pub thresholds: MappingThresholds,
     pub source_version: MappingSourceVersion,
     pub reason: Option<String>,
+    pub license_tier: Option<String>,
+    pub source_kind: Option<String>,
 }
 
 /// Strategies used by the mapping engine. Keeps provenance readable.

@@ -271,6 +271,8 @@ mod tests {
                 thresholds: MappingThresholds::default(),
                 source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
                 reason: None,
+                license_tier: None,
+                source_kind: None,
             },
             MappingResult {
                 code_element_id: "SR-2::http://loinc.org::99999-9".into(),
@@ -282,6 +284,8 @@ mod tests {
                 thresholds: MappingThresholds::default(),
                 source_version: MappingSourceVersion::new("ncit-2024", "umls-2024"),
                 reason: Some("missing_system_or_code".into()),
+                license_tier: None,
+                source_kind: None,
             },
         ];
 

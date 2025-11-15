@@ -6,7 +6,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use dfps_configuration::load_env;
 use dfps_core::fhir::Bundle;
-use dfps_ingestion::validation::{validate_bundle, ValidationSeverity};
+use dfps_ingestion::validation::{ValidationSeverity, validate_bundle};
 use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::bundle_to_mapped_sr;
 use log::{LevelFilter, info, warn};

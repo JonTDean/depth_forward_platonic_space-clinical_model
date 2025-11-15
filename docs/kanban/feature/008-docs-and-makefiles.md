@@ -13,6 +13,19 @@
 
 ## TODO
 
+
+### DOCS-06 – CI hook
+- [ ] Optional: add a CI step to run `cargo make docs` or `cargo make ci` to ensure tasks/docs build.
+
+---
+
+## DOING
+- _Empty_
+
+## REVIEW
+- [ ] Confirm `/docs` redirects to the configured `DFPS_DOCS_URL`.
+- [ ] Confirm `make` targets succeed across the workspace on a clean checkout.
+
 ### DOCS-01 – mdBook scaffold
 - [x] Add `docs/book/book.toml` and `docs/book/src/{SUMMARY.md,index.md}`.
 - [x] Structure “Runbooks” + “Kanban (Feature)” navigation.
@@ -42,18 +55,6 @@
   - [x] Installing `mdbook` for docs targets.
   - [x] Core targets (`cargo make build`, `cargo make ci`, `cargo make docs`, `cargo make web`, etc.).
   - [x] How `DFPS_ENV` / env profiles interact with targets.
-
-### DOCS-06 – CI hook
-- [ ] Optional: add a CI step to run `cargo make docs` or `cargo make ci` to ensure tasks/docs build.
-
----
-
-## DOING
-- _Empty_
-
-## REVIEW
-- [ ] Confirm `/docs` redirects to the configured `DFPS_DOCS_URL`.
-- [ ] Confirm `make` targets succeed across the workspace on a clean checkout.
 
 ---
 

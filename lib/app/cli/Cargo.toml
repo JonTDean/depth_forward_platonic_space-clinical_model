@@ -14,8 +14,9 @@ path = "src/bin/map_codes.rs"
 [dependencies]
 dfps_core = { path = "../../domain/core" }
 dfps_pipeline = { path = "../../domain/pipeline" }
-dfps_observability = { path = "../../platform/observability" }
 dfps_mapping = { path = "../../domain/mapping" }
+dfps_ingestion = { path = "../../domain/ingestion" }
+dfps_observability = { path = "../../platform/observability" }
 dfps_configuration = { path = "../../platform/configuration" }
 serde.workspace = true
 serde_json.workspace = true

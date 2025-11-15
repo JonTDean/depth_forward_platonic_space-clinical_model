@@ -24,6 +24,8 @@ classDiagram
     +strategy : string
     +state : MappingState
     +reason : string?
+    +license_tier : string?
+    +source_kind : string?
   }
 
   class MappingEngine {
@@ -57,4 +59,4 @@ Implementation notes:
 - The end-to-end façade `dfps_pipeline::bundle_to_mapped_sr` produces the
   `MappingResult`/`DimNCITConcept` pairs used by the warehouse layer.
 - When `state == NoMatch`, `reason` captures whether the engine fell below
-  thresholds or lacked required identifiers.
+  thresholds or lacked required identifiers. Known systems now attach license metadata for downstream policy hooks via the `license_tier` / `source_kind` fields exposed on `MappingResult`.

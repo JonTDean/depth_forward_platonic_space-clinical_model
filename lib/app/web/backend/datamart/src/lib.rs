@@ -171,6 +171,8 @@ mod tests {
                 thresholds: MappingThresholds::default(),
                 source_version: MappingSourceVersion::new("ncit", "umls"),
                 reason: None,
+                license_tier: None,
+                source_kind: None,
             }],
             dim_concepts: vec![DimNCITConcept {
                 ncit_id: "C1234".into(),
@@ -221,6 +223,8 @@ mod tests {
                 thresholds: MappingThresholds::default(),
                 source_version: MappingSourceVersion::new("ncit", "umls"),
                 reason: Some("unknown_code_system".into()),
+                license_tier: None,
+                source_kind: None,
             }],
             dim_concepts: vec![],
         }

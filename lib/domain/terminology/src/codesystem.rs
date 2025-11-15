@@ -9,6 +9,16 @@ pub enum LicenseTier {
     InternalOnly,
 }
 
+impl LicenseTier {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            LicenseTier::Licensed => "licensed",
+            LicenseTier::Open => "open",
+            LicenseTier::InternalOnly => "internal_only",
+        }
+    }
+}
+
 /// Origin/source classification for a code system.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -17,6 +27,17 @@ pub enum SourceKind {
     UMLS,
     OboFoundry,
     Local,
+}
+
+impl SourceKind {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            SourceKind::Fhir => "fhir",
+            SourceKind::UMLS => "umls",
+            SourceKind::OboFoundry => "obo_foundry",
+            SourceKind::Local => "local",
+        }
+    }
 }
 
 /// Metadata describing a code system/terminology entry.
