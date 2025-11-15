@@ -178,7 +178,6 @@ flowchart LR
 
 **12–22 – Future epics (summaries)**
 
-* **012** Eval harness: gold schema, `run_eval`, CLI, docs, CI gating.
 * **013** Vector backend: `VectorStore` abstraction, concrete backend (pgvector/Qdrant), index builder CLI, engine integration, metrics, runbook.
 * **014** Terminology APIs: `TerminologyClient` (+ mock), mapping fallback, env/docs.
 * **015** External FHIR conformance: `$validate` client, blending with internal validation, CLI, fixtures.

@@ -1,4 +1,4 @@
-use super::{stream_ndjson, EvalRow, Registry};
+use super::{EvalRow, Registry, stream_ndjson};
 use serde_json::Result as JsonResult;
 use std::io;
 

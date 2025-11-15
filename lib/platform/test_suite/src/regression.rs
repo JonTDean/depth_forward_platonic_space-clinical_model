@@ -21,8 +21,7 @@ pub fn baseline_service_request() -> ServiceRequest {
     let file = registry()
         .open_regression("service_request_active")
         .expect("regression service request fixture should exist");
-    serde_json::from_reader(file)
-        .expect("regression service request fixture should be valid JSON")
+    serde_json::from_reader(file).expect("regression service request fixture should be valid JSON")
 }
 
 pub fn baseline_fhir_bundle() -> fhir::Bundle {

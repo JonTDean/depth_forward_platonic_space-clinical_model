@@ -1,8 +1,8 @@
 use dfps_core::{order::ServiceRequest, staging::StgSrCodeExploded};
 use dfps_eval::EvalCase;
 use dfps_fake_data::{
-    fixtures::{self, Registry},
     ServiceRequestScenario, fake_service_request_for,
+    fixtures::{self, Registry},
     scenarios::{fake_service_request_scenario, fake_service_request_scenario_with_seed},
 };
 use once_cell::sync::Lazy;

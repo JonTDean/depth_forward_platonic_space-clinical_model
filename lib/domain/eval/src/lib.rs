@@ -18,6 +18,9 @@ use std::{
 
 pub const DEFAULT_DATA_ROOT: &str = "lib/domain/fake_data/data/eval";
 
+pub mod io;
+pub mod report;
+
 #[derive(Debug)]
 pub enum DatasetError {
     Io {
@@ -679,6 +682,3 @@ mod tests {
         assert_eq!(summary.results.len(), 2);
     }
 }
-
-pub mod io;
-pub mod report;
