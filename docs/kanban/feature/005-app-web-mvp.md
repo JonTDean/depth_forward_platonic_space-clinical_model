@@ -6,7 +6,7 @@
 
 ### Columns
 * **TODO** – Not started yet  
-* **DOING** – In progress  
+* **INPROGRESS** – In progress  
 * **REVIEW** – Needs code review / refactor / docs polish  
 * **DONE** – Completed  
 
@@ -44,7 +44,7 @@ _Working branch: `feature/app/web/frontend-mvp`_
 
 ---
 
-## DOING
+## INPROGRESS
 
 ### Backend – HTTP API gateway (`dfps_api`)
 _Working branch: `feature/app/web/backend-mvp`_

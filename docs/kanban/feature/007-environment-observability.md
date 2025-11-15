@@ -10,7 +10,7 @@ This track hardens config/env handling across app/domain/platform crates so loca
 
 - _Empty_
 
-## DOING
+## INPROGRESS
 
 - _Empty_
 

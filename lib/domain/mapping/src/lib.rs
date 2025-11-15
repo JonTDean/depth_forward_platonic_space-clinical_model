@@ -17,10 +17,12 @@ use dfps_core::{
 use dfps_terminology::{CodeKind, EnrichedCode};
 
 mod data;
+pub mod eval;
 
 pub use data::{
     NCIT_DATA_VERSION, UMLS_DATA_VERSION, UmlsXref, load_ncit_concepts, load_umls_xrefs,
 };
+pub use eval::{run_eval, EvalCase, EvalResult, EvalSummary};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct MappingSummary {

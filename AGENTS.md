@@ -109,7 +109,7 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
    If missing, write `Unreleased` instead of a version number for the steps below.
 
 2) **Update the epic header** in the Kanban you touched:
-   - If the epic is newly started and its “Introduced in” is `_TBD_`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
+   - If the epic is newly started and its “Introduced in” is `2025-11-15`, set it to the current workspace version (or `Unreleased` if no version chosen yet).
    - Always set **“Last updated in”** to the current workspace version (or `Unreleased`).
 
    Example:
@@ -177,8 +177,8 @@ Every time you change a checklist line from `- [ ]` to `- [x]` in `docs/kanban/*
 
 ## Columns
 
-* **TODO ? DOING**: implementation starts
-* **DOING ? REVIEW**: code + tests + initial docs written; pass locally
+* **TODO ? INPROGRESS**: implementation starts
+* **INPROGRESS ? REVIEW**: code + tests + initial docs written; pass locally
 * **REVIEW ? DONE**: acceptance criteria met, docs fully synced
 
 
@@ -242,30 +242,30 @@ Where `<kind>` ∈ {`feature`, `bugfix`, `chore`, `docs`, `spike`} and `<card-id
 > Epic: FP-07 – Ingestion error surface
 > Branch: feature/FP-07-ingestion-error-surface
 > Branch target version: v0.2.1
-> Status: DOING
-> Introduced in: _TBD_
+> Status: INPROGRESS
+> Introduced in: 2025-11-15
 > Last updated in: v0.2.1
 ```
 
 ## Workflow
 
-1. **TODO -> DOING**
+1. **TODO -> INPROGRESS**
    - Create the branch from `main` using the naming rule.
    - In the epic Kanban, ensure the header contains:
      - `Branch: <branch-name>`
      - `Branch target version: Unreleased` (or seed with the planned semver)
-     - `Status: DOING`
+     - `Status: INPROGRESS`
 
 2. **Implement**
    - Code + tests + docs as usual.
 
-3. **DOING -> REVIEW or DONE (leaving DOING)**
+3. **INPROGRESS -> REVIEW or DONE (leaving INPROGRESS)**
    - **Update the branch target version in the epic** (metadata only; do **not** bump Cargo here):
      - **PATCH** - routine/internal change
      - **MINOR** - user‑visible addition
      - **MAJOR** - breaking change
    - Set `Last updated in` to that version.
-   - Keep `Introduced in: _TBD_` until a release PR.
+   - Keep `Introduced in: 2025-11-15` until a release PR.
 
 4. **Merge -> `main`**
    - Move the card to **DONE**.

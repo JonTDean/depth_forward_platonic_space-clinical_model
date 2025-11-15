@@ -6,7 +6,7 @@
 
 ### Columns
 * **TODO** – Not started yet  
-* **DOING** – In progress  
+* **INPROGRESS** – In progress  
 * **REVIEW** – Needs code review / refactor / docs polish  
 * **DONE** – Completed  
 
@@ -76,7 +76,7 @@
 
 ---
 
-## DOING
+## INPROGRESS
 - _Empty_
 
 ---
