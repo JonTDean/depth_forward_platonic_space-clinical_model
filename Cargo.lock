@@ -732,6 +732,7 @@ dependencies = [
  "clap",
  "dfps_configuration",
  "dfps_core",
+ "dfps_ingestion",
  "dfps_mapping",
  "dfps_observability",
  "dfps_pipeline",
@@ -823,6 +824,13 @@ dependencies = [
  "serde",
  "serde_json",
  "thiserror",
+]
+
+[[package]]
+name = "dfps_terminology"
+version = "0.1.0"
+dependencies = [
+ "serde",
 ]
 
 [[package]]

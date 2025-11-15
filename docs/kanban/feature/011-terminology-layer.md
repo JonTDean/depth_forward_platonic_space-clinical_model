@@ -15,29 +15,6 @@
 
 ## TODO
 
-### TERM-01 - Terminology crate scaffold
-- [ ] Create `lib/domain/terminology` crate (e.g., `dfps_terminology`).
-- [ ] Wire into `Cargo.toml` workspace members.
-- [ ] Initial modules:
-  - [ ] `codesystem` - FHIR / code system metadata.
-  - [ ] `obo` - OBO Foundry ontology metadata (NCIt OBO, MONDO, etc.).
-  - [ ] `registry` - unified registries and lookup APIs.
-
-### TERM-02 - CodeSystem metadata with license tier
-- [ ] Implement:
-  - [ ] `LicenseTier` enum (e.g., `Licensed`, `Open`, `InternalOnly`).
-  - [ ] `SourceKind` enum (e.g., `FHIR`, `UMLS`, `OBOFoundry`, `Local`).
-  - [ ] `CodeSystemMeta { url, name, version, description, license_tier, source_kind }`.
-- [ ] Seed registry entries for core systems, with **license-aware** classification:
-  - [ ] `http://www.ama-assn.org/go/cpt` → `Licensed`.
-  - [ ] `http://snomed.info/sct` → `Licensed`.
-  - [ ] `http://loinc.org` → appropriate tier (e.g., `Licensed` or `Open`, per policy).
-  - [ ] NCIt OBO IRI(s) → `Open`, `source_kind = OBOFoundry`.
-- [ ] Add helper APIs:
-  - [ ] `lookup_codesystem(url: &str) -> Option<CodeSystemMeta>`
-  - [ ] `is_licensed(url: &str) -> bool`
-  - [ ] `is_open(url: &str) -> bool`.
-
 ### TERM-03 - OBO Foundry integration
 - [ ] Add `obo` module with:
   - [ ] `OntologyMeta { id, iri, preferred_prefix, version, description }`.
@@ -106,7 +83,13 @@
 ---
 
 ## DONE
-- _Empty_
+
+### TERM-01 - Terminology crate scaffold
+- [x] Created `lib/domain/terminology` crate with `codesystem`, `obo`, and `registry` modules wired into the workspace.
+
+### TERM-02 - CodeSystem metadata with license tier
+- [x] Implemented `LicenseTier`, `SourceKind`, and `CodeSystemMeta`.
+- [x] Seeded registry entries for CPT, SNOMED CT, LOINC, and NCIt OBO with helper APIs (`lookup_codesystem`, `is_licensed`, `is_open`).
 
 ---
 

@@ -13,6 +13,25 @@
 
 ## TODO
 
+### VAL-02 - ServiceRequest-level validation
+- [ ] Ensure errors/warnings are distinguishable from `IngestionError`:
+  - [ ] Ingestion should still be able to proceed in -best-effort- mode for non-fatal issues.
+
+---
+
+## DOING
+- _Empty_
+
+---
+
+## REVIEW
+- [ ] Ensure requirement IDs are consistently referenced in code and docs.
+- [ ] Sanity check that validation errors and ingestion errors are clearly separated and discoverable.
+
+---
+
+## DONE
+
 ### VAL-01 - Validation model
 - [x] Add `validation` module to `dfps_ingestion` (or new crate `dfps_fhir_validation` if needed).
 - [x] Define:
@@ -27,8 +46,6 @@
   - [x] `R_Subject` - ensure `subject` is present and a valid `Patient` reference.
   - [x] `R_Status` - ensure `status` is recognized and normalizable.
   - [x] `R_Trace` - ensure required identifiers to trace back to a raw Bundle are present.
-- [ ] Ensure errors/warnings are distinguishable from `IngestionError`:
-  - [ ] Ingestion should still be able to proceed in -best-effort- mode for non-fatal issues.
 
 ### VAL-03 - Bundle-level validation
 - [x] Add `validate_bundle(bundle: &dfps_core::fhir::Bundle) -> Vec<ValidationIssue>`:
@@ -56,22 +73,6 @@
 - [x] Add a -Validation quickstart- subsection to `docs/system-design/clinical/fhir/index.md` showing:
   - [x] `validate_sr` / `validate_bundle` usage in Rust,
   - [x] how to run validation before `bundle_to_staging`.
-
----
-
-## DOING
-- _Empty_
-
----
-
-## REVIEW
-- [ ] Ensure requirement IDs are consistently referenced in code and docs.
-- [ ] Sanity check that validation errors and ingestion errors are clearly separated and discoverable.
-
----
-
-## DONE
-- VAL-01 through VAL-05 (validation primitives, SR/bundle checks, ingestion integration, fixtures/tests)
 
 ---
 
