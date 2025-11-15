@@ -1,0 +1,13 @@
+# II. Claims Matrix
+
+| Paper | Claim | Formal statement | Evidence strength | Contradicts/extends |
+| --- | --- | --- | --- | --- |
+| A1 (Nature Comms 2020) | Definition of manifold capacity & anchor points; α=P/N; RM and DM as anchor-derived measures; capacity improves across layers mainly via DM↓ | α_c = P_c/N; weight vector decomposes into anchors; RM = E||anchor||; DM via participation ratio; decreases in D_M dominate α increases | Strong (peer‑reviewed) | Extends MFTMA; basis for all downstream metrics |
+| A2 (MMCR 2023) | Inverse capacity α^{-1}=E[F(T)] (support‑function/KKT); MMCR objective aligns Z with G eigenvectors | F(T)=min_V ||V−T||^2 s.t. g_S(V)≥0, with anchors as KKT supports; minimize −||GZ||_* | Strong (arXiv with proofs) | Extends estimators; links learning objective to capacity |
+| S7 (JMLR 2024) | Learned flattening reduces curvature while reconstructing signals; improves separability without topological collapse | Curvature‑aware loss + reconstruction; shows class‑separation gains with structure preservation | Strong (peer‑reviewed) | Extends flattening as controllable preprocessor |
+| S4 (Leiden 2019) | Leiden guarantees connected communities; Louvain may yield disconnected/badly connected clusters | Iterative refinement converges to partitions without badly connected communities; Louvain may produce disconnected sets | Strong (peer‑reviewed) | Contradicts adequacy of Louvain for capacity‑sensitive graphs |
+| S1 (arXiv 2023) | Inductive biases and layer operations shape representation geometry; flattening as a recurring effect | Theoretical/empirical analysis of curvature shaping across blocks | Medium‑strong | Extends intuition for flattening mechanisms |
+| S3 (arXiv 2016) | Deep nets progressively linearize/flatten manifolds | Layerwise analysis shows increasing linear separability via flattening | Medium | Supports supervised and unsupervised flattening levers |
+| S8 (arXiv 2025) | Latent manifolds approximated by vanishing ideals (algebraic manifolds) | Use polynomial ideals as compact manifold descriptors; algorithms for approximation | Medium‑strong | Extends to algebraic/causal manifold views |
+| S9 (arXiv 2017) | Manifold/graph/symmetry unification for non‑Euclidean data | Geometric DL framework and assumptions | Strong (survey) | Background; informs graph‑aware embedding updates |
+| S6 (Blog 2018) | Functions‑as‑vectors (Hilbert space) pedagogy | Functions as elements of inner‑product spaces; link to kernels | Weak | Motivational/educational only |
