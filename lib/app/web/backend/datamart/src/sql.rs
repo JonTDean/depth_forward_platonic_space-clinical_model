@@ -1,16 +1,9 @@
-use std::time::Duration;
-
 use dfps_configuration::load_env;
-use dfps_core::mapping::DimNCITConcept;
-use dfps_core::value::{EncounterId, PatientId, ServiceRequestId};
 use dfps_pipeline::PipelineOutput;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Sqlite, Transaction};
+use sqlx::{FromRow, Pool, Sqlite, SqlitePool, Transaction};
 
-use crate::{
-    DimCode, DimCodeKey, DimEncounter, DimEncounterKey, DimNCIT, DimNCITKey, DimPatient,
-    DimPatientKey, FactServiceRequest,
-};
+use crate::{DimCode, DimEncounter, DimNCIT, DimPatient, FactServiceRequest};
 
 pub const CREATE_DIM_PATIENT: &str = r#"
 CREATE TABLE IF NOT EXISTS dim_patient (
@@ -129,21 +122,7 @@ pub async fn load_from_pipeline_output(
 }
 
 pub async fn connect_sqlite(cfg: &WarehouseConfig) -> Result<Pool<Sqlite>, sqlx::Error> {
-    Pool::<Sqlite>::builder()
-        .max_lifetime(Duration::from_secs(60))
-        .max_size(cfg.max_connections)
-        .after_connect(|conn, _meta| {
-            Box::pin(async move {
-                if let Some(schema) = &cfg.schema {
-                    let _ = sqlx::query(&format!("ATTACH DATABASE '{}' AS '{}';", schema, schema))
-                        .execute(conn)
-                        .await;
-                }
-                Ok(())
-            })
-        })
-        .build(&cfg.url)
-        .await
+    SqlitePool::connect_lazy(&cfg.url)
 }
 
 #[derive(Debug, FromRow)]
@@ -213,7 +192,7 @@ impl From<&DimNCIT> for DimNCITRow {
             ncit_key: dim.key.0 as i64,
             ncit_id: dim.ncit_id.clone(),
             preferred_name: dim.preferred_name.clone(),
-            semantic_group: dim.semantic_group.clone(),
+            semantic_group: Some(dim.semantic_group.clone()),
         }
     }
 }

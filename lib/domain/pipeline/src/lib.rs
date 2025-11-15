@@ -14,7 +14,7 @@ use dfps_mapping::map_staging_codes;
 use thiserror::Error;
 
 /// Aggregated pipeline output for a single Bundle ingestion/mapping run.
-#[derive(Debug)]
+#[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct PipelineOutput {
     pub flats: Vec<StgServiceRequestFlat>,
     pub exploded_codes: Vec<StgSrCodeExploded>,

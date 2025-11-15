@@ -33,8 +33,9 @@ dfps_configuration = { path = "../../platform/configuration" }
 dfps_eval = { path = "../../domain/eval" }
 dfps_datamart = { path = "../web/backend/datamart" }
 serde.workspace = true
-serde_json.workspace = true
+serde_json.workspace = true 
 env_logger = "0.11"
 log = "0.4"
 clap.workspace = true
+tokio = { version = "1", features = ["rt-multi-thread"] }
 sqlx = { version = "0.7.4", default-features = false, features = ["runtime-tokio", "macros", "sqlite"] }
