@@ -10,6 +10,11 @@ pub mod validation;
 
 pub use reference::{reference_id, reference_id_from_str};
 pub use transforms::{
-    IngestionError, bundle_to_domain, bundle_to_staging, sr_to_domain, sr_to_staging,
+    IngestionError, bundle_to_domain, bundle_to_domain_with_validation, bundle_to_staging,
+    bundle_to_staging_with_validation, sr_to_domain, sr_to_staging,
 };
-pub use validation::{RequirementRef, ValidationIssue, ValidationSeverity};
+
+pub use validation::{
+    RequirementRef, Validated, ValidationIssue, ValidationMode, ValidationReport,
+    ValidationSeverity, validate_bundle, validate_sr,
+};

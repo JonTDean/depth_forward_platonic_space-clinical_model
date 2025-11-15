@@ -32,18 +32,49 @@ MVP powers the synthetic bundle generators and end-to-end ingestion tests.
 ### Code snippet
 
 ```rust
-use dfps_ingestion::bundle_to_staging;
+use dfps_ingestion::{
+    bundle_to_staging_with_validation,
+    validation::{ValidationMode, validate_bundle},
+};
 use dfps_pipeline::bundle_to_mapped_sr;
 use serde_json::from_str;
 
 let bundle: dfps_core::fhir::Bundle =
     from_str(include_str!("../../lib/test_suite/fixtures/regression/fhir_bundle_sr.json"))?;
 
-let (flats, exploded) = bundle_to_staging(&bundle)?;
+let validated = bundle_to_staging_with_validation(&bundle, ValidationMode::Lenient)?;
+assert!(!validated.report.has_errors());
+let (flats, exploded) = validated.value;
 let mapped = bundle_to_mapped_sr(&bundle)?;
 
 assert_eq!(flats.len(), mapped.flats.len());
 assert_eq!(exploded.len(), mapped.exploded_codes.len());
+```
+
+### Validation quickstart
+
+```rust
+use dfps_ingestion::validation::{validate_bundle, validate_sr, ValidationMode};
+
+let bundle: dfps_core::fhir::Bundle =
+    serde_json::from_str(include_str!("../../lib/test_suite/fixtures/regression/fhir_bundle_sr.json"))?;
+
+// Validate the whole bundle before ingestion.
+let report = validate_bundle(&bundle);
+assert!(!report.has_errors());
+
+// Validate an individual ServiceRequest.
+let sr = bundle
+    .iter_servicerequests()
+    .next()
+    .expect("bundle contains ServiceRequest")
+    .expect("service request decodes");
+let issues = validate_sr(&sr);
+assert!(issues.is_empty());
+
+// Strict mode will block ingestion when issues are present.
+let lenient = dfps_ingestion::bundle_to_staging_with_validation(&bundle, ValidationMode::Lenient)?;
+assert!(!lenient.report.has_errors());
 ```
 
 ### CLI helpers

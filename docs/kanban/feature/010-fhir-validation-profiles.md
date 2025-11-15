@@ -31,16 +31,16 @@
   - [ ] Ingestion should still be able to proceed in -best-effort- mode for non-fatal issues.
 
 ### VAL-03 - Bundle-level validation
-- [ ] Add `validate_bundle(bundle: &dfps_core::fhir::Bundle) -> Vec<ValidationIssue>`:
-  - [ ] Collect per-SR issues and bundle-level invariants (e.g., referenced Patient/Encounter exists).
-- [ ] Optionally add a helper that returns a structured report:
-  - [ ] `ValidationReport { issues: Vec<ValidationIssue>, has_errors: bool }`.
+- [x] Add `validate_bundle(bundle: &dfps_core::fhir::Bundle) -> Vec<ValidationIssue>`:
+  - [x] Collect per-SR issues and bundle-level invariants (e.g., referenced Patient/Encounter exists).
+- [x] Optionally add a helper that returns a structured report:
+  - [x] `ValidationReport { issues: Vec<ValidationIssue>, has_errors: bool }`.
 
 ### VAL-04 - Ingestion integration
-- [ ] Extend `bundle_to_staging` / `bundle_to_domain` to optionally:
-  - [ ] invoke validation first and attach `ValidationIssue` data to the result (in a sidecar struct, not the core types).
-- [ ] Add a small -validation mode- enum (e.g., `Strict` vs. `Lenient`) controlling:
-  - [ ] whether errors stop ingestion or just annotate results.
+- [x] Extend `bundle_to_staging` / `bundle_to_domain` to optionally:
+  - [x] invoke validation first and attach `ValidationIssue` data to the result (via `Validated<T>` sidecar).
+- [x] Add a small -validation mode- enum (`ValidationMode::{Strict, Lenient}`) controlling:
+  - [x] whether errors stop ingestion or just annotate results.
 
 ### VAL-05 - Tests & regression fixtures
 - [ ] Add new fixtures that explicitly violate R_Subject / R_Status / R_Trace (or reuse existing ones where possible).
@@ -51,19 +51,19 @@
   - [ ] malformed bundles surface the expected requirement-bound issues.
 
 ### VAL-06 - Docs alignment
-- [ ] Extend `docs/system-design/clinical/fhir/requirements/ingestion-requirements.md` with a -Verification- section:
-  - [ ] explain how `ValidationIssue` IDs correspond to diagram IDs.
-- [ ] Add a -Validation quickstart- subsection to `docs/system-design/clinical/fhir/index.md` showing:
-  - [ ] `validate_sr` / `validate_bundle` usage in Rust,
-  - [ ] how to run validation before `bundle_to_staging`.
+- [x] Extend `docs/system-design/clinical/fhir/requirements/ingestion-requirements.md` with a -Verification- section:
+  - [x] explain how `ValidationIssue` IDs correspond to diagram IDs.
+- [x] Add a -Validation quickstart- subsection to `docs/system-design/clinical/fhir/index.md` showing:
+  - [x] `validate_sr` / `validate_bundle` usage in Rust,
+  - [x] how to run validation before `bundle_to_staging`.
 
 ---
 
 ## DOING
 
-### VAL-02 - ServiceRequest-level validation
-- [x] `validate_sr` emits requirement-linked issues for subject/status/trace checks.
-- [ ] Integrate severity handling with ingestion "best-effort" modes once the pipeline consumes validation output.
+### VAL-05 - Tests & regression fixtures
+- [ ] Extend regression fixtures to exercise the new validation API (R_Subject/R_Status/R_Trace).
+- [ ] Ensure ingestion CLI/test harness surfaces validation reports in logs.
 
 ---
 

@@ -4,22 +4,22 @@
 **Goal:** Build a lightweight evaluation harness that measures NCIt mapping quality (precision/recall, state distributions) against gold-standard code → NCIt labels.
 
 ### Columns
-* **TODO** – Not started yet
-* **DOING** – In progress
-* **REVIEW** – Needs code review / refactor / docs polish
-* **DONE** – Completed
+* **TODO** - Not started yet
+* **DOING** - In progress
+* **REVIEW** - Needs code review / refactor / docs polish
+* **DONE** - Completed
 
 ---
 
 ## TODO
 
-### EVAL-01 – Gold standard format
+### EVAL-01 - Gold standard format
 - [ ] Define a simple gold dataset schema (e.g., NDJSON or JSONL) under `lib/platform/test_suite/fixtures/eval/`:
   - [ ] `{"system": "...", "code": "...", "display": "...", "expected_ncit_id": "NCIT:Cxxxx"}`
 - [ ] Include a small PET/CT-focused sample:
   - [ ] Codes for CPT, SNOMED, LOINC used in existing regression fixtures.
 
-### EVAL-02 – Evaluation core API
+### EVAL-02 - Evaluation core API
 - [ ] New module or crate (e.g., `lib/domain/eval` or `dfps_mapping::eval`):
   - [ ] `EvalCase` struct mirroring the fixture shape.
   - [ ] `EvalResult` / `EvalSummary` with:
@@ -31,7 +31,7 @@
     - [ ] runs each case through `map_staging_codes` (or equivalent),
     - [ ] compares `expected_ncit_id` to the top `MappingResult`.
 
-### EVAL-03 – Test harness integration
+### EVAL-03 - Test harness integration
 - [ ] Add evaluation tests in `dfps_test_suite`:
   - [ ] Construct a small suite of EvalCase rows from fixtures.
   - [ ] Assert:
@@ -40,7 +40,7 @@
 - [ ] Optionally add a property test ensuring:
   - [ ] label-mismatched golds never report as correct.
 
-### EVAL-04 – CLI wrapper
+### EVAL-04 - CLI wrapper
 - [ ] Introduce a small CLI binary, e.g.:
   - [ ] `dfps_mapping_eval` or a new `dfps_cli` subcommand `eval-mapping`.
 - [ ] CLI behavior:
@@ -48,7 +48,7 @@
   - [ ] Prints summary metrics (precision, recall, counts by MappingState).
   - [ ] Optional `--dump-details` flag to emit per-code results.
 
-### EVAL-05 – Docs & requirements link
+### EVAL-05 - Docs & requirements link
 - [ ] Add `docs/runbook/mapping-eval-quickstart.md` describing:
   - [ ] how to run the CLI over the gold file,
   - [ ] how to interpret metrics.

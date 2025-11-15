@@ -3,8 +3,12 @@
 //! Each [`RequirementRef`] corresponds to an ID defined in
 //! `docs/system-design/clinical/fhir/requirements/ingestion-requirements.md`.
 
+use std::collections::HashSet;
+
 use dfps_core::fhir;
 use serde::{Deserialize, Serialize};
+
+use crate::reference::reference_id_from_str;
 
 /// Requirement identifiers mirrored from the ingestion requirements doc.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
@@ -81,6 +85,76 @@ pub fn validate_sr(sr: &fhir::ServiceRequest) -> Vec<ValidationIssue> {
     issues
 }
 
+/// Aggregated validation mode for bundle ingestion.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum ValidationMode {
+    Strict,
+    Lenient,
+}
+
+impl Default for ValidationMode {
+    fn default() -> Self {
+        ValidationMode::Lenient
+    }
+}
+
+/// Aggregated report returned by `validate_bundle`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ValidationReport {
+    pub issues: Vec<ValidationIssue>,
+}
+
+impl ValidationReport {
+    pub fn new(issues: Vec<ValidationIssue>) -> Self {
+        Self { issues }
+    }
+
+    pub fn has_errors(&self) -> bool {
+        self.issues
+            .iter()
+            .any(|issue| issue.severity == ValidationSeverity::Error)
+    }
+}
+
+/// Output wrapper for functions that combine ingestion + validation.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Validated<T> {
+    pub value: T,
+    pub report: ValidationReport,
+}
+
+impl<T> Validated<T> {
+    pub fn new(value: T, report: ValidationReport) -> Self {
+        Self { value, report }
+    }
+}
+
+/// Validate an entire FHIR Bundle by walking ServiceRequests and referenced resources.
+pub fn validate_bundle(bundle: &fhir::Bundle) -> ValidationReport {
+    let patient_ids = collect_resource_ids(bundle, "Patient");
+    let encounter_ids = collect_resource_ids(bundle, "Encounter");
+    let mut issues = Vec::new();
+
+    for entry in bundle.iter_servicerequests() {
+        match entry {
+            Ok(sr) => {
+                issues.extend(validate_sr(&sr));
+                validate_bundle_relationships(&sr, &patient_ids, &encounter_ids, &mut issues);
+            }
+            Err(err) => {
+                issues.push(ValidationIssue::new(
+                    "VAL_BUNDLE_SR_DECODE",
+                    ValidationSeverity::Error,
+                    format!("Failed to decode ServiceRequest: {err}"),
+                    RequirementRef::RTrace,
+                ));
+            }
+        }
+    }
+
+    ValidationReport::new(issues)
+}
+
 fn validate_subject(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationIssue>) {
     match sr
         .subject
@@ -132,6 +206,41 @@ fn validate_traceability(sr: &fhir::ServiceRequest, issues: &mut Vec<ValidationI
     }
 }
 
+fn validate_bundle_relationships(
+    sr: &fhir::ServiceRequest,
+    patient_ids: &HashSet<String>,
+    encounter_ids: &HashSet<String>,
+    issues: &mut Vec<ValidationIssue>,
+) {
+    if let Some(reference) = sr.subject.as_ref().and_then(|r| r.reference.as_deref()) {
+        if let Some(id) = reference_id_from_str(reference) {
+            if !patient_ids.contains(id) {
+                issues.push(ValidationIssue::new(
+                    "VAL_SR_SUBJECT_PATIENT_NOT_FOUND",
+                    ValidationSeverity::Error,
+                    format!("ServiceRequest.subject references Patient/{id}, which is not present in the Bundle."),
+                    RequirementRef::RSubject,
+                ));
+            }
+        }
+    }
+
+    if let Some(reference) = sr.encounter.as_ref().and_then(|r| r.reference.as_deref()) {
+        if let Some(id) = reference_id_from_str(reference) {
+            if !encounter_ids.contains(id) {
+                issues.push(ValidationIssue::new(
+                    "VAL_SR_ENCOUNTER_NOT_FOUND",
+                    ValidationSeverity::Warning,
+                    format!(
+                        "ServiceRequest.encounter references Encounter/{id}, which is not present in the Bundle."
+                    ),
+                    RequirementRef::RTrace,
+                ));
+            }
+        }
+    }
+}
+
 fn is_patient_reference(reference: &str) -> bool {
     reference.starts_with("Patient/")
         && reference
@@ -154,6 +263,23 @@ fn is_known_status(value: &str) -> bool {
             | "entered-in-error"
             | "entered_in_error"
     )
+}
+
+fn collect_resource_ids(bundle: &fhir::Bundle, resource_type: &str) -> HashSet<String> {
+    bundle
+        .entry
+        .iter()
+        .filter_map(|entry| entry.resource.as_ref())
+        .filter_map(|resource| {
+            let ty = resource.get("resourceType")?.as_str()?;
+            if ty.eq_ignore_ascii_case(resource_type) {
+                resource.get("id").and_then(|v| v.as_str())
+            } else {
+                None
+            }
+        })
+        .map(|id| id.to_string())
+        .collect()
 }
 
 #[cfg(test)]
@@ -237,5 +363,90 @@ mod tests {
 
         let issues = validate_sr(&sr);
         assert!(issues.is_empty());
+    }
+
+    #[test]
+    fn bundle_validation_aggregates_service_request_issues() {
+        let bundle = fhir::Bundle {
+            resource_type: "Bundle".into(),
+            bundle_type: Some("collection".into()),
+            entry: vec![fhir::BundleEntry {
+                full_url: None,
+                resource: Some(serde_json::json!({
+                    "resourceType": "ServiceRequest",
+                    "id": "SR-2",
+                    "status": "unknown",
+                    "intent": "order",
+                    "subject": { "reference": "Observation/123" },
+                })),
+            }],
+        };
+
+        let report = validate_bundle(&bundle);
+        assert!(report.has_errors());
+        assert_eq!(report.issues.len(), 3);
+    }
+
+    #[test]
+    fn bundle_validation_flags_missing_patient_resource() {
+        let bundle = fhir::Bundle {
+            resource_type: "Bundle".into(),
+            bundle_type: Some("collection".into()),
+            entry: vec![fhir::BundleEntry {
+                full_url: None,
+                resource: Some(serde_json::json!({
+                    "resourceType": "ServiceRequest",
+                    "id": "SR-3",
+                    "status": "active",
+                    "intent": "order",
+                    "subject": { "reference": "Patient/P-MISSING" }
+                })),
+            }],
+        };
+
+        let report = validate_bundle(&bundle);
+        assert!(report.has_errors());
+        assert!(
+            report
+                .issues
+                .iter()
+                .any(|issue| issue.id == "VAL_SR_SUBJECT_PATIENT_NOT_FOUND")
+        );
+    }
+
+    #[test]
+    fn bundle_validation_flags_missing_encounter_resource() {
+        let bundle = fhir::Bundle {
+            resource_type: "Bundle".into(),
+            bundle_type: Some("collection".into()),
+            entry: vec![
+                fhir::BundleEntry {
+                    full_url: None,
+                    resource: Some(serde_json::json!({
+                        "resourceType": "Patient",
+                        "id": "PAT-1"
+                    })),
+                },
+                fhir::BundleEntry {
+                    full_url: None,
+                    resource: Some(serde_json::json!({
+                        "resourceType": "ServiceRequest",
+                        "id": "SR-4",
+                        "status": "active",
+                        "intent": "order",
+                        "subject": { "reference": "Patient/PAT-1" },
+                        "encounter": { "reference": "Encounter/ENC-MISSING" }
+                    })),
+                },
+            ],
+        };
+
+        let report = validate_bundle(&bundle);
+        assert!(
+            report
+                .issues
+                .iter()
+                .any(|issue| issue.id == "VAL_SR_ENCOUNTER_NOT_FOUND")
+        );
     }
 }

@@ -6,7 +6,10 @@ use dfps_core::{
 };
 use serde_json::Error as SerdeError;
 
-use crate::reference;
+use crate::{
+    reference,
+    validation::{Validated, ValidationIssue, ValidationMode, validate_bundle},
+};
 
 /// Errors surfaced while normalizing raw FHIR payloads.
 #[derive(Debug)]
@@ -20,6 +23,7 @@ pub enum IngestionError {
     InvalidStatus(String),
     InvalidIntent(String),
     Decode(SerdeError),
+    ValidationFailed(Vec<ValidationIssue>),
 }
 
 impl std::fmt::Display for IngestionError {
@@ -33,6 +37,9 @@ impl std::fmt::Display for IngestionError {
             Self::InvalidStatus(value) => write!(f, "invalid status value '{value}'"),
             Self::InvalidIntent(value) => write!(f, "invalid intent value '{value}'"),
             Self::Decode(err) => write!(f, "failed to decode resource: {err}"),
+            Self::ValidationFailed(issues) => {
+                write!(f, "validation failed with {} issue(s)", issues.len())
+            }
         }
     }
 }
@@ -141,6 +148,26 @@ pub fn sr_to_domain(sr: &fhir::ServiceRequest) -> Result<order::ServiceRequest, 
 pub fn bundle_to_staging(
     bundle: &fhir::Bundle,
 ) -> Result<(Vec<StgServiceRequestFlat>, Vec<StgSrCodeExploded>), IngestionError> {
+    bundle_to_staging_with_validation(bundle, ValidationMode::default())
+        .map(|validated| validated.value)
+}
+
+/// Convert a bundle into staging rows, returning validation metadata.
+pub fn bundle_to_staging_with_validation(
+    bundle: &fhir::Bundle,
+    mode: ValidationMode,
+) -> Result<Validated<(Vec<StgServiceRequestFlat>, Vec<StgSrCodeExploded>)>, IngestionError> {
+    let report = validate_bundle(bundle);
+    if matches!(mode, ValidationMode::Strict) && report.has_errors() {
+        return Err(IngestionError::ValidationFailed(report.issues.clone()));
+    }
+    let (flats, exploded) = bundle_to_staging_inner(bundle)?;
+    Ok(Validated::new((flats, exploded), report))
+}
+
+fn bundle_to_staging_inner(
+    bundle: &fhir::Bundle,
+) -> Result<(Vec<StgServiceRequestFlat>, Vec<StgSrCodeExploded>), IngestionError> {
     let mut flats = Vec::new();
     let mut exploded = Vec::new();
 
@@ -156,6 +183,26 @@ pub fn bundle_to_staging(
 
 /// Convert a bundle into domain ServiceRequest aggregates.
 pub fn bundle_to_domain(
+    bundle: &fhir::Bundle,
+) -> Result<Vec<order::ServiceRequest>, IngestionError> {
+    bundle_to_domain_with_validation(bundle, ValidationMode::default())
+        .map(|validated| validated.value)
+}
+
+/// Convert a bundle into domain ServiceRequest aggregates, returning validation metadata.
+pub fn bundle_to_domain_with_validation(
+    bundle: &fhir::Bundle,
+    mode: ValidationMode,
+) -> Result<Validated<Vec<order::ServiceRequest>>, IngestionError> {
+    let report = validate_bundle(bundle);
+    if matches!(mode, ValidationMode::Strict) && report.has_errors() {
+        return Err(IngestionError::ValidationFailed(report.issues.clone()));
+    }
+    let output = bundle_to_domain_inner(bundle)?;
+    Ok(Validated::new(output, report))
+}
+
+fn bundle_to_domain_inner(
     bundle: &fhir::Bundle,
 ) -> Result<Vec<order::ServiceRequest>, IngestionError> {
     let mut output = Vec::new();
@@ -297,6 +344,26 @@ mod tests {
         matches!(err, IngestionError::InvalidIntent(value) if value == "weird");
     }
 
+    #[test]
+    fn strict_validation_blocks_bundle_to_staging() {
+        let bundle = bundle_missing_patient_resource();
+        let err = bundle_to_staging_with_validation(&bundle, ValidationMode::Strict)
+            .expect_err("strict validation should fail");
+        matches!(err, IngestionError::ValidationFailed(issues) if !issues.is_empty());
+
+        let validated = bundle_to_staging_with_validation(&bundle, ValidationMode::Lenient)
+            .expect("lenient mode");
+        assert!(validated.report.has_errors());
+    }
+
+    #[test]
+    fn strict_validation_blocks_bundle_to_domain() {
+        let bundle = bundle_missing_patient_resource();
+        let err = bundle_to_domain_with_validation(&bundle, ValidationMode::Strict)
+            .expect_err("strict validation should fail");
+        matches!(err, IngestionError::ValidationFailed(issues) if !issues.is_empty());
+    }
+
     fn minimal_sr() -> fhir::ServiceRequest {
         fhir::ServiceRequest {
             resource_type: "ServiceRequest".into(),
@@ -314,6 +381,23 @@ mod tests {
             category: vec![],
             description: None,
             authored_on: Some("2024-05-01T12:00:00Z".into()),
+        }
+    }
+
+    fn bundle_missing_patient_resource() -> fhir::Bundle {
+        fhir::Bundle {
+            resource_type: "Bundle".into(),
+            bundle_type: Some("collection".into()),
+            entry: vec![fhir::BundleEntry {
+                full_url: None,
+                resource: Some(serde_json::json!({
+                    "resourceType": "ServiceRequest",
+                    "id": "SR-MISSING-PAT",
+                    "status": "active",
+                    "intent": "order",
+                    "subject": { "reference": "Patient/PAT-404" }
+                })),
+            }],
         }
     }
 }
