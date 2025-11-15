@@ -10,9 +10,6 @@
 ---
 
 ## TODO
-### Domain model crate (`lib/core`)
-
-Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
 
 ---
 

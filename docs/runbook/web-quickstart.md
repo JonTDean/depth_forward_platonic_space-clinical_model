@@ -25,77 +25,9 @@ Both binaries live in the main Cargo workspace, so `cargo run -p <crate>` works 
 
 ---
 
-## 3. Environment variables & automated `.env` loading
+## 3. Configure environment
 
-The `dfps_configuration` crate loads namespace-aware dotenv files automatically. Every crate opts into a namespace (e.g., `app.web.api`), and the loader reads `.env.<namespace>.<profile>` from `code/data/environment/` (or an override provided via `DFPS_ENV_DIR`) based on `DFPS_ENV` (default: `dev`). You can override the filename entirely with `DFPS_ENV_FILE`.
-
-| Namespace | Crate(s) | Default file (when `DFPS_ENV=dev`) |
-| --- | --- | --- |
-| `app.web.api` | `dfps_api` (`lib/app/web/backend/api`) | `.env.app.web.api.dev` |
-| `app.web.frontend` | `dfps_web_frontend` (`lib/app/web/frontend`) | `.env.app.web.frontend.dev` |
-| `app.cli` | `dfps_cli` binaries (`map_bundles`, `map_codes`) | `.env.app.cli.dev` |
-| `domain.fake_data` | `dfps_fake_data` sample generator | `.env.domain.fake_data.dev` |
-| `platform.test_suite` | `dfps_test_suite` (fixtures, integration/e2e tests) | `.env.platform.test_suite.test` when `DFPS_ENV=test`, `.env.platform.test_suite.dev` otherwise |
-| `platform.observability` | `dfps_observability` helpers (log/metrics defaults) | `.env.platform.observability.dev` |
-
-Both binaries call `dfps_configuration::load_env(...)` on startup, and the test suite triggers it lazily whenever fixtures are accessed. That means you only need to maintain the `.env` files in the repo root—the rest happens automatically.
-
-| Variable | Used by | Default | Description |
-| --- | --- | --- | --- |
-| `DFPS_ENV` / `APP_ENV` | Loader | `dev` | Active profile (`dev`, `test`, `prod`). Controls which `.env.<namespace>.<profile>` file is loaded. |
-| `DFPS_ENV_FILE` | Loader | unset | Absolute/relative path to a specific env file. Overrides namespace logic when set. |
-| `DFPS_ENV_DIR` | Loader | `data/environment` | Directory containing the `.env.*` files. Defaults to the workspace `data/environment` folder. |
-| `DFPS_FRONTEND_LISTEN_ADDR` | Frontend | `127.0.0.1:8090` | Address/port for `dfps_web_frontend`. Typically defined in `.env.app.web.frontend.<profile>`. |
-| `DFPS_API_BASE_URL` | Frontend | `http://127.0.0.1:8080` | Backend base URL. |
-| `DFPS_API_CLIENT_TIMEOUT_SECS` | Frontend | `15` | Reqwest timeout for backend calls. |
-| `DFPS_API_HOST` (optional) | Backend | `127.0.0.1` | Override `ApiServerConfig.host` if you create a custom wrapper binary. |
-| `DFPS_API_PORT` (optional) | Backend | `8080` | Override `ApiServerConfig.port`. |
-
-For quickstarts, set `DFPS_ENV=dev` (default) and copy the companion `.env` files from the templates in `data/environment`. Override values only if ports conflict with other services.
-
-### 3.1 Manage `.env` files
-
-Keep per-service environment files under `data/environment/` so every crate sees the same layout. Copy the matching `.env.<namespace>.example` template to `.env.<namespace>.<profile>` and fill in secrets before running a crate.
-
-#### `.env.app.web.api.dev`
-
-```bash
-DFPS_API_HOST=127.0.0.1
-DFPS_API_PORT=8080
-RUST_LOG=dfps_api=info
-```
-
-The backend currently binds via `ApiServerConfig::default()`, so host/port envs are informational until you customize `main.rs`, but keeping them in the `.env` keeps intent clear alongside log filters.
-
-#### `.env.app.web.frontend.dev`
-
-```bash
-DFPS_FRONTEND_LISTEN_ADDR=127.0.0.1:8090
-DFPS_API_BASE_URL=http://127.0.0.1:8080
-DFPS_API_CLIENT_TIMEOUT_SECS=15
-```
-
-Because the loader runs automatically, you only need to ensure the file exists. When you run `cargo run -p dfps_web_frontend`, it loads `.env.app.web.frontend.dev` before evaluating `AppConfig::from_env()`.
-
-#### `.env.platform.test_suite.test`
-
-```bash
-DFPS_ENV=test
-RUST_LOG=dfps_test_suite=info
-```
-
-Setting `DFPS_ENV=test` inside this file ensures integration/e2e tests operate with the correct profile whenever the suite runs. You can still override `DFPS_ENV` in the shell (e.g., `DFPS_ENV=prod cargo run ...`) to force a different profile temporarily.
-
-> **Tip:** When automating multi-crate workflows (e.g., running backend + frontend simultaneously), export `DFPS_ENV` once in your shell and let each crate pick up the matching `.env.<namespace>.<profile>` file. This keeps observability/log settings aligned across surfaces.
-
-### 3.2 Storage, versioning, and secrets
-
-- All `.env.*` files live in `code/data/environment/`. Real `.env.*.<profile>` files stay untracked, while the `.env.*.example` templates live alongside them to document required keys.
-- Production secrets never live in the repo. Copy the relevant `.example` into your deployment workspace, then set `DFPS_ENV_DIR` or `DFPS_ENV_FILE` so binaries read from the mounted secret path. You can also set `DFPS_WORKSPACE_ROOT` for hermetic build scripts.
-- Set `DFPS_ENV_STRICT=1` (already implied when `CI` is present) to fail fast whenever a namespace-specific `.env` file is missing. This is how CI surfaces misconfigured jobs with actionable error paths because the loader reports every attempted path.
-- Use `.env.platform.observability.<profile>` to declare shared log/metrics sinks—for example, `RUST_LOG=dfps_pipeline=info` in dev, or future exporters for Grafana/Loki in prod. Because `dfps_observability` loads the env lazily, all components see consistent log directives.
-
----
+Before launching the web surfaces, follow `docs/runbook/env-quickstart.md` to copy the appropriate `.env.<namespace>.example` files into `data/environment/` and set `DFPS_ENV` / `DFPS_ENV_DIR` as needed. Once the backend (`app.web.api`) and frontend (`app.web.frontend`) env files are in place, return here to start the services.
 
 ## 4. Start the backend API
 
@@ -233,3 +165,4 @@ cargo test -p dfps_test_suite --tests web_api
 | Upload/paste returns “Backend error: status 500 …” | Backend rejected the JSON (invalid FHIR or not an array/Bundle). | Validate the payload; compare with `sample-bundle.json` or use fixtures from `dfps_test_suite::regression`. |
 | Curl works but frontend shows blank results | Frontend displays a friendly message when zero `MappingResult` rows come back. | Ensure the bundle includes codes under `stg_sr_code_exploded` by checking backend logs. |
 | Port already in use errors | Another service bound to `8080` or `8090`. | Change the respective env vars to free ports. |
+
