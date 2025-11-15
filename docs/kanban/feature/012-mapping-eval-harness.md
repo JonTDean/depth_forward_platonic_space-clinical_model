@@ -1,6 +1,12 @@
 # Kanban - feature/mapping-eval-harness (012)
 
-**Branch:** `feature/platform/mapping-eval-harness`  
+> Epic: EVAL-012 – Mapping eval harness  
+> Branch: `feature/EVAL-012-mapping-eval-harness`  
+> Branch target version: `Unreleased`  
+> Status: **DOING**  
+> Introduced in: `_TBD_`  
+> Last updated in: `Unreleased`
+
 **Goal:** Build a lightweight evaluation harness that measures NCIt mapping quality (precision/recall, state distributions) against gold-standard code -> NCIt labels.
 
 ### Columns
