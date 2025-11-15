@@ -6,7 +6,6 @@ use dfps_eval::{DatasetManifest, EvalSummary};
 use dfps_observability::PipelineMetrics;
 use reqwest::{Client, Response, StatusCode};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use serde_json::json;
 use thiserror::Error;
 
 use crate::config::AppConfig;

@@ -515,7 +515,7 @@ fn state_metric_card(title: &str, value: usize, classes: &str, tooltip: &str) ->
 mod tests {
     use super::*;
     use crate::view_model::{
-        CountStat, EvalContext, MappingResultsView, MappingRowView, NoMatchRowView, PageContext,
+        CountStat, MappingResultsView, MappingRowView, NoMatchRowView, PageContext,
         ServiceRequestSummary,
     };
 
