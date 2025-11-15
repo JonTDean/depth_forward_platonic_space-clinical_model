@@ -17,6 +17,10 @@ use dfps_pipeline::PipelineOutput;
 pub use dim::*;
 pub use fact::*;
 pub use keys::*;
+pub use sql::{
+    LoadSummary, WarehouseConfig, connect_sqlite, ddl_statements, load_from_pipeline_output,
+    migrate,
+};
 
 #[derive(Debug, Default, Clone)]
 pub struct Dims {

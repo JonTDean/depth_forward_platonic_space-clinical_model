@@ -14,48 +14,6 @@
 
 ## TODO
 
-### WH-SQL-01 – DB driver & schema definitions
-
-- [x] Add a DB library to the workspace (e.g., `sqlx` with `postgres` / `sqlite` feature) in `Cargo.toml`.
-- [x] Under `dfps_datamart`, create a `sql` module with:
-
-  - [x] `CREATE TABLE` DDL strings for:
-
-    - `dim_patient`, `dim_encounter`, `dim_code`, `dim_ncit`, `fact_service_request`.
-
-  - [x] Rust structs deriving `sqlx::FromRow` / `sqlx::Type` to map `Dim*` / `FactServiceRequest` into DB rows.
-
-- [x] Add env-driven config for DB connection:
-
-  - `DFPS_WAREHOUSE_URL`, `DFPS_WAREHOUSE_SCHEMA`, `DFPS_WAREHOUSE_MAX_CONNECTIONS`.
-
-### WH-SQL-02 – Migration & setup tooling
-
-- [x] Provide a minimal migration runner (module or new binary):
-
-  - `dfps_datamart::migrate()` or `dfps_cli warehouse-migrate` that:
-
-    - [x] Applies bundled migrations (offline) to the configured database.
-    - [x] Is idempotent and safe to run on CI.
-
-- [x] Store migration files under `data/sql/migrations` with clear naming/versioning.
-
-### WH-SQL-03 – Loader from PipelineOutput -> DB
-
-- [ ] Introduce a new loader API:
-
-  - `dfps_datamart::load_from_pipeline_output(conn, &PipelineOutput) -> Result<LoadSummary>`:
-
-    - [ ] Upserts dims based on natural IDs (patient/encounter/code/ncit).
-    - [ ] Inserts corresponding `FactServiceRequest` rows.
-
-- [ ] Add a `dfps_cli` subcommand:
-
-  - `load-datamart`:
-
-    - [ ] Reads NDJSON `PipelineOutput` fragments or runs `bundle_to_mapped_sr` internally.
-    - [ ] Calls `load_from_pipeline_output` and prints a summary (`rows_inserted`, `rows_updated`).
-
 ### WH-SQL-04 – Tests & CI integration
 
 - [ ] Add integration tests in `dfps_test_suite/tests/integration/warehouse.rs` that:
@@ -94,7 +52,48 @@
 ---
 
 ## REVIEW
-- _Empty_
+
+### WH-SQL-01 – DB driver & schema definitions
+
+- [x] Add a DB library to the workspace (e.g., `sqlx` with `postgres` / `sqlite` feature) in `Cargo.toml`.
+- [x] Under `dfps_datamart`, create a `sql` module with:
+
+  - [x] `CREATE TABLE` DDL strings for:
+
+    - `dim_patient`, `dim_encounter`, `dim_code`, `dim_ncit`, `fact_service_request`.
+
+  - [x] Rust structs deriving `sqlx::FromRow` / `sqlx::Type` to map `Dim*` / `FactServiceRequest` into DB rows.
+
+- [x] Add env-driven config for DB connection:
+
+  - `DFPS_WAREHOUSE_URL`, `DFPS_WAREHOUSE_SCHEMA`, `DFPS_WAREHOUSE_MAX_CONNECTIONS`.
+
+### WH-SQL-02 – Migration & setup tooling
+
+- [x] Provide a minimal migration runner (module or new binary):
+
+  - `dfps_datamart::migrate()` or `dfps_cli warehouse-migrate` that:
+
+    - [x] Applies bundled migrations (offline) to the configured database.
+    - [x] Is idempotent and safe to run on CI.
+
+- [x] Store migration files under `data/sql/migrations` with clear naming/versioning.
+
+### WH-SQL-03 – Loader from PipelineOutput -> DB
+
+- [x] Introduce a new loader API:
+
+  - `dfps_datamart::load_from_pipeline_output(conn, &PipelineOutput) -> Result<LoadSummary>`:
+
+    - [x] Upserts dims based on natural IDs (patient/encounter/code/ncit).
+    - [x] Inserts corresponding `FactServiceRequest` rows.
+
+- [x] Add a `dfps_cli` subcommand:
+
+  - `load-datamart`:
+
+    - [x] Reads NDJSON `PipelineOutput` fragments or runs `bundle_to_mapped_sr` internally.
+    - [x] Calls `load_from_pipeline_output` and prints a summary (`rows_inserted`, `rows_updated`).
 
 ---
 

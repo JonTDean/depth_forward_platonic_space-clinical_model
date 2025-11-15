@@ -5,9 +5,12 @@ use dfps_core::mapping::DimNCITConcept;
 use dfps_core::value::{EncounterId, PatientId, ServiceRequestId};
 use dfps_pipeline::PipelineOutput;
 use serde::{Deserialize, Serialize};
-use sqlx::{FromRow, Pool, Sqlite};
+use sqlx::{FromRow, Pool, Sqlite, Transaction};
 
-use crate::{DimCode, DimCodeKey, DimEncounter, DimEncounterKey, DimNCIT, DimNCITKey, DimPatient, DimPatientKey, FactServiceRequest};
+use crate::{
+    DimCode, DimCodeKey, DimEncounter, DimEncounterKey, DimNCIT, DimNCITKey, DimPatient,
+    DimPatientKey, FactServiceRequest,
+};
 
 pub const CREATE_DIM_PATIENT: &str = r#"
 CREATE TABLE IF NOT EXISTS dim_patient (
@@ -94,6 +97,35 @@ pub async fn migrate(pool: &Pool<Sqlite>) -> Result<(), sqlx::Error> {
         sqlx::query(stmt).execute(pool).await?;
     }
     Ok(())
+}
+
+/// Summary of rows inserted or updated during a load.
+#[derive(Debug, Default, Clone, Serialize)]
+pub struct LoadSummary {
+    pub patients: u64,
+    pub encounters: u64,
+    pub codes: u64,
+    pub ncit: u64,
+    pub facts: u64,
+}
+
+/// Load a PipelineOutput into the warehouse, upserting dims and inserting facts.
+pub async fn load_from_pipeline_output(
+    pool: &Pool<Sqlite>,
+    output: &PipelineOutput,
+) -> Result<LoadSummary, sqlx::Error> {
+    let (dims, facts) = crate::from_pipeline_output(output);
+    let mut tx = pool.begin().await?;
+    let mut summary = LoadSummary::default();
+
+    summary.patients = upsert_patients(&mut tx, &dims.patients).await?;
+    summary.encounters = upsert_encounters(&mut tx, &dims.encounters).await?;
+    summary.codes = upsert_codes(&mut tx, &dims.codes).await?;
+    summary.ncit = upsert_ncit(&mut tx, &dims.ncit).await?;
+    summary.facts = insert_facts(&mut tx, &facts).await?;
+
+    tx.commit().await?;
+    Ok(summary)
 }
 
 pub async fn connect_sqlite(cfg: &WarehouseConfig) -> Result<Pool<Sqlite>, sqlx::Error> {
@@ -213,4 +245,113 @@ impl From<&FactServiceRequest> for FactServiceRequestRow {
             ordered_at: fact.ordered_at.clone(),
         }
     }
+}
+
+async fn upsert_patients(
+    tx: &mut Transaction<'_, Sqlite>,
+    dims: &[DimPatient],
+) -> Result<u64, sqlx::Error> {
+    let mut inserted = 0;
+    for dim in dims {
+        let row: DimPatientRow = dim.into();
+        let res = sqlx::query(
+            "INSERT OR IGNORE INTO dim_patient (patient_key, patient_id) VALUES (?, ?)",
+        )
+        .bind(row.patient_key)
+        .bind(row.patient_id)
+        .execute(&mut **tx)
+        .await?;
+        inserted += res.rows_affected();
+    }
+    Ok(inserted)
+}
+
+async fn upsert_encounters(
+    tx: &mut Transaction<'_, Sqlite>,
+    dims: &[DimEncounter],
+) -> Result<u64, sqlx::Error> {
+    let mut inserted = 0;
+    for dim in dims {
+        let row: DimEncounterRow = dim.into();
+        let res = sqlx::query(
+            "INSERT OR IGNORE INTO dim_encounter (encounter_key, encounter_id, patient_key) VALUES (?, ?, ?)",
+        )
+        .bind(row.encounter_key)
+        .bind(row.encounter_id)
+        .bind(row.patient_key)
+        .execute(&mut **tx)
+        .await?;
+        inserted += res.rows_affected();
+    }
+    Ok(inserted)
+}
+
+async fn upsert_codes(
+    tx: &mut Transaction<'_, Sqlite>,
+    dims: &[DimCode],
+) -> Result<u64, sqlx::Error> {
+    let mut inserted = 0;
+    for dim in dims {
+        let row: DimCodeRow = dim.into();
+        let res = sqlx::query(
+            "INSERT OR IGNORE INTO dim_code (code_key, code_element_id, system, code, display) VALUES (?, ?, ?, ?, ?)",
+        )
+        .bind(row.code_key)
+        .bind(row.code_element_id)
+        .bind(row.system)
+        .bind(row.code)
+        .bind(row.display)
+        .execute(&mut **tx)
+        .await?;
+        inserted += res.rows_affected();
+    }
+    inserted += 0;
+    Ok(inserted)
+}
+
+async fn upsert_ncit(
+    tx: &mut Transaction<'_, Sqlite>,
+    dims: &[DimNCIT],
+) -> Result<u64, sqlx::Error> {
+    let mut inserted = 0;
+    for dim in dims {
+        let row: DimNCITRow = dim.into();
+        let res = sqlx::query(
+            "INSERT OR IGNORE INTO dim_ncit (ncit_key, ncit_id, preferred_name, semantic_group) VALUES (?, ?, ?, ?)",
+        )
+        .bind(row.ncit_key)
+        .bind(row.ncit_id)
+        .bind(row.preferred_name)
+        .bind(row.semantic_group)
+        .execute(&mut **tx)
+        .await?;
+        inserted += res.rows_affected();
+    }
+    Ok(inserted)
+}
+
+async fn insert_facts(
+    tx: &mut Transaction<'_, Sqlite>,
+    facts: &[FactServiceRequest],
+) -> Result<u64, sqlx::Error> {
+    let mut inserted = 0;
+    for fact in facts {
+        let row: FactServiceRequestRow = fact.into();
+        let res = sqlx::query(
+            "INSERT OR REPLACE INTO fact_service_request (sr_id, patient_key, encounter_key, code_key, ncit_key, status, intent, description, ordered_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        )
+        .bind(row.sr_id)
+        .bind(row.patient_key)
+        .bind(row.encounter_key)
+        .bind(row.code_key)
+        .bind(row.ncit_key)
+        .bind(row.status)
+        .bind(row.intent)
+        .bind(row.description)
+        .bind(row.ordered_at)
+        .execute(&mut **tx)
+        .await?;
+        inserted += res.rows_affected();
+    }
+    Ok(inserted)
 }

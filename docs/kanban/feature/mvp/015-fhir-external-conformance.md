@@ -20,20 +20,6 @@
 
 ## TODO
 
-### FHIR-CONF-05 – Tests & mocks
-
-- [x] Add a test-only mock FHIR validator server in `dfps_test_suite`:
-
-  - [x] Provides `/fhir/$validate` that returns canned `OperationOutcome` fixtures for:
-
-    - Missing subject, invalid status, etc.
-    - Valid bundles.
-
-- [x] Write integration tests:
-
-  - [x] Validate that external issues are merged with internal `validate_bundle` results.
-  - [x] Ensure that `ExternalStrict` mode blocks ingestion for failing bundles but allows pass-through when `ExternalPreferred` is used.
-
 ---
 
 ## DOING
@@ -103,6 +89,20 @@
 
   - [x] A “Validation (external)” subsection.
   - [x] Example `dfps_cli validate-fhir` commands.
+
+### FHIR-CONF-05 – Tests & mocks
+
+- [x] Add a test-only mock FHIR validator server in `dfps_test_suite`:
+
+  - [x] Provides `/fhir/$validate` that returns canned `OperationOutcome` fixtures for:
+
+    - Missing subject, invalid status, etc.
+    - Valid bundles.
+
+- [x] Write integration tests:
+
+  - [x] Validate that external issues are merged with internal `validate_bundle` results.
+  - [x] Ensure that `ExternalStrict` mode blocks ingestion for failing bundles but allows pass-through when `ExternalPreferred` is used.
 
 ---
 

@@ -12,13 +12,16 @@ name = "map_codes"
 path = "src/bin/map_codes.rs"
 
 [[bin]]
-<<<<<<< HEAD
-name = "validate_fhir"
-path = "src/bin/validate_fhir.rs"
-=======
 name = "eval_mapping"
 path = "src/bin/eval_mapping.rs"
->>>>>>> feature/EVAL-022-mapping-benchmarking-platform
+
+[[bin]]
+name = "validate_fhir"
+path = "src/bin/validate_fhir.rs"
+
+[[bin]]
+name = "load_datamart"
+path = "src/bin/load_datamart.rs"
 
 [dependencies]
 dfps_core = { path = "../../domain/core" }
@@ -28,8 +31,10 @@ dfps_ingestion = { path = "../../domain/ingestion" }
 dfps_observability = { path = "../../platform/observability" }
 dfps_configuration = { path = "../../platform/configuration" }
 dfps_eval = { path = "../../domain/eval" }
+dfps_datamart = { path = "../web/backend/datamart" }
 serde.workspace = true
 serde_json.workspace = true
 env_logger = "0.11"
 log = "0.4"
 clap.workspace = true
+sqlx = { version = "0.7.4", default-features = false, features = ["runtime-tokio", "macros", "sqlite"] }
