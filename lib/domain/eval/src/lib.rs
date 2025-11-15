@@ -7,6 +7,7 @@ use dfps_core::{
 #[cfg(feature = "rand")]
 use rand::{Rng, SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
+use sha2::{Digest, Sha256};
 use std::{
     collections::BTreeMap,
     env,
@@ -27,6 +28,10 @@ pub enum DatasetError {
         line: usize,
         source: serde_json::Error,
     },
+    ManifestParse {
+        path: PathBuf,
+        source: serde_json::Error,
+    },
 }
 
 impl std::fmt::Display for DatasetError {
@@ -38,6 +43,14 @@ impl std::fmt::Display for DatasetError {
             DatasetError::Parse { line, source } => {
                 write!(f, "failed to parse EvalCase on line {}: {}", line, source)
             }
+            DatasetError::ManifestParse { path, source } => {
+                write!(
+                    f,
+                    "failed to parse dataset manifest {}: {}",
+                    path.display(),
+                    source
+                )
+            }
         }
     }
 }
@@ -47,6 +60,7 @@ impl std::error::Error for DatasetError {
         match self {
             DatasetError::Io { source, .. } => Some(source),
             DatasetError::Parse { source, .. } => Some(source),
+            DatasetError::ManifestParse { source, .. } => Some(source),
         }
     }
 }
@@ -63,8 +77,98 @@ pub fn dataset_path(name: &str) -> PathBuf {
     dataset_root().join(format!("{}.ndjson", name))
 }
 
+fn manifest_path(name: &str) -> PathBuf {
+    dataset_root().join(format!("{}.manifest.json", name))
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DatasetManifest {
+    pub name: String,
+    pub version: String,
+    pub license: Option<String>,
+    pub source: Option<String>,
+    pub n_cases: usize,
+    pub sha256: String,
+    #[serde(default)]
+    pub notes: Option<String>,
+}
+
+#[derive(Debug)]
+pub struct DatasetLoadOutcome {
+    pub manifest: DatasetManifest,
+    pub data_path: PathBuf,
+    pub cases: Vec<EvalCase>,
+    pub checksum_ok: bool,
+    pub computed_sha256: String,
+}
+
+pub fn load_dataset_with_manifest(name: &str) -> Result<DatasetLoadOutcome, DatasetError> {
+    let manifest = load_manifest(name)?;
+    let path = dataset_path(&manifest.name);
+    let cases = load_cases_from_path(&path)?;
+    let computed_sha = compute_sha256(&path)?;
+    if manifest.n_cases != cases.len() {
+        eprintln!(
+            "warning: dataset {} manifest n_cases={} but file contains {} rows",
+            manifest.name,
+            manifest.n_cases,
+            cases.len()
+        );
+    }
+    if manifest
+        .license
+        .as_deref()
+        .map(|value| value.trim().is_empty())
+        .unwrap_or(true)
+    {
+        eprintln!(
+            "warning: dataset {} manifest missing license attribution",
+            manifest.name
+        );
+    }
+    let checksum_ok = manifest.sha256.eq_ignore_ascii_case(computed_sha.as_str());
+
+    Ok(DatasetLoadOutcome {
+        manifest,
+        data_path: path,
+        cases,
+        checksum_ok,
+        computed_sha256: computed_sha,
+    })
+}
+
 pub fn load_dataset(name: &str) -> Result<Vec<EvalCase>, DatasetError> {
-    load_cases_from_path(dataset_path(name))
+    load_dataset_with_manifest(name).map(|outcome| outcome.cases)
+}
+
+fn load_manifest(name: &str) -> Result<DatasetManifest, DatasetError> {
+    let path = manifest_path(name);
+    let file = File::open(&path).map_err(|source| DatasetError::Io {
+        source,
+        path: path.clone(),
+    })?;
+    serde_json::from_reader(file).map_err(|source| DatasetError::ManifestParse { path, source })
+}
+
+fn compute_sha256(path: &Path) -> Result<String, DatasetError> {
+    let mut file = File::open(path).map_err(|source| DatasetError::Io {
+        source,
+        path: path.to_path_buf(),
+    })?;
+    let mut hasher = Sha256::new();
+    use std::io::Read;
+    let mut buffer = [0u8; 8192];
+    loop {
+        let read = file.read(&mut buffer).map_err(|source| DatasetError::Io {
+            source,
+            path: path.to_path_buf(),
+        })?;
+        if read == 0 {
+            break;
+        }
+        hasher.update(&buffer[..read]);
+    }
+    Ok(format!("{:x}", hasher.finalize()))
 }
 
 pub fn load_cases_from_path(path: impl AsRef<Path>) -> Result<Vec<EvalCase>, DatasetError> {
@@ -499,7 +603,10 @@ mod tests {
                 .expect("workspace root")
                 .to_path_buf();
             unsafe {
-                std::env::set_var("DFPS_EVAL_DATA_ROOT", root.join("lib/domain/fake_data/data/eval"));
+                std::env::set_var(
+                    "DFPS_EVAL_DATA_ROOT",
+                    root.join("lib/domain/fake_data/data/eval"),
+                );
             }
         });
     }
@@ -574,46 +681,4 @@ mod tests {
 }
 
 pub mod io;
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::path::PathBuf;
-    use std::sync::Once;
-
-    static INIT: Once = Once::new();
-
-    fn ensure_dataset_env() {
-        INIT.call_once(|| {
-            let manifest_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
-            let root = manifest_dir
-                .ancestors()
-                .nth(3)
-                .expect("workspace root")
-                .to_path_buf();
-            unsafe {
-                std::env::set_var(
-                    "DFPS_EVAL_DATA_ROOT",
-                    root.join("lib/domain/fake_data/data/eval"),
-                );
-            }
-        });
-    }
-
-    #[test]
-    fn load_sample_datasets() {
-        ensure_dataset_env();
-        for dataset in [
-            "pet_ct_small",
-            "bronze_pet_ct_small",
-            "silver_pet_ct_small",
-            "gold_pet_ct_small",
-        ] {
-            let cases =
-                load_dataset(dataset).unwrap_or_else(|_| panic!("dataset {dataset} should load"));
-            assert!(!cases.is_empty(), "dataset {dataset} should include cases");
-        }
-    }
-}
-
 pub mod report;

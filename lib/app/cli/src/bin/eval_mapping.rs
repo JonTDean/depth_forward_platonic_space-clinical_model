@@ -87,9 +87,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         );
     }
 
-    let summary = dfps_eval::run_eval_with_mapper(&cases, |rows| {
-        map_staging_codes(rows).0
-    });
+    let summary = dfps_eval::run_eval_with_mapper(&cases, |rows| map_staging_codes(rows).0);
     let summary_view = SummaryView {
         total_cases: summary.total_cases,
         predicted_cases: summary.predicted_cases,
@@ -150,8 +148,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 fn read_cases(args: &Args) -> Result<Vec<EvalCase>, Box<dyn std::error::Error>> {
     if let Some(name) = &args.dataset {
-        dfps_eval::load_dataset(name)
-            .map_err(|err| format!("failed to load dataset {name}: {err}").into())
+        let outcome = dfps_eval::load_dataset_with_manifest(name)
+            .map_err(|err| format!("failed to load dataset {name}: {err}"))?;
+        if !outcome.checksum_ok {
+            eprintln!(
+                "warning: dataset {name} checksum mismatch (expected {}, actual {})",
+                outcome.manifest.sha256, outcome.computed_sha256
+            );
+        }
+        return Ok(outcome.cases);
     } else if let Some(path) = &args.input {
         let file = File::open(path)?;
         let reader = BufReader::new(file);

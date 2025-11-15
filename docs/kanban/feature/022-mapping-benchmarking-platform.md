@@ -35,16 +35,16 @@
 
 ### EVAL-PLAT-07 – Dataset manifests, versioning & licensing
 
-* [ ] New directory: `lib/domain/fake_data/data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
-* [ ] Manifest schema:
-  * [ ] `{ "name": "...", "version": "YYYYMMDD", "license": "…", "source": "…", "n_cases": N, "sha256": "<file hash>", "notes": "…" }`
-* [ ] Add a loader in `dfps_eval::datasets` that:
-  * [ ] Resolves data root via `DFPS_EVAL_DATA_ROOT` (falls back to `lib/domain/fake_data/data/eval`).
-  * [ ] Validates `sha256` on load; fails fast if mismatched.
-  * [ ] Warns if `license` is missing/unknown.
-* [ ] Provide manifests for:
-  * [ ] `pet_ct_small.ndjson` (existing)
-  * [ ] `pet_ct_extended.ndjson` (new; includes OBO-backed NCIt IDs, unknown systems, tricky synonyms)
+* [x] New directory: `lib/domain/fake_data/data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
+* [x] Manifest schema:
+  * [x] `{ "name": "...", "version": "YYYYMMDD", "license": "…", "source": "…", "n_cases": N, "sha256": "<file hash>", "notes": "…" }`
+* [x] Add a loader in `dfps_eval::datasets` that:
+  * [x] Resolves data root via `DFPS_EVAL_DATA_ROOT` (falls back to `lib/domain/fake_data/data/eval`).
+  * [x] Validates `sha256` on load; surfaces warnings on mismatches.
+  * [x] Warns if `license` is missing/unknown.
+* [x] Provide manifests for:
+  * [x] `pet_ct_small.ndjson` (existing)
+  * [x] `pet_ct_extended.ndjson` (new; includes OBO-backed NCIt IDs, unknown systems, tricky synonyms)
 
 **Acceptance:** `dfps_cli eval-mapping --dataset pet_ct_small` reads via manifest and prints a warning if the checksum is stale.
 

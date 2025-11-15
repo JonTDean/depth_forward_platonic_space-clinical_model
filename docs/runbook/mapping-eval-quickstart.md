@@ -5,7 +5,7 @@ against the gold NDJSON fixtures.
 
 ## Prerequisites
 - Rust toolchain (install via `data/scripts/install_rust_tooling.sh`).
-- Gold dataset: `lib/domain/fake_data/data/eval/pet_ct_small.ndjson` (or your custom NDJSON with `EvalCase` rows). Override the root with `DFPS_EVAL_DATA_ROOT` if you keep datasets elsewhere.
+- Gold dataset: `lib/domain/fake_data/data/eval/pet_ct_small.ndjson` (or your custom NDJSON with `EvalCase` rows). Override the root with `DFPS_EVAL_DATA_ROOT` if you keep datasets elsewhere. Each dataset ships with `<name>.manifest.json`; the CLI validates the SHA-256 listed there and warns if a checksum drifts.
 - Tiered splits: bronze/silver/gold datasets (e.g., `bronze_pet_ct_small`, `silver_pet_ct_extended`, `gold_pet_ct_comprehensive`) live under `lib/domain/fake_data/data/eval/README.md`.
 
 ## Steps
