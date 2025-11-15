@@ -1,0 +1,20 @@
+[
+  {
+    "system": "http://www.ama-assn.org/go/cpt",
+    "code": "78815",
+    "cui": "C19951",
+    "ncit_id": "NCIT:C19951"
+  },
+  {
+    "system": "http://snomed.info/sct",
+    "code": "441567006",
+    "cui": "C19951",
+    "ncit_id": "NCIT:C19951"
+  },
+  {
+    "system": "http://loinc.org",
+    "code": "24606-6",
+    "cui": "C17747",
+    "ncit_id": "NCIT:C17747"
+  }
+]

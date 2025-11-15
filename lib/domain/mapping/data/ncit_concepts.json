@@ -1,0 +1,28 @@
+[
+  {
+    "ncit_id": "NCIT:C19951",
+    "preferred_name": "Positron Emission Tomography",
+    "synonyms": [
+      "PET Scan",
+      "Positron Emission Tomography Imaging"
+    ],
+    "semantic_group": "Diagnostic Procedure"
+  },
+  {
+    "ncit_id": "NCIT:C16809",
+    "preferred_name": "Computed Tomography",
+    "synonyms": [
+      "CT Scan",
+      "Computerized Axial Tomography"
+    ],
+    "semantic_group": "Diagnostic Procedure"
+  },
+  {
+    "ncit_id": "NCIT:C17747",
+    "preferred_name": "Nuclear Medicine Procedure",
+    "synonyms": [
+      "Nuclear Medicine Imaging"
+    ],
+    "semantic_group": "Clinical Specialty"
+  }
+]

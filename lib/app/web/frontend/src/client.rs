@@ -1,0 +1,104 @@
+use dfps_core::{
+    mapping::{DimNCITConcept, MappingResult},
+    staging::{StgServiceRequestFlat, StgSrCodeExploded},
+};
+use dfps_observability::PipelineMetrics;
+use reqwest::{Client, Response, StatusCode};
+use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use thiserror::Error;
+
+use crate::config::AppConfig;
+
+#[derive(Debug, Clone)]
+pub struct BackendClient {
+    client: Client,
+    base_url: String,
+}
+
+impl BackendClient {
+    pub fn from_config(config: &AppConfig) -> Result<Self, ClientError> {
+        let client = Client::builder()
+            .timeout(config.client_timeout)
+            .build()
+            .map_err(ClientError::Http)?;
+        Ok(Self {
+            client,
+            base_url: config.backend_base_url.clone(),
+        })
+    }
+
+    fn endpoint(&self, path: &str) -> String {
+        let mut base = self.base_url.trim_end_matches('/').to_string();
+        base.push_str(path);
+        base
+    }
+
+    pub async fn health(&self) -> Result<HealthResponse, ClientError> {
+        let response = self.client.get(self.endpoint("/health")).send().await?;
+        Self::handle_json(response).await
+    }
+
+    pub async fn metrics_summary(&self) -> Result<PipelineMetrics, ClientError> {
+        let response = self
+            .client
+            .get(self.endpoint("/metrics/summary"))
+            .send()
+            .await?;
+        Self::handle_json(response).await
+    }
+
+    pub async fn map_bundles(
+        &self,
+        payload: serde_json::Value,
+    ) -> Result<MapBundlesResponse, ClientError> {
+        let response = self
+            .client
+            .post(self.endpoint("/api/map-bundles"))
+            .json(&payload)
+            .send()
+            .await?;
+        Self::handle_json(response).await
+    }
+
+    async fn handle_json<T>(response: Response) -> Result<T, ClientError>
+    where
+        T: DeserializeOwned,
+    {
+        let status = response.status();
+        if status.is_success() {
+            response.json::<T>().await.map_err(ClientError::Http)
+        } else {
+            let body = response.text().await.unwrap_or_default();
+            Err(ClientError::Backend { status, body })
+        }
+    }
+}
+
+#[derive(Debug, Error)]
+pub enum ClientError {
+    #[error("http error: {0}")]
+    Http(#[from] reqwest::Error),
+    #[error("backend returned {status}: {body}")]
+    Backend { status: StatusCode, body: String },
+    #[error("bundle payload missing")]
+    EmptyBundle,
+    #[error("invalid bundle JSON: {0}")]
+    InvalidJson(#[from] serde_json::Error),
+    #[error("unable to read upload: {0}")]
+    Upload(String),
+    #[error("utf-8 error: {0}")]
+    Utf8(#[from] std::string::FromUtf8Error),
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct HealthResponse {
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct MapBundlesResponse {
+    pub flats: Vec<StgServiceRequestFlat>,
+    pub exploded_codes: Vec<StgSrCodeExploded>,
+    pub mapping_results: Vec<MappingResult>,
+    pub dim_concepts: Vec<DimNCITConcept>,
+}

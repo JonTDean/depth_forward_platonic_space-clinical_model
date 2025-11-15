@@ -1,0 +1,8 @@
+[package]
+name = "dfps_terminology"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+serde.workspace = true
+dfps_core = { path = '../core' }

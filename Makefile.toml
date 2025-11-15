@@ -1,0 +1,41 @@
+extend = [
+    { path = "data/makefiles/core.toml" },
+    { path = "data/makefiles/docs.toml" },
+    { path = "data/makefiles/apps.toml" }
+]
+
+[env]
+DFPS_ENV = { value = "dev", condition = { env_not_set = "DFPS_ENV" } }
+
+[config]
+skip_core_tasks = true
+default_to_workspace = false
+
+[tasks.setup]
+script = ["pwd"]
+
+[tasks.help]
+description = "Show available tasks"
+script = [
+    "#!@duckscript",
+    'echo ""',
+    'echo "Targets:"',
+    "for task in get_enriched_tasks() {",
+    "  if (task.description != \"\") {",
+    "    echo format(\"  {0}\", task.name)",
+    "    echo format(\"    {0}\", task.description)",
+    "  }",
+    "}",
+]
+
+[tasks.codex-sync]
+description = "Concatenate .codex shards into AGENTS.md"
+script = [
+    "powershell -NoLogo -NoProfile -Command \"bash data/scripts/codex_sync.sh\""
+]
+
+[tasks.codex-check]
+description = "Verify AGENTS.md exists and report size"
+script = [
+    "powershell -NoLogo -NoProfile -Command \"if (!(Test-Path AGENTS.md) -or ((Get-Item AGENTS.md).Length -eq 0)) { Write-Error 'Run: cargo make codex-sync'; exit 1 }; Get-Item AGENTS.md | Select-Object Length\""
+]

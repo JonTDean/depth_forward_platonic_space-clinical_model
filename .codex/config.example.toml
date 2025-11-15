@@ -1,0 +1,8 @@
+# Place this at: .codex/config.toml (optional)
+# Use it by launching: CODEX_HOME=$(pwd)/.codex codex exec "Summarize instructions"
+
+# Treat old filename as a fallback during migration
+project_doc_fallback_filenames = ["AGENT.md", ".agents.md", "TEAM_GUIDE.md"]
+
+# Allow a larger concatenated instruction slice if needed
+project_doc_max_bytes = 65536

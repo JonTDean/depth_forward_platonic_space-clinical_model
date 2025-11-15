@@ -1,0 +1,461 @@
+use dfps_core::mapping::MappingState;
+use dfps_observability::PipelineMetrics;
+use maud::{DOCTYPE, Markup, html};
+
+use crate::view_model::{AlertKind, AlertMessage, MappingResultsView, PageContext};
+
+pub fn render_page(ctx: &PageContext) -> String {
+    html! {
+        (DOCTYPE)
+        html class="h-full bg-slate-100" {
+            head {
+                meta charset="utf-8";
+                meta name="viewport" content="width=device-width, initial-scale=1";
+                title { "DFPS Mapping Workbench" }
+                script src="https://cdn.tailwindcss.com" {}
+                script src="https://unpkg.com/htmx.org@1.9.12" {}
+            }
+            body class="min-h-screen bg-slate-100 text-slate-900" {
+                main class="mx-auto max-w-6xl px-4 py-10 space-y-8" {
+                    section class="bg-white shadow-sm rounded-xl p-6 space-y-4" {
+                        h1 class="text-2xl font-semibold" { "FHIR + NCIt mapping workbench" }
+                        p class="text-slate-600" {
+                            "Paste a FHIR Bundle or upload JSON so the DFPS pipeline can flatten ServiceRequests into "
+                            code { "stg_servicerequest_flat" }
+                            " and "
+                            code { "stg_sr_code_exploded" }
+                            ", then emit "
+                            code { "MappingResult" }
+                            " rows."
+                        }
+                        div class="flex flex-wrap gap-4 text-sm" {
+                            @if let Some(health) = &ctx.health {
+                                span class={(format!("inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium {}",
+                                    if health.ok { "bg-emerald-100 text-emerald-800" } else { "bg-amber-100 text-amber-800" }
+                                ))} {
+                                    span class={(if health.ok { "h-2 w-2 rounded-full bg-emerald-500" } else { "h-2 w-2 rounded-full bg-amber-500" })} {}
+                                    span { (format!("Backend health: {}", health.status)) }
+                                }
+                            } @else {
+                                span class="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-xs font-medium text-amber-800" {
+                                    "Backend health unknown"
+                                }
+                            }
+                            @if let Some(metrics) = &ctx.metrics {
+                                span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-700" {
+                                    (format!("Bundles processed: {} | AutoMapped: {} | NeedsReview: {} | NoMatch: {}",
+                                        metrics.bundle_count,
+                                        metrics.auto_mapped,
+                                        metrics.needs_review,
+                                        metrics.no_match
+                                    ))
+                                }
+                            }
+                        }
+                        @if let Some(error) = &ctx.health_error {
+                            div class="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900" {
+                                strong class="font-semibold" { "Backend warning: " }
+                                span { (error) }
+                            }
+                        }
+                        div class="mt-2 grid gap-4 md:grid-cols-2 text-sm text-slate-600" {
+                            div class="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2" {
+                                h3 class="text-base font-semibold text-slate-800" { "Mapping state glossary" }
+                                ul class="space-y-2" {
+                                    li {
+                                        strong { "AutoMapped. " }
+                                        "NCIt concept met lexical + semantic thresholds with no manual review."
+                                    }
+                                    li {
+                                        strong { "NeedsReview. " }
+                                        "MappingResult landed near the quality threshold and should be validated before surfacing."
+                                    }
+                                    li {
+                                        strong { "NoMatch. " }
+                                        "The NCIt + mock UMLS crosswalk could not resolve a concept for the ServiceRequest code."
+                                    }
+                                }
+                            }
+                            div class="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-2" {
+                                h3 class="text-base font-semibold text-slate-800" { "How the mapping engine works" }
+                                p {
+                                    "Bundles are ingested, flattened into "
+                                    code { "stg_servicerequest_flat" }
+                                    " and "
+                                    code { "stg_sr_code_exploded" }
+                                    ", then cross-referenced against NCIt concepts plus mock UMLS xrefs."
+                                }
+                                p { "Each MappingResult links back to NCIt metadata so reviewers can track which concepts were used for AutoMapped rows." }
+                            }
+                        }
+                    }
+                    section class="grid gap-6 lg:grid-cols-2" {
+                        div class="bg-white shadow-sm rounded-xl p-6" {
+                            h2 class="text-lg font-semibold" { "Paste Bundle JSON" }
+                            form hx-post="/map/paste" hx-target="#results" hx-swap="innerHTML" method="post" class="mt-4 space-y-4" {
+                                label class="block text-sm font-medium text-slate-700" for="bundle_text" {
+                                    "FHIR Bundle JSON"
+                                }
+                                textarea name="bundle_text" id="bundle_text" rows="10" class="w-full rounded-lg border border-slate-300 p-3 font-mono text-sm focus:border-emerald-500 focus:ring-emerald-200" placeholder="{ \"resourceType\": \"Bundle\", ... }" {}
+                                button type="submit" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-white font-medium hover:bg-emerald-700" {
+                                    "Map bundle"
+                                }
+                            }
+                        }
+                        div class="bg-white shadow-sm rounded-xl p-6" {
+                            h2 class="text-lg font-semibold" { "Upload Bundle JSON" }
+                            form hx-post="/map/upload" hx-target="#results" hx-swap="innerHTML" method="post" enctype="multipart/form-data" class="mt-4 space-y-4" {
+                                label class="block text-sm font-medium text-slate-700" for="bundle_file" {
+                                    "JSON file"
+                                }
+                                input type="file" id="bundle_file" name="bundle_file" accept="application/json,.json,.ndjson" class="w-full rounded-lg border border-dashed border-slate-300 p-3 text-sm" {}
+                                button type="submit" class="inline-flex items-center rounded-lg bg-slate-800 px-4 py-2 text-white font-medium hover:bg-slate-900" {
+                                    "Upload & map"
+                                }
+                            }
+                        }
+                    }
+                    section id="results" class="space-y-4" {
+                        (render_results(ctx))
+                    }
+                    (render_metrics_dashboard(ctx.metrics.as_ref()))
+                    (render_no_match_explorer(ctx.results.as_ref()))
+                }
+            }
+        }
+    }
+    .into_string()
+}
+
+pub fn render_results_fragment(ctx: &PageContext) -> String {
+    render_results(ctx).into_string()
+}
+
+fn render_results(ctx: &PageContext) -> Markup {
+    html! {
+        @if let Some(alert) = &ctx.alert {
+            (render_alert(alert))
+        }
+        @if let Some(results) = &ctx.results {
+            (render_results_panel(results))
+        } @else {
+            div class="bg-white rounded-xl border border-dashed border-slate-200 p-6 text-center text-slate-500" {
+                p { "Results land here once the backend emits MappingResult rows." }
+                p class="text-sm mt-2" { "Submit a Bundle (single object, array, or NDJSON) so ingestion can populate stg_servicerequest_flat and stg_sr_code_exploded." }
+            }
+        }
+    }
+}
+
+fn render_metrics_dashboard(metrics: Option<&PipelineMetrics>) -> Markup {
+    html! {
+        section class="bg-white shadow-sm rounded-xl p-6 space-y-5" id="metrics-dashboard" {
+            div class="flex items-center justify-between" {
+                h2 class="text-xl font-semibold" { "Pipeline metrics" }
+                span class="text-sm text-slate-500" { "Snapshot from GET /metrics/summary" }
+            }
+            @if let Some(metrics) = metrics {
+                div class="grid gap-4 md:grid-cols-3" {
+                    (metric_card("Bundles processed", metrics.bundle_count, "Total number of Bundle mapping runs recorded.", "text-emerald-600"))
+                    (metric_card("ServiceRequest flats", metrics.flats_count, "Flattened SR rows emitted by ingestion.", "text-slate-700"))
+                    (metric_card("Mapping attempts", metrics.mapping_count, "Total MappingResult entries generated.", "text-slate-700"))
+                }
+                div class="grid gap-4 md:grid-cols-3" {
+                    (state_metric_card("AutoMapped", metrics.auto_mapped, "bg-emerald-100 text-emerald-900", "Lexical matching cleared thresholds without reviewer help."))
+                    (state_metric_card("Needs review", metrics.needs_review, "bg-amber-100 text-amber-900", "Score fell into the review band; confirm the NCIt suggestion manually."))
+                    (state_metric_card("No match", metrics.no_match, "bg-rose-100 text-rose-900", "No NCIt concept resolved even after mock UMLS crosswalks."))
+                }
+            } @else {
+                p class="text-sm text-slate-500" {
+                    "Run a mapping request to populate live metrics. The dashboard refreshes on each page load."
+                }
+            }
+        }
+    }
+}
+
+fn render_no_match_explorer(results: Option<&MappingResultsView>) -> Markup {
+    html! {
+        section class="bg-white shadow-sm rounded-xl p-6 space-y-4" id="no-match-explorer" {
+            div class="flex items-center justify-between" {
+                h2 class="text-xl font-semibold" { "NoMatch explorer" }
+                span class="text-sm text-slate-500" { "Codes that need NCIt follow-up" }
+            }
+            @if let Some(view) = results {
+                @if view.no_matches.is_empty() {
+                    div class="rounded-lg border border-slate-200 bg-slate-50 p-5 text-sm text-slate-600" {
+                        "Great news--your latest mapping run did not emit any MappingState::NoMatch rows."
+                    }
+                } @else {
+                    div class="overflow-x-auto" {
+                        table class="min-w-full divide-y divide-slate-200" {
+                            thead class="bg-slate-50" {
+                                tr {
+                                    th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "ServiceRequest" }
+                                    th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "Code" }
+                                    th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "Reason" }
+                                }
+                            }
+                            tbody class="divide-y divide-slate-100 bg-white" {
+                                @for row in &view.no_matches {
+                                    tr {
+                                        td class="px-4 py-3 align-top" {
+                                            p class="font-medium" { (&row.sr_id) }
+                                            p class="text-sm text-slate-500" { (&row.system) }
+                                        }
+                                        td class="px-4 py-3 align-top" {
+                                            p class="font-semibold" { (&row.code) }
+                                            p class="text-sm text-slate-500" { (&row.display) }
+                                        }
+                                        td class="px-4 py-3 align-top" {
+                                            span class="inline-flex rounded-full bg-rose-100 px-2.5 py-1 text-xs font-semibold text-rose-900" {
+                                                (row.reason.as_deref().unwrap_or("unknown_reason"))
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            } @else {
+                div class="rounded-lg border border-dashed border-slate-200 p-5 text-sm text-slate-600" {
+                    "Upload a Bundle or paste JSON to seed the explorer with actionable NoMatch rows."
+                }
+            }
+        }
+    }
+}
+
+fn render_alert(alert: &AlertMessage) -> Markup {
+    let (bg, text) = match alert.kind {
+        AlertKind::Info => ("bg-emerald-50 text-emerald-900", "Info"),
+        AlertKind::Error => ("bg-rose-50 text-rose-900", "Error"),
+    };
+    html! {
+        div class={(format!("rounded-lg px-4 py-3 text-sm font-medium {bg}"))} {
+            strong class="mr-2" { (text) ":" }
+            span { (&alert.text) }
+        }
+    }
+}
+
+fn render_results_panel(results: &MappingResultsView) -> Markup {
+    html! {
+        div class="bg-white shadow rounded-xl p-6 space-y-6" {
+            h2 class="text-xl font-semibold" { "MappingResult rows" }
+            div class="grid gap-4 md:grid-cols-3" {
+                div class="rounded-lg border border-slate-200 p-4" {
+                    p class="text-sm font-mono text-slate-500" { "stg_servicerequest_flat" }
+                    p class="text-2xl font-semibold" { (results.request_summary.total) }
+                    p class="text-xs text-slate-500 mt-1" { "ServiceRequest rows produced by ingestion." }
+                }
+                div class="rounded-lg border border-slate-200 p-4" {
+                    p class="text-sm font-semibold text-slate-600" { "ServiceRequest.status" }
+                    @if results.request_summary.statuses.is_empty() {
+                        p class="text-sm text-slate-500" { "No status values reported." }
+                    } @else {
+                        ul class="mt-2 space-y-1" {
+                            @for stat in &results.request_summary.statuses {
+                                li class="flex justify-between text-sm" {
+                                    span { (&stat.label) }
+                                    span class="font-medium" { (&stat.count) }
+                                }
+                            }
+                        }
+                    }
+                }
+                div class="rounded-lg border border-slate-200 p-4" {
+                    p class="text-sm font-semibold text-slate-600" { "ServiceRequest.intent" }
+                    @if results.request_summary.intents.is_empty() {
+                        p class="text-sm text-slate-500" { "No intents reported." }
+                    } @else {
+                        ul class="mt-2 space-y-1" {
+                            @for stat in &results.request_summary.intents {
+                                li class="flex justify-between text-sm" {
+                                    span { (&stat.label) }
+                                    span class="font-medium" { (&stat.count) }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            div class="overflow-x-auto" {
+                table class="min-w-full divide-y divide-slate-200" {
+                    thead class="bg-slate-50" {
+                        tr {
+                            th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "ServiceRequest (sr_id)" }
+                            th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "Code element" }
+                            th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "NCIt concept" }
+                            th class="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600" { "Mapping state" }
+                        }
+                    }
+                    tbody class="divide-y divide-slate-100 bg-white" {
+                        @if results.rows.is_empty() {
+                            tr {
+                                td colspan="4" class="px-4 py-6 text-center text-slate-500" {
+                                    "Backend returned 0 MappingResult rows. Confirm that codes landed in stg_sr_code_exploded."
+                                }
+                            }
+                        } @else {
+                            @for row in &results.rows {
+                                tr {
+                                    td class="px-4 py-3 align-top" {
+                                        p class="font-medium" { (&row.sr_id) }
+                                        p class="text-sm text-slate-500" { (&row.system) }
+                                    }
+                                    td class="px-4 py-3 align-top" {
+                                        p class="font-semibold" { (&row.code) }
+                                        p class="text-sm text-slate-500" { (&row.display) }
+                                    }
+                                    td class="px-4 py-3 align-top" {
+                                        @if let Some(id) = &row.ncit_id {
+                                            p class="font-medium" { (id) }
+                                            @if let Some(label) = &row.ncit_label {
+                                                p class="text-sm text-slate-500" { (label) }
+                                            }
+                                        } @else {
+                                            span class="text-slate-400" { "--" }
+                                        }
+                                    }
+                                    td class="px-4 py-3 align-top" {
+                                        (state_chip(row.state))
+                                        @if let Some(reason) = &row.reason {
+                                            p class="mt-1 text-xs text-slate-500" {
+                                                "MappingResult.reason: " (reason)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+fn state_chip(state: MappingState) -> Markup {
+    let (label, classes, tooltip) = match state {
+        MappingState::AutoMapped => (
+            "AutoMapped",
+            "bg-emerald-100 text-emerald-900 ring-emerald-200",
+            "Met lexical + semantic thresholds using NCIt and mock UMLS xrefs.",
+        ),
+        MappingState::NeedsReview => (
+            "Needs review",
+            "bg-amber-100 text-amber-900 ring-amber-200",
+            "Below hard threshold; requires human validation before promoting.",
+        ),
+        MappingState::NoMatch => (
+            "No match",
+            "bg-rose-100 text-rose-900 ring-rose-200",
+            "Pipeline could not locate an NCIt concept for the supplied code.",
+        ),
+    };
+    html! {
+        span title=(tooltip) class={(format!("inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset {classes}"))} {
+            (label)
+        }
+    }
+}
+
+fn metric_card(title: &str, value: usize, description: &str, accent: &str) -> Markup {
+    html! {
+        div class="rounded-lg border border-slate-200 p-4 shadow-sm" {
+            p class="text-sm text-slate-500" { (title) }
+            p class={(format!("text-3xl font-semibold {}", accent))} { (value) }
+            p class="text-xs text-slate-500 mt-1" { (description) }
+        }
+    }
+}
+
+fn state_metric_card(title: &str, value: usize, classes: &str, tooltip: &str) -> Markup {
+    html! {
+        div class="rounded-lg border border-slate-200 p-4" {
+            p class="text-sm text-slate-500" { (title) }
+            div title=(tooltip) class={(format!("mt-2 inline-flex items-center rounded-full px-3 py-1 text-sm font-semibold {}", classes))} {
+                (value) " entries"
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::view_model::{
+        CountStat, MappingResultsView, MappingRowView, NoMatchRowView, PageContext,
+        ServiceRequestSummary,
+    };
+
+    #[test]
+    fn render_page_shows_metrics_and_no_match_details() {
+        let mut metrics = PipelineMetrics::default();
+        metrics.bundle_count = 3;
+        metrics.flats_count = 4;
+        metrics.mapping_count = 5;
+        metrics.auto_mapped = 2;
+        metrics.needs_review = 1;
+        metrics.no_match = 2;
+
+        let results = MappingResultsView {
+            request_summary: ServiceRequestSummary {
+                total: 2,
+                statuses: vec![CountStat {
+                    label: "active".into(),
+                    count: 2,
+                }],
+                intents: vec![CountStat {
+                    label: "order".into(),
+                    count: 2,
+                }],
+            },
+            rows: vec![
+                MappingRowView {
+                    sr_id: "SR-1".into(),
+                    system: "http://loinc.org".into(),
+                    code: "24606-6".into(),
+                    display: "FDG uptake".into(),
+                    ncit_id: Some("C1234".into()),
+                    ncit_label: Some("FDG Uptake".into()),
+                    state: MappingState::AutoMapped,
+                    reason: None,
+                },
+                MappingRowView {
+                    sr_id: "SR-2".into(),
+                    system: "http://loinc.org".into(),
+                    code: "99999-9".into(),
+                    display: "Unknown code".into(),
+                    ncit_id: None,
+                    ncit_label: None,
+                    state: MappingState::NoMatch,
+                    reason: Some("missing_system_or_code".into()),
+                },
+            ],
+            no_matches: vec![NoMatchRowView {
+                sr_id: "SR-2".into(),
+                system: "http://loinc.org".into(),
+                code: "99999-9".into(),
+                display: "Unknown code".into(),
+                reason: Some("missing_system_or_code".into()),
+            }],
+        };
+
+        let ctx = PageContext {
+            health: None,
+            health_error: Some("Health endpoint unreachable: test".into()),
+            metrics: Some(metrics),
+            alert: None,
+            results: Some(results),
+        };
+
+        let html = render_page(&ctx);
+        assert!(html.contains("Pipeline metrics"));
+        assert!(html.contains("NoMatch explorer"));
+        assert!(html.contains("MappingResult.reason"));
+        assert!(html.contains("missing_system_or_code"));
+        assert!(html.contains("Backend warning"));
+    }
+}

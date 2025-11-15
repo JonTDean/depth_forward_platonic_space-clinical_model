@@ -1,0 +1,9 @@
+[package]
+name = "dfps_datamart"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+dfps_core = { path = "../../../../domain/core" }
+dfps_pipeline = { path = "../../../../domain/pipeline" }
+serde.workspace = true
