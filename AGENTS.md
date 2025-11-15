@@ -396,6 +396,7 @@ Axum HTTP API for mapping requests and metrics.
   - Accepts: **Bundle object**, **array**, or **NDJSON**.
   - For each bundle: `bundle_to_mapped_sr` → aggregate `flats`, `exploded_codes`, `mapping_results`, `dim_concepts`.
   - Dedupes concepts by `ncit_id`; updates global `PipelineMetrics`.
+- `GET /api/eval/summary?dataset=<name>` → `EvalSummary` (loads dataset via `DFPS_EVAL_DATA_ROOT`, reuses mapping harness).
 
 **Errors**
 - `400 invalid_json`, `422 invalid_fhir`, `500 internal_error` — all include `request_id`.

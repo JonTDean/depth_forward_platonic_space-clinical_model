@@ -20,7 +20,7 @@ use http_body_util::BodyExt;
 use reqwest::StatusCode as ReqwestStatusCode;
 use serde::Deserialize;
 use serde::de::DeserializeOwned;
-use std::net::SocketAddr;
+use std::{net::SocketAddr, path::PathBuf, sync::Once};
 use tokio::{net::TcpListener, sync::oneshot, task::JoinHandle};
 use tower::ServiceExt;
 
@@ -37,7 +37,25 @@ struct HealthResponse {
     status: String,
 }
 
+#[derive(Deserialize)]
+struct EvalSummaryBody {
+    total_cases: usize,
+}
+
+fn ensure_eval_data_root() {
+    static INIT: Once = Once::new();
+    INIT.call_once(|| {
+        let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let data_root = manifest.join("../../..").join("data/eval");
+        let data_root = data_root.canonicalize().unwrap_or(data_root);
+        unsafe {
+            std::env::set_var("DFPS_EVAL_DATA_ROOT", data_root);
+        }
+    });
+}
+
 fn app() -> Router {
+    ensure_eval_data_root();
     api_router(ApiState::default())
 }
 
@@ -206,4 +224,17 @@ async fn ci_smoke_server_runs_endpoints() {
 
     let _ = shutdown_tx.send(());
     handle.await.expect("server join");
+}
+
+#[tokio::test]
+async fn eval_summary_endpoint_returns_metrics() {
+    let app = app();
+    let request = Request::builder()
+        .method("GET")
+        .uri("/api/eval/summary?dataset=bronze_pet_ct_small")
+        .body(Body::empty())
+        .expect("eval request");
+    let (status, body): (StatusCode, EvalSummaryBody) = send_json(&app, request).await;
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body.total_cases, 3);
 }

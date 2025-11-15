@@ -1,7 +1,7 @@
 use dfps_core::mapping::MappingState;
-use dfps_mapping::eval::{run_eval, EvalCase};
-use dfps_test_suite::{init_environment, fixtures};
 use dfps_eval;
+use dfps_mapping::eval::{run_eval, EvalCase};
+use dfps_test_suite::{fixtures, init_environment};
 
 fn custom_no_match_case() -> EvalCase {
     EvalCase {

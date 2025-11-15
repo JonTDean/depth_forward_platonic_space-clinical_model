@@ -8,7 +8,7 @@ use std::{
 use axum::{
     Json, Router,
     body::Bytes,
-    extract::State,
+    extract::{Query, State},
     http::StatusCode,
     response::{IntoResponse, Response},
     routing::{get, post},
@@ -21,7 +21,7 @@ use dfps_core::{
 use dfps_observability::{PipelineMetrics, log_no_match, log_pipeline_output};
 use dfps_pipeline::{PipelineError, bundle_to_mapped_sr};
 use log::{error, info, warn};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
 use thiserror::Error;
 use tokio::{net::TcpListener, sync::Mutex};
@@ -121,13 +121,29 @@ pub fn router(state: ApiState) -> Router {
         .route("/health", get(health))
         .route("/metrics/summary", get(metrics_summary))
         .route("/api/map-bundles", post(map_bundles))
+        .route("/api/eval/summary", get(eval_summary))
         .with_state(state)
+}
+
+#[derive(Deserialize)]
+struct EvalQuery {
+    dataset: String,
 }
 
 async fn health() -> impl IntoResponse {
     let request_id = Uuid::new_v4();
     info!(target: "dfps_api", "request_id={request_id} health");
     Json(json!({ "status": "ok" }))
+}
+
+async fn eval_summary(Query(query): Query<EvalQuery>) -> Result<Response, ApiError> {
+    let request_id = Uuid::new_v4();
+    let dataset = query.dataset;
+    info!(target: "dfps_api", "request_id={request_id} eval_summary dataset={dataset}");
+    let cases = dfps_eval::load_dataset(&dataset)
+        .map_err(|err| ApiError::invalid_dataset(err.to_string(), request_id))?;
+    let summary = dfps_mapping::eval::run_eval(&cases);
+    Ok(Json(summary).into_response())
 }
 
 async fn metrics_summary(State(state): State<ApiState>) -> impl IntoResponse {
@@ -247,6 +263,10 @@ enum ApiError {
         message: String,
         request_id: Uuid,
     },
+    InvalidDataset {
+        message: String,
+        request_id: Uuid,
+    },
     #[allow(dead_code)]
     Internal {
         message: String,
@@ -274,6 +294,18 @@ impl ApiError {
             "request_id={request_id} invalid fhir payload: {message}"
         );
         Self::Ingestion {
+            message,
+            request_id,
+        }
+    }
+
+    fn invalid_dataset(message: impl Into<String>, request_id: Uuid) -> Self {
+        let message = message.into();
+        warn!(
+            target: "dfps_api",
+            "request_id={request_id} invalid dataset: {message}"
+        );
+        Self::InvalidDataset {
             message,
             request_id,
         }
@@ -315,6 +347,18 @@ impl IntoResponse for ApiError {
                 StatusCode::UNPROCESSABLE_ENTITY,
                 Json(ErrorResponse {
                     code: "invalid_fhir",
+                    message,
+                    request_id,
+                }),
+            )
+                .into_response(),
+            ApiError::InvalidDataset {
+                message,
+                request_id,
+            } => (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse {
+                    code: "invalid_dataset",
                     message,
                     request_id,
                 }),

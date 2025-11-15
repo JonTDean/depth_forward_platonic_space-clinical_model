@@ -71,6 +71,7 @@ architecture-beta
   - `lib/app/web/backend/datamart` (`dfps_datamart`) -?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**
   - `lib/app/cli` : `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes; `eval_mapping` reads gold NDJSON or a named dataset (`--dataset pet_ct_small`) and prints enriched metrics (precision/recall/F1, stratified tables) via `dfps_mapping::eval::run_eval`. The quickstart lives in `docs/runbook/mapping-eval-quickstart.md`; use `--thresholds` to gate CI and `--out-dir` to capture `eval_summary.json`/`eval_results.ndjson`.
+  - `lib/app/web/backend/api` : exposes `GET /api/eval/summary?dataset=...` (runs the same eval harness on a dataset) alongside `/api/map-bundles`, so dashboards/UI can ingest fresh summaries.
 
 ## Mapping states & thresholds
 

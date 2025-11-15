@@ -1,6 +1,8 @@
 //! Evaluation types and dataset helpers for NCIt mapping harnesses.
 
 use dfps_core::staging::StgSrCodeExploded;
+#[cfg(feature = "rand")]
+use rand::{Rng, SeedableRng, rngs::StdRng};
 use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
@@ -130,6 +132,9 @@ pub struct EvalSummary {
     pub state_counts: BTreeMap<String, usize>,
     pub by_system: BTreeMap<String, StratifiedMetrics>,
     pub by_license_tier: BTreeMap<String, StratifiedMetrics>,
+    pub score_histogram: BTreeMap<String, usize>,
+    pub reason_counts: BTreeMap<String, usize>,
+    pub advanced: Option<AdvancedStats>,
     pub results: Vec<EvalResult>,
 }
 
@@ -146,9 +151,20 @@ impl Default for EvalSummary {
             state_counts: BTreeMap::new(),
             by_system: BTreeMap::new(),
             by_license_tier: BTreeMap::new(),
+            score_histogram: BTreeMap::new(),
+            reason_counts: BTreeMap::new(),
+            advanced: None,
             results: Vec::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AdvancedStats {
+    pub precision_ci: (f32, f32),
+    pub recall_ci: (f32, f32),
+    pub f1_ci: (f32, f32),
+    pub bootstrap_iterations: usize,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -209,6 +225,55 @@ pub fn compute_metrics(correct: usize, predicted: usize, total: usize) -> (f32, 
         0.0
     };
     (precision, recall, f1)
+}
+
+#[cfg(feature = "eval-advanced")]
+pub fn bootstrap_metrics(samples: &[(bool, bool)], iterations: usize) -> AdvancedStats {
+    let mut rng = StdRng::seed_from_u64(42 + samples.len() as u64);
+    let mut precisions = Vec::with_capacity(iterations);
+    let mut recalls = Vec::with_capacity(iterations);
+    let mut f1s = Vec::with_capacity(iterations);
+
+    for _ in 0..iterations {
+        let mut correct = 0usize;
+        let mut predicted = 0usize;
+        for _ in 0..samples.len() {
+            let &(pred, corr) = samples.get(rng.random_range(0..samples.len())).unwrap();
+            if pred {
+                predicted += 1;
+            }
+            if corr {
+                correct += 1;
+            }
+        }
+        let (precision, recall, f1) = compute_metrics(correct, predicted, samples.len());
+        precisions.push(precision);
+        recalls.push(recall);
+        f1s.push(f1);
+    }
+
+    AdvancedStats {
+        precision_ci: percentile_bounds(&mut precisions),
+        recall_ci: percentile_bounds(&mut recalls),
+        f1_ci: percentile_bounds(&mut f1s),
+        bootstrap_iterations: iterations,
+    }
+}
+
+#[cfg(feature = "eval-advanced")]
+fn percentile_bounds(values: &mut [f32]) -> (f32, f32) {
+    values.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    if values.is_empty() {
+        return (0.0, 0.0);
+    }
+    let lower_idx = ((values.len() as f32) * 0.05).floor() as usize;
+    let upper_idx = ((values.len() as f32) * 0.95).ceil() as usize - 1;
+    let lower = values.get(lower_idx).copied().unwrap_or(0.0);
+    let upper = values
+        .get(upper_idx.min(values.len() - 1))
+        .copied()
+        .unwrap_or(0.0);
+    (lower, upper)
 }
 
 #[cfg(test)]

@@ -23,43 +23,27 @@
 
 ### EVAL-PLAT-02 – Advanced metrics
 
-- [ ] Optional advanced stats when the feature flag `eval-advanced` is set:
-
-  - [ ] Bootstrap confidence intervals for key metrics.
+- [x] Advanced stats when the feature flag `eval-advanced` is set:
+  - [x] Bootstrap confidence intervals for key metrics (`dfps_eval::bootstrap_metrics`).
   - [ ] Calibration-style summaries (e.g., score buckets vs correctness).
 
 ### EVAL-PLAT-03 – CI & regression gates
 
 - [ ] Wire CI job:
-
   - [ ] On each merge to main, run `eval-mapping` against at least one gold set.
   - [ ] Fail the pipeline if AutoMapped precision or overall accuracy regresses.
 
 ### EVAL-PLAT-04 – Dashboards & reporting
 
-- [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
-- [ ] Optionally add a small HTML/markdown report generator in `dfps_eval`:
-
+- [x] CLI artifacts: `dfps_cli eval_mapping --out-dir <dir>` writes `eval_summary.json` + `eval_results.ndjson` for CI/dashboards.
+- [ ] Add a small HTMX/markdown report generator in `dfps_eval`:
   - [ ] Renders tables of metrics and a short changelog comparing against a baseline.
+- [x] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI (`GET /api/eval/summary?dataset=...`).
 
-- [ ] Add endpoints in `dfps_api` to expose latest eval summaries to the web UI.
-
-### EVAL-PLAT-05 – Datasets & tests
-
-- [x] Create nine distinct datasets (3× bronze/silver/gold):
-  - Bronze: `bronze_pet_ct_small`, `bronze_pet_ct_unknowns`, `bronze_pet_ct_mixed`.
-  - Silver: `silver_pet_ct_small`, `silver_pet_ct_extended`, `silver_pet_ct_obo`.
-  - Gold: `gold_pet_ct_small`, `gold_pet_ct_extended`, `gold_pet_ct_comprehensive`.
-  - Updated `data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
-- [x] Tests in `dfps_test_suite`:
-
-  - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
-  - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.
 
 ### EVAL-PLAT-06 – Migrate/unwrap 012 harness into `dfps_eval`
 
 * [ ] Create new crate `lib/domain/eval` (`dfps_eval`).
-
   * [ ] Move `EvalCase`, `EvalResult`, `EvalSummary`, `run_eval` out of `dfps_mapping::eval` into `dfps_eval`.
   * [ ] Re-export from `dfps_mapping` temporarily to avoid churn (`pub use dfps_eval::*`), then remove once downstream crates are updated.
 * [ ] Update imports across `dfps_test_suite` to use `dfps_eval`.
@@ -245,6 +229,23 @@
 
     - [x] Runs `run_eval` and writes a JSON summary.
     - [x] Exit with non-zero code if metrics drop below configured thresholds.
+
+### EVAL-PLAT-04 – Dashboards & reporting
+
+- [x] Emit machine-readable summaries (`eval_summary.json` + `eval_results.ndjson`) via `dfps_cli eval_mapping --out-dir <dir>`.
+
+
+### EVAL-PLAT-05 – Datasets & tests
+
+- [x] Create nine distinct datasets (3× bronze/silver/gold):
+  - Bronze: `bronze_pet_ct_small`, `bronze_pet_ct_unknowns`, `bronze_pet_ct_mixed`.
+  - Silver: `silver_pet_ct_small`, `silver_pet_ct_extended`, `silver_pet_ct_obo`.
+  - Gold: `gold_pet_ct_small`, `gold_pet_ct_extended`, `gold_pet_ct_comprehensive`.
+  - Updated `data/eval/README.md` with tier descriptions; datasets consume shared schema under `DFPS_EVAL_DATA_ROOT`.
+- [x] Tests in `dfps_test_suite`:
+
+  - [x] Verify that the eval harness correctly classifies matches/mismatches (`mapping_eval.rs` still exercises precision/recall + state counts).
+  - [x] Add tiered dataset load test to ensure bronze/silver/gold splits stay readable.
 
 ---
 

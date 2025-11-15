@@ -28,6 +28,9 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     let mut results = Vec::with_capacity(cases.len());
     let mut by_system: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
     let mut by_license: BTreeMap<String, StratifiedMetrics> = BTreeMap::new();
+    let mut score_histogram: BTreeMap<String, usize> = BTreeMap::new();
+    let mut reason_counts: BTreeMap<String, usize> = BTreeMap::new();
+    let mut advanced_samples = Vec::with_capacity(cases.len());
 
     for (case, mapping) in cases.iter().cloned().zip(mappings.into_iter()) {
         let predicted = mapping.ncit_id.is_some();
@@ -57,6 +60,17 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
             is_correct,
         );
 
+        let bucket = match mapping.score.is_nan() {
+            true => "nan".to_string(),
+            false => format!("{:.1}", (mapping.score * 10.0).floor() / 10.0),
+        };
+        *score_histogram.entry(bucket).or_default() += 1;
+
+        let reason_key = mapping.reason.clone().unwrap_or_else(|| "none".to_string());
+        *reason_counts.entry(reason_key).or_default() += 1;
+
+        advanced_samples.push((predicted, is_correct));
+
         results.push(EvalResult {
             case,
             mapping,
@@ -75,6 +89,12 @@ pub fn run_eval(cases: &[EvalCase]) -> EvalSummary {
     summary.f1 = f1;
     summary.by_system = finalize_stratified(by_system);
     summary.by_license_tier = finalize_stratified(by_license);
+    summary.score_histogram = score_histogram;
+    summary.reason_counts = reason_counts;
+    #[cfg(feature = "eval-advanced")]
+    {
+        summary.advanced = Some(dfps_eval::bootstrap_metrics(&advanced_samples, 100));
+    }
     summary.results = results;
     summary
 }
@@ -156,5 +176,11 @@ mod tests {
         assert_eq!(open_metrics.total_cases, 1);
         assert_eq!(summary.results.len(), 2);
         assert!(summary.results.iter().all(|res| res.correct));
+        assert_eq!(summary.score_histogram.values().sum::<usize>(), 2);
+        assert!(!summary.reason_counts.is_empty());
+        #[cfg(feature = "eval-advanced")]
+        {
+            assert!(summary.advanced.is_some());
+        }
     }
 }

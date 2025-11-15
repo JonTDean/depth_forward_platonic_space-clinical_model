@@ -4,7 +4,7 @@ use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use dfps_configuration::load_env;
-use dfps_eval::{self, EvalCase, StratifiedMetrics};
+use dfps_eval::{self, AdvancedStats, EvalCase, StratifiedMetrics};
 use dfps_mapping::eval::run_eval;
 use serde::{Deserialize, Serialize};
 
@@ -45,6 +45,11 @@ struct SummaryView<'a> {
     by_system: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
     #[serde(rename = "by_license_tier")]
     by_license: &'a std::collections::BTreeMap<String, StratifiedMetrics>,
+    #[serde(rename = "score_histogram")]
+    histogram: &'a std::collections::BTreeMap<String, usize>,
+    #[serde(rename = "reason_counts")]
+    reasons: &'a std::collections::BTreeMap<String, usize>,
+    advanced: &'a Option<AdvancedStats>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -85,6 +90,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         states: &summary.state_counts,
         by_system: &summary.by_system,
         by_license: &summary.by_license_tier,
+        histogram: &summary.score_histogram,
+        reasons: &summary.reason_counts,
+        advanced: &summary.advanced,
     };
 
     println!(
