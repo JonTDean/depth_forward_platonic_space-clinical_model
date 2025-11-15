@@ -830,6 +830,7 @@ dependencies = [
 name = "dfps_terminology"
 version = "0.1.0"
 dependencies = [
+ "dfps_core",
  "serde",
 ]
 
