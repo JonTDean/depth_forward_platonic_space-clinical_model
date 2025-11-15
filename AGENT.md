@@ -136,7 +136,7 @@ When asked to implement a feature, refactor, or bugfix, you MUST:
 7. **Update docs, terminology, and kanban**
    - System-design docs / runbooks: reflect the current behavior and flows. When you change any `docs/runbook/**` or `docs/kanban/**` content, run `cargo make docs-sync` followed by `cargo make docs` so the mdBook in `docs/book/` stays in sync.
    - Reference terminology: update relationship definitions or mapping semantics.
-   - Kanban: move cards between columns and adjust acceptance criteria if necessary.
+   - Kanban: move cards between columns and adjust acceptance criteria if necessary. **Do not rewrite existing checklist text**—when something is done, check the box and move the card; keep the original bullet wording for traceability.
 
 ---
 

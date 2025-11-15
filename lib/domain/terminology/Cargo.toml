@@ -5,4 +5,4 @@ edition.workspace = true
 
 [dependencies]
 serde.workspace = true
-dfps_core = { path = "../core" }
+dfps_core = { path = '../core' }
