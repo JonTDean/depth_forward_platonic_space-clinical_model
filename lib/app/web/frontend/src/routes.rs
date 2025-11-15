@@ -337,4 +337,3 @@ mod tests {
         assert!(html.contains("AutoMapped"));
     }
 }
-

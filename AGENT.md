@@ -17,7 +17,7 @@ All paths are relative to the `code/` directory.
 
 ### 1.1 Kanban boards
 
-- `docs/kanban/**/*.md`
+- `docs/kanban/**/*.md` (mirrored into `docs/book/src/kanban/**` via `cargo make docs-sync`)
 
 ### 1.2 Reference terminology
 
@@ -74,7 +74,14 @@ Any time you introduce or rely on a new semantic relationship type in code or do
 - Overview / index  
   - `docs/system-design/ncit/index.md`
 
-### 1.4 Binary entrypoint
+### 1.4 Workspace tooling & docs
+
+- `Makefile.toml` + `data/makefiles/` - cargo-make tasks (`cargo make build`, `cargo make docs`, `cargo make web`, etc.). Install the tool once via `cargo install cargo-make` and run tasks from the repo root.
+- `docs/book/` – mdBook sources and build artifacts. Install `mdbook` via `cargo install mdbook`, then run `cargo make docs-sync` to refresh content, `cargo make docs` to build HTML, and `cargo make docs-serve` for live preview.
+- `docs/runbook/` – source runbooks; the mdBook copies live under `docs/book/src/runbook/`.
+- `data/environment/` – checked-in `.env.*.example` templates. Copy to `.env.<namespace>.<profile>` for new profiles; the loader (`dfps_configuration`) reads from here by default.
+
+### 1.5 Binary entrypoint
 
 - `src/main.rs`  
   - Top-level binary (if used) that may compose `lib/pipeline` or other crates.
@@ -86,14 +93,14 @@ Any time you introduce or rely on a new semantic relationship type in code or do
 When asked to implement a feature, refactor, or bugfix, you MUST:
 
 1. **Locate the relevant kanban file**
-   - Domain/fake_data/test skeleton → `docs/kanban/feature-base-skeleton.md`
-   - FHIR ingestion pipeline → `docs/kanban/feature-fhir-pipeline-mvp.md`
-   - NCIt mapping pipeline → `docs/kanban/feature-mapping-ncit-skeleton.md`
+   - Domain/fake_data/test skeleton -> `docs/kanban/feature-base-skeleton.md`
+   - FHIR ingestion pipeline -> `docs/kanban/feature-fhir-pipeline-mvp.md`
+   - NCIt mapping pipeline -> `docs/kanban/feature-mapping-ncit-skeleton.md`
 
 2. **Read the relevant system-design docs first**
-   - FHIR-related work → `docs/system-design/fhir/**`
-   - NCIt mapping-related work → `docs/system-design/ncit/**`
-   - Workspace layout / crate placement → `docs/system-design/base/directory-architecture.md`
+   - FHIR-related work -> `docs/system-design/fhir/**`
+   - NCIt mapping-related work -> `docs/system-design/ncit/**`
+   - Workspace layout / crate placement -> `docs/system-design/base/directory-architecture.md`
    - If semantics or relationships are involved, also read:
      - `docs/reference-terminology/semantic-relationships.yaml`
 
@@ -105,11 +112,11 @@ When asked to implement a feature, refactor, or bugfix, you MUST:
 4. **Implement the change**
    - Modify code in the correct crate and module.
    - Respect bounded contexts:
-     - Domain types & invariants → `lib/core`
-     - Generators → `lib/fake_data`
-     - FHIR transforms → `lib/ingestion`
-     - Mapping engine → `lib/mapping`
-     - End-to-end orchestration → `lib/pipeline`
+     - Domain types & invariants -> `lib/core`
+     - Generators -> `lib/fake_data`
+     - FHIR transforms -> `lib/ingestion`
+     - Mapping engine -> `lib/mapping`
+     - End-to-end orchestration -> `lib/pipeline`
    - Keep mappings between FHIR concepts and NCIt concepts consistent with docs and terminology.
 
 5. **Update tests**
@@ -120,12 +127,14 @@ When asked to implement a feature, refactor, or bugfix, you MUST:
    - Prefer deterministic, seeded fake data.
 
 6. **Run the standard checks**
-   - `cargo fmt --all`
-   - `cargo clippy --all-targets -- -D warnings`
-   - `cargo test --all`
+   - Prefer the cargo-make wrappers so local runs match CI:
+     - `cargo make fmt`
+     - `cargo make clippy`
+     - `cargo make test`
+   - If you touched docs or runbooks, also run `cargo make docs` (which builds the mdBook after syncing sources).
 
 7. **Update docs, terminology, and kanban**
-   - System-design docs: reflect the current behavior and flows.
+   - System-design docs / runbooks: reflect the current behavior and flows. When you change any `docs/runbook/**` or `docs/kanban/**` content, run `cargo make docs-sync` followed by `cargo make docs` so the mdBook in `docs/book/` stays in sync.
    - Reference terminology: update relationship definitions or mapping semantics.
    - Kanban: move cards between columns and adjust acceptance criteria if necessary.
 
@@ -169,13 +178,13 @@ Example:
 
 ### 3.2 Column transitions
 
-* **TODO → DOING**
+* **TODO -> DOING**
 
   * When implementation begins.
-* **DOING → REVIEW**
+* **DOING -> REVIEW**
 
   * When code, tests, and initial docs are written and pass locally.
-* **REVIEW → DONE**
+* **REVIEW -> DONE**
 
   * When the behavior meets (or updates) the acceptance criteria and documentation is fully in sync.
 
@@ -191,9 +200,9 @@ Example:
 
 The goal is **bi-directional traceability**:
 
-* From diagrams/requirements → exact modules and types.
-* From code → diagrams, requirements, and terminology schema.
-* From terminology schema → where semantics are enforced in code.
+* From diagrams/requirements -> exact modules and types.
+* From code -> diagrams, requirements, and terminology schema.
+* From terminology schema -> where semantics are enforced in code.
 
 ### 4.1 From code to docs
 
@@ -243,7 +252,7 @@ When updating any system-design doc:
 ```markdown
 The ServiceRequest ingestion path is implemented in:
 
-- `lib/ingestion/src/transforms.rs` (FHIR → staging/domain)
+- `lib/ingestion/src/transforms.rs` (FHIR -> staging/domain)
 - `lib/core/src/fhir/mod.rs` (typed FHIR models)
 - `lib/core/src/staging/mod.rs` (staging models)
 - `lib/pipeline/src/lib.rs` (end-to-end orchestration)
@@ -303,7 +312,7 @@ When you modify mapping states, semantic groups, or relationship semantics:
 
 ### 5.3 `lib/ingestion`
 
-* Implement FHIR → staging → domain transforms with clear error semantics.
+* Implement FHIR -> staging -> domain transforms with clear error semantics.
 * Enforce requirements from:
 
   * `docs/system-design/fhir/requirements/ingestion-requirements.md`
@@ -324,7 +333,7 @@ When you modify mapping states, semantic groups, or relationship semantics:
 
 * Provide high-level orchestration:
 
-  * FHIR `Bundle` → staging rows → mapping → NCIt dims.
+  * FHIR `Bundle` -> staging rows -> mapping -> NCIt dims.
 * Expose library functions and CLI (`map_bundles`) that match end-to-end design flows.
 * Ensure e2e tests in `lib/test_suite/tests/e2e/*` fully exercise pipeline behavior.
 
@@ -420,7 +429,7 @@ This section defines how a coding agent should create branches and write commits
 
 1. **One logical unit of work per branch**
 
-   * Prefer 1 kanban card → 1 feature branch.
+   * Prefer 1 kanban card -> 1 feature branch.
    * If a change spans multiple small cards that are tightly related, list all card IDs in the branch name.
 
 2. **Branch naming convention**
@@ -450,7 +459,7 @@ Where:
 
 When starting work on a card:
 
-1. Move the card from **TODO** → **DOING** in the relevant kanban file.
+1. Move the card from **TODO** -> **DOING** in the relevant kanban file.
 2. Create a new branch from `main` using the naming convention above.
 3. Implement code + tests + docs on that branch.
 4. When ready for review:

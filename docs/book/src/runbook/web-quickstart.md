@@ -29,7 +29,7 @@ Both binaries live in the main Cargo workspace, so `cargo run -p <crate>` works 
 
 Before launching the web surfaces, follow `docs/runbook/env-quickstart.md` to copy the appropriate `.env.<namespace>.example` files into `data/environment/` and set `DFPS_ENV` / `DFPS_ENV_DIR` as needed. Once the backend (`app.web.api`) and frontend (`app.web.frontend`) env files are in place, return here to start the services.
 
-### Optional: serve mdBook docs
+### Serve mdBook docs
 
 If you want `/docs` in the frontend to redirect to an mdBook instance:
 

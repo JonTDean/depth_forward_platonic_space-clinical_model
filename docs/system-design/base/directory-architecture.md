@@ -16,7 +16,11 @@ This document describes how the Rust workspace is organized into clear, discover
 ```text
 code/
   docs/
-    ...
+    runbook/
+    kanban/
+    book/           # mdBook sources + build output (via cargo make docs)
+  data/
+    makefiles/      # cargo-make task shards (core/docs/apps)
   lib/
     app/
         cli/
@@ -88,6 +92,7 @@ code/lib/app/
   * Reads `DFPS_API_BASE_URL` to reach the backend API, `DFPS_FRONTEND_LISTEN_ADDR` for its bind address, and `DFPS_API_CLIENT_TIMEOUT_SECS` for the reqwest client timeout.
   * Exposes an HTML form for paste/upload workflows and calls `/api/map-bundles`, `/metrics/summary`, and `/health` via an internal API client.
   * Provides real-time mapping summaries, a metrics dashboard fed by `/metrics/summary`, and a NoMatch explorer so reviewers can triage unmapped codes.
+  * When `DFPS_DOCS_URL` is set (see `.env.app.web.frontend.<profile>`), `/docs` issues a redirect to the mdBook server so documentation is visible alongside the UI.
   * `src/views.rs` holds the Maud templates, `src/routes.rs` hosts the paste/upload endpoints, and `src/client.rs` houses the reqwest wrapper that talks to the backend. For a full end-to-end runbook, see `docs/runbook/web-quickstart.md`.
 
 * `web/backend/api/`
@@ -313,4 +318,10 @@ This keeps the workspace readable even as the number of crates grows.
 
 ---
 
-For operational guidance and run instructions, refer to the runbooks under `docs/runbook/`.
+## Developer tooling and docs
+
+* **Task runner:** `cargo make` (defined in `Makefile.toml` + `data/makefiles/` shards) standardizes `build`, `test`, `docs`, `web`, etc. Install via `cargo install cargo-make`. From the workspace root, run `cargo make help` to list available tasks.
+* **Documentation book:** `docs/book/` hosts the mdBook sources. Use `cargo make docs-sync` to sync runbooks/kanban into the book and `cargo make docs` to build HTML under `docs/book/book/`. `cargo make docs-serve` runs `mdbook serve`.
+* **Environment files:** All `.env.*` files live under `data/environment/` (ignored by git). Copy the `.example` templates when setting up new profiles. The loader (`dfps_configuration`) reads `.env.<namespace>.<profile>` based on `DFPS_ENV`.
+
+For operational guidance and run instructions, refer to the runbooks under `docs/runbook/` (and their mdBook mirror).

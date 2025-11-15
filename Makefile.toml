@@ -1,3 +1,9 @@
+extend = [
+    { path = "data/makefiles/core.toml" },
+    { path = "data/makefiles/docs.toml" },
+    { path = "data/makefiles/apps.toml" }
+]
+
 [env]
 DFPS_ENV = { value = "dev", condition = { env_not_set = "DFPS_ENV" } }
 
@@ -11,116 +17,13 @@ script = ["pwd"]
 [tasks.help]
 description = "Show available tasks"
 script = [
+    "#!@duckscript",
     'echo ""',
     'echo "Targets:"',
-    'duckscript -e "for task in get_enriched_tasks() { if (task.description != \\"\\" ) { echo format(\\"  {0}\\", task.name); echo format(\\"    {0}\\", task.description); } }"',
+    "for task in get_enriched_tasks() {",
+    "  if (task.description != \"\") {",
+    "    echo format(\"  {0}\", task.name)",
+    "    echo format(\"    {0}\", task.description)",
+    "  }",
+    "}",
 ]
-
-[tasks.build]
-description = "Build the whole workspace"
-command = "cargo"
-args = ["build", "--workspace"]
-
-[tasks.check]
-description = "Type-check the whole workspace"
-command = "cargo"
-args = ["check", "--workspace"]
-
-[tasks.fmt]
-description = "Format all crates"
-command = "cargo"
-args = ["fmt", "--all"]
-
-[tasks.clippy]
-description = "Clippy lint (deny warnings)"
-command = "cargo"
-args = ["clippy", "--all-targets", "--", "-D", "warnings"]
-
-[tasks.test]
-description = "Run all tests"
-command = "cargo"
-args = ["test", "--workspace"]
-
-[tasks.ci]
-description = "CI convenience target (fmt + clippy + test)"
-dependencies = ["fmt", "clippy", "test"]
-
-[tasks.clean]
-description = "Clean target dir and book output"
-linux_alias = "clean-unix"
-mac_alias = "clean-unix"
-windows_alias = "clean-windows"
-
-[tasks.clean-unix]
-script_runner = "bash"
-script = [
-    "cargo clean",
-    "rm -rf docs/book/book",
-]
-
-[tasks.clean-windows]
-command = "powershell"
-args = [
-    "-NoLogo",
-    "-NoProfile",
-    "-Command",
-    "cargo clean; if (Test-Path 'docs/book/book') { Remove-Item -Recurse -Force 'docs/book/book' }",
-]
-
-[tasks.docs-sync]
-description = "Sync runbooks & kanban into the book sources"
-linux_alias = "docs-sync-unix"
-mac_alias = "docs-sync-unix"
-windows_alias = "docs-sync-windows"
-
-[tasks.docs-sync-unix]
-script_runner = "bash"
-script = [
-    "mkdir -p docs/book/src",
-    "rm -rf docs/book/src/runbook docs/book/src/kanban",
-    "cp -R docs/runbook docs/book/src/runbook",
-    "cp -R docs/kanban docs/book/src/kanban",
-]
-
-[tasks.docs-sync-windows]
-command = "powershell"
-args = [
-    "-NoLogo",
-    "-NoProfile",
-    "-Command",
-    "New-Item -ItemType Directory -Force -Path docs/book/src | Out-Null; if (Test-Path docs/book/src/runbook) { Remove-Item -Recurse -Force docs/book/src/runbook }; if (Test-Path docs/book/src/kanban) { Remove-Item -Recurse -Force docs/book/src/kanban }; Copy-Item -Recurse docs/runbook docs/book/src/runbook; Copy-Item -Recurse docs/kanban docs/book/src/kanban",
-]
-
-[tasks.docs]
-description = "Build mdBook to docs/book/book"
-dependencies = ["docs-sync"]
-command = "mdbook"
-args = ["build", "docs/book"]
-
-[tasks.docs-serve]
-description = "Serve mdBook locally"
-dependencies = ["docs-sync"]
-command = "mdbook"
-args = ["serve", "docs/book", "--open"]
-
-[tasks.api]
-description = "Run the backend API (dfps_api)"
-command = "cargo"
-args = ["run", "-p", "dfps_api", "--bin", "dfps_api"]
-
-[tasks.web]
-description = "Run the frontend; serves book at /docs if built"
-command = "cargo"
-args = ["run", "-p", "dfps_web_frontend", "--bin", "dfps_web_frontend"]
-
-[tasks.map-bundles]
-description = "Map Bundles NDJSON -> emit staging/mapping rows (INPUT=<file>)"
-condition = { env_set = ["INPUT"] }
-command = "cargo"
-args = ["run", "-p", "dfps_cli", "--bin", "map_bundles", "--", "${INPUT}"]
-
-[tasks.map-codes]
-description = "Map staging codes NDJSON -> emit MappingResult"
-condition = { env_set = ["INPUT"] }
-command = "cargo"
-args = ["run", "-p", "dfps_cli", "--bin", "map_codes", "--", "${INPUT}"]

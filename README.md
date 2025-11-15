@@ -1,6 +1,6 @@
 # DFPS - Clinical Model Workbench
 
-Monorepo with a small DFPS pipeline & web UI:
+Monorepo with a small DFPS pipeline & web UI targeting clinical ontology:
 - **Backend** (Axum): `/api/map-bundles`, `/metrics/summary`, `/health`
 - **Frontend** (Actix + Maud + HTMX): paste/upload a FHIR Bundle, view MappingResults
 - **CLI** tools: `map_bundles`, `map_codes`

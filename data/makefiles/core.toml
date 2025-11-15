@@ -1,0 +1,50 @@
+[tasks.build]
+description = "Build the whole workspace"
+command = "cargo"
+args = ["build", "--workspace"]
+
+[tasks.check]
+description = "Type-check the whole workspace"
+command = "cargo"
+args = ["check", "--workspace"]
+
+[tasks.fmt]
+description = "Format all crates"
+command = "cargo"
+args = ["fmt", "--all"]
+
+[tasks.clippy]
+description = "Clippy lint (deny warnings)"
+command = "cargo"
+args = ["clippy", "--all-targets", "--", "-D", "warnings"]
+
+[tasks.test]
+description = "Run all tests"
+command = "cargo"
+args = ["test", "--workspace"]
+
+[tasks.ci]
+description = "CI convenience target (fmt + clippy + test)"
+dependencies = ["fmt", "clippy", "test"]
+
+[tasks.clean]
+description = "Clean target dir and book output"
+linux_alias = "clean-unix"
+mac_alias = "clean-unix"
+windows_alias = "clean-windows"
+
+[tasks.clean-unix]
+script_runner = "bash"
+script = [
+    "cargo clean",
+    "rm -rf docs/book/book",
+]
+
+[tasks.clean-windows]
+command = "powershell"
+args = [
+    "-NoLogo",
+    "-NoProfile",
+    "-Command",
+    "cargo clean; if (Test-Path 'docs/book/book') { Remove-Item -Recurse -Force 'docs/book/book' }",
+]

@@ -1,0 +1,36 @@
+[tasks.docs-sync]
+description = "Sync runbooks & kanban into the book sources"
+linux_alias = "docs-sync-unix"
+mac_alias = "docs-sync-unix"
+windows_alias = "docs-sync-windows"
+
+[tasks.docs-sync-unix]
+script_runner = "bash"
+script = [
+    "mkdir -p docs/book/src",
+    "rm -rf docs/book/src/runbook docs/book/src/kanban",
+    "cp -R docs/runbook docs/book/src/runbook",
+    "mkdir -p docs/book/src/kanban",
+    "cp -R docs/kanban/. docs/book/src/kanban",
+]
+
+[tasks.docs-sync-windows]
+command = "powershell"
+args = [
+    "-NoLogo",
+    "-NoProfile",
+    "-Command",
+    "New-Item -ItemType Directory -Force -Path docs/book/src | Out-Null; if (Test-Path docs/book/src/runbook) { Remove-Item -Recurse -Force docs/book/src/runbook }; if (Test-Path docs/book/src/kanban) { Remove-Item -Recurse -Force docs/book/src/kanban }; Copy-Item -Recurse docs/runbook docs/book/src/runbook; New-Item -ItemType Directory -Force -Path docs/book/src/kanban | Out-Null; Copy-Item -Recurse docs/kanban/* docs/book/src/kanban/",
+]
+
+[tasks.docs]
+description = "Build mdBook to docs/book/book"
+dependencies = ["docs-sync"]
+command = "mdbook"
+args = ["build", "docs/book"]
+
+[tasks.docs-serve]
+description = "Serve mdBook locally"
+dependencies = ["docs-sync"]
+command = "mdbook"
+args = ["serve", "docs/book", "--open"]

@@ -102,13 +102,13 @@ Central place for **shared test utilities, property tests, integration-style tes
 
 ### Fake data generator crate (`lib/fake_data`)
 
-Using `fake` crate for convenient generators against your domain types. ([Crates][3])
+Using `fake` crate for convenient generators against your domain types.
 
 * [x] **FD-01 – Wire `fake` + `Dummy` derives**
   * Core exposes a `dummy` feature powered by `fake::Dummy`, enabled automatically from `dfps_fake_data`.
 
   * Add `fake` + `rand` deps (already in WS-02).
-  * For simpler types, derive `Dummy` directly in `core` (behind a cfg or feature if you want), or in `fake_data` via wrapper types. ([Docs.rs][5])
+  * For simpler types, derive `Dummy` directly in `core` (behind a cfg or feature if you want), or in `fake_data` via wrapper types.
 
 * [x] **FD-02 – Implement generators for value objects**
 
@@ -154,7 +154,7 @@ Using `fake` crate for convenient generators against your domain types. ([Crates
 
 ### Domain model crate (`lib/core`)
 
-Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts. ([Xebia][4])
+Functional domain modeling + `serde` via ADTs and newtypes, roughly along the lines of the Xebia / fmodel-style posts.
 
 * [x] **DM-01 – Define core bounded contexts / modules**
 
@@ -179,7 +179,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
     #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
     pub struct ServiceRequestId(pub String);
     ```
-  * Use `struct` and `enum` ADTs to encode valid states and invariants (e.g. `OrderStatus`, `Intent`). ([Xebia][4])
+  * Use `struct` and `enum` ADTs to encode valid states and invariants (e.g. `OrderStatus`, `Intent`). 
 
 * [x] **DM-03 – Model core entities using ADTs + serde**
 
@@ -214,7 +214,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
 
   * Create `lib/core`, `lib/fake_data`, `lib/test_suite`.
   * In root `Cargo.toml`, add a `[workspace]` with members:
-    `["lib/core", "lib/fake_data", "lib/test_suite"]`. ([Rust Documentation][1])
+    `["lib/core", "lib/fake_data", "lib/test_suite"]`.
 
 * [x] **WS-02 – Add per-crate Cargo manifests**
 
@@ -231,7 +231,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
     serde_json = "1"
     ```
 
-    (Serde derive setup per official docs). ([serde.rs][2])
+    (Serde derive setup per official docs).
   * `lib/fake_data/Cargo.toml`:
 
     ```toml
@@ -246,7 +246,7 @@ Functional domain modeling + `serde` via ADTs and newtypes, roughly along the li
     rand = "0.8"
     ```
 
-    (Using the `fake` crate’s `Dummy`/`Fake` traits). ([Crates][3])
+    (Using the `fake` crate’s `Dummy`/`Fake` traits).
   * `lib/test_suite/Cargo.toml`:
 
     ```toml

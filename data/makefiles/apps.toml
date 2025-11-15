@@ -1,0 +1,21 @@
+[tasks.api]
+description = "Run the backend API (dfps_api)"
+command = "cargo"
+args = ["run", "-p", "dfps_api", "--bin", "dfps_api"]
+
+[tasks.web]
+description = "Run the frontend; serves docs via DFPS_DOCS_URL"
+command = "cargo"
+args = ["run", "-p", "dfps_web_frontend", "--bin", "dfps_web_frontend"]
+
+[tasks.map-bundles]
+description = "Map Bundles NDJSON -> emit staging/mapping rows (INPUT=<file>)"
+condition = { env_set = ["INPUT"] }
+command = "cargo"
+args = ["run", "-p", "dfps_cli", "--bin", "map_bundles", "--", "${INPUT}"]
+
+[tasks.map-codes]
+description = "Map staging codes NDJSON -> emit MappingResult"
+condition = { env_set = ["INPUT"] }
+command = "cargo"
+args = ["run", "-p", "dfps_cli", "--bin", "map_codes", "--", "${INPUT}"]
