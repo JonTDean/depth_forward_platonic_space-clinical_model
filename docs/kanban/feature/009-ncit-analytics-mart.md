@@ -13,21 +13,6 @@
 
 ## TODO
 
-### MART-04 - Pipeline -> mart mappers
-- [ ] Add API in `dfps_datamart`:
-  - [ ] `from_pipeline_output(output: &dfps_pipeline::PipelineOutput) -> (Dims, Vec<FactServiceRequest>)`
-- [ ] Deduplicate dims while preserving stable keys for `(patient_id, encounter_id, code, ncit_id)`.
-- [ ] Handle `MappingState::NoMatch`:
-  - [ ] Decide whether `ncit_key` is nullable or points to a special "NoMatch" dim row.
-
-### MART-05 - Tests & invariants
-- [ ] Add unit tests in `dfps_datamart`:
-  - [ ] Every `MappingResult` with `ncit_id` yields a corresponding `DimNCIT` row.
-  - [ ] Every `FactServiceRequest` foreign key resolves to exactly one dim row.
-- [ ] Add integration coverage in `dfps_test_suite`:
-  - [ ] `regression::baseline_fhir_bundle()` -> `bundle_to_mapped_sr` -> datamart mapping.
-  - [ ] Assert counts match docs: 1 SR, 2 codes, expected NCIt concept(s).
-
 ### MART-06 - Docs alignment
 - [ ] Extend `docs/system-design/clinical/ncit/models/data-model-er.md` with an "Implementation" section referencing `dfps_datamart`.
 - [ ] Add a Warehouse/datamart-layer note to `docs/system-design/clinical/ncit/architecture.md` describing:
@@ -63,6 +48,19 @@
 - [x] Implemented `FactServiceRequest` with `patient_key`, `encounter_key`, `code_key`, `ncit_key`, and `ordered_at` snapshot fields.
 - [x] Captured status/intent/description snapshots alongside the timestamp.
 - [x] Ensured facts mirror NCIt ERD relationships by wiring keys from the deduped dims.
+
+### MART-04 - Pipeline -> mart mappers
+- [x] `from_pipeline_output` now emits `(Dims, Vec<FactServiceRequest>)` directly.
+- [x] Added deterministic dedupe keyed by natural identifiers across patient/encounter/code/NCIt dims.
+- [x] Introduced a shared `NO_MATCH` NCIt dimension so `MappingState::NoMatch` facts still point at a valid surrogate key.
+
+### MART-05 - Tests & invariants
+- [x] Added dfps_datamart unit tests that assert the NO_MATCH dimension exists and remains linked to NoMatch facts.
+- [x] Added integration coverage using the `fhir_bundle_unknown_code` regression fixture to verify the sentinel dim appears in pipeline-driven runs.
+
+### MART-06 - Docs alignment
+- [x] Documented the datamart implementation in `docs/system-design/clinical/ncit/models/data-model-er.md` (surrogate keys, sentinel NCIt dim).
+- [x] Mentioned `dfps_datamart` in `docs/system-design/clinical/ncit/architecture.md` as the warehouse bridge layer.
 
 ---
 

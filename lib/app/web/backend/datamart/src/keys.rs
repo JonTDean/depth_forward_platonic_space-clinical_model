@@ -35,6 +35,10 @@ impl DimNCITKey {
     pub fn from_ncit_id(ncit_id: &str) -> Self {
         DimNCITKey(stable_key(&["ncit", ncit_id]))
     }
+
+    pub fn no_match() -> Self {
+        DimNCITKey(stable_key(&["ncit", "__no_match__"]))
+    }
 }
 
 fn stable_key(parts: &[&str]) -> u64 {

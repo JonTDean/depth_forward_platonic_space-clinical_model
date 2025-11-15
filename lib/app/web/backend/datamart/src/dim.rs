@@ -87,4 +87,22 @@ impl DimNCIT {
             semantic_group: concept.semantic_group.clone(),
         }
     }
+
+    pub fn no_match() -> Self {
+        Self {
+            key: DimNCITKey::no_match(),
+            ncit_id: "NO_MATCH".into(),
+            preferred_name: "Unmapped (NoMatch)".into(),
+            semantic_group: "NoMatch".into(),
+        }
+    }
+
+    pub fn unknown(id: &str) -> Self {
+        Self {
+            key: DimNCITKey::from_ncit_id(id),
+            ncit_id: id.to_string(),
+            preferred_name: "Unknown NCIt concept".into(),
+            semantic_group: "Unknown".into(),
+        }
+    }
 }

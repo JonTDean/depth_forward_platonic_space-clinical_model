@@ -1,10 +1,10 @@
-# NCIm / NCIt Mapping & Analytics Architecture
+﻿# NCIm / NCIt Mapping & Analytics Architecture
 
 ## Legend
 
-- [Square nodes] – entities/tables
-- (Rounded nodes) – services/processes
-- Subgraphs – layers (Staging, Mapping, UMLS/NCIm, OBO, Warehouse)
+- [Square nodes] â€“ entities/tables
+- (Rounded nodes) â€“ services/processes
+- Subgraphs â€“ layers (Staging, Mapping, UMLS/NCIm, OBO, Warehouse)
 
 ## High-level mapping pipeline
 
@@ -59,23 +59,25 @@ architecture-beta
 ## Implementation layers
 
 - **Domain crates**
-  - `lib/domain/ingestion` (`dfps_ingestion`) — emits `stg_sr_code_exploded` rows.
-  - `lib/domain/mapping` (`dfps_mapping`) — lexical/vector rankers, rule rerankers, and `MappingEngine`.
-  - `lib/domain/pipeline` (`dfps_pipeline`) — composes ingestion + mapping via `bundle_to_mapped_sr`.
+  - `lib/domain/ingestion` (`dfps_ingestion`) â€” emits `stg_sr_code_exploded` rows.
+  - `lib/domain/mapping` (`dfps_mapping`) â€” lexical/vector rankers, rule rerankers, and `MappingEngine`.
+  - `lib/domain/pipeline` (`dfps_pipeline`) â€” composes ingestion + mapping via `bundle_to_mapped_sr`.
 - **Platform crates**
-  - `lib/platform/observability` — metrics/log helpers used by the CLI and tests.
-  - `lib/platform/test_suite` — regression/property tests and fixtures.
+  - `lib/platform/observability` â€” metrics/log helpers used by the CLI and tests.
+  - `lib/platform/test_suite` â€” regression/property tests and fixtures.
+- **Warehouse bridge**
+  - `lib/app/web/backend/datamart` (`dfps_datamart`) �?" turns `bundle_to_mapped_sr` output into the dimensional mart (`DimPatient`, `DimEncounter`, `DimCode`, `DimNCIT`, `FactServiceRequest`) and maintains the sentinel `DimNCIT` row that collects `NoMatch` facts.
 - **App surfaces**
-  - `lib/app/cli` — `map_bundles` streams Bundles → staging/mapping rows; `map_codes` explains staged codes.
+  - `lib/app/cli` â€” `map_bundles` streams Bundles â†’ staging/mapping rows; `map_codes` explains staged codes.
 
 ## Mapping states & thresholds
 
 | State        | Condition                                  | Action                                             |
 |--------------|--------------------------------------------|----------------------------------------------------|
-| AutoMapped   | Score ≥ 0.95 (default)                     | Persist & link to NCIt without manual review       |
-| NeedsReview  | 0.60 ≤ score < 0.95                        | Surface to curation queue                          |
+| AutoMapped   | Score â‰¥ 0.95 (default)                     | Persist & link to NCIt without manual review       |
+| NeedsReview  | 0.60 â‰¤ score < 0.95                        | Surface to curation queue                          |
 | NoMatch      | Score < 0.60 or missing identifiers        | Track with `reason` + provenance for later triage  |
 
 - Thresholds live in `dfps_core::mapping::MappingThresholds`; defaults are surfaced in `MappingResult`.
 - `MappingResult.reason` explains whether a NoMatch came from missing data, low scores, or rule filters.
-- `map_bundles --log-level info …` logs aggregated metrics (`auto_mapped`, `needs_review`, `no_match`) via `dfps_observability`.
+- `map_bundles --log-level info â€¦` logs aggregated metrics (`auto_mapped`, `needs_review`, `no_match`) via `dfps_observability`.
