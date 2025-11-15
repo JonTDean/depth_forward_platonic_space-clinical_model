@@ -21,6 +21,42 @@ pub const DEFAULT_DATA_ROOT: &str = "lib/domain/fake_data/data/eval";
 pub mod io;
 pub mod report;
 
+#[cfg(all(test, feature = "eval-advanced"))]
+mod advanced_tests {
+    use super::*;
+    use dfps_core::mapping::{MappingSourceVersion, MappingStrategy, MappingThresholds};
+
+    #[test]
+    fn advanced_stats_are_populated_when_feature_enabled() {
+        let cases = vec![EvalCase {
+            system: "http://www.ama-assn.org/go/cpt".into(),
+            code: "78815".into(),
+            display: "PET with concurrently acquired CT for tumor imaging".into(),
+            expected_ncit_id: "NCIT:C19951".into(),
+        }];
+
+        let summary = run_eval_with_mapper(&cases, |rows| {
+            rows.into_iter()
+                .map(|row| MappingResult {
+                    code_element_id: row.sr_id,
+                    ncit_id: Some("NCIT:C19951".into()),
+                    cui: Some("C19951".into()),
+                    score: 0.95,
+                    strategy: MappingStrategy::Lexical,
+                    state: MappingState::AutoMapped,
+                    thresholds: MappingThresholds::default(),
+                    source_version: MappingSourceVersion::new("v-test", "v-test"),
+                    reason: None,
+                    license_tier: Some("licensed".into()),
+                    source_kind: Some("fhir".into()),
+                })
+                .collect()
+        });
+
+        assert!(summary.advanced.is_some());
+    }
+}
+
 #[derive(Debug)]
 pub enum DatasetError {
     Io {

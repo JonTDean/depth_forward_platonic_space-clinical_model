@@ -50,15 +50,20 @@ against the gold NDJSON fixtures.
    ```
    First run writes the fingerprint; subsequent runs fail if the summary hash changes.
 5. Persist machine-readable artifacts for dashboards/CI (plus optional Markdown report):
-  ```bash
-  cargo run -p dfps_cli --bin eval_mapping -- \
-    --dataset gold_pet_ct_comprehensive \
-    --out-dir target/eval \
+   ```bash
+   cargo run -p dfps_cli --bin eval_mapping -- \
+     --dataset gold_pet_ct_comprehensive \
+     --out-dir target/eval \
      --report target/eval/report.md \
      --dump-details
    ```
    This writes `eval_summary.json` + `eval_results.ndjson` under `target/eval/gold_pet_ct_comprehensive/`.
 6. Use `jq`/scripts (or the generated report) to gate CI metrics or share summaries.
+7. Optional advanced stats: enable the `eval-advanced` feature to include bootstrap confidence intervals in the summary/report:
+   ```bash
+   cargo run -p dfps_cli --bin eval_mapping --features eval-advanced -- \
+     --dataset pet_ct_small
+   ```
 
 ## Dashboards & reporting
 - `dfps_eval::report` now emits Markdown (for CLI artifacts) plus an HTML fragment consumed by the web frontend's HTMX panel.

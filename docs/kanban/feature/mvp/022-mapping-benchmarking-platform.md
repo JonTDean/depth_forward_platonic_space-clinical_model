@@ -28,8 +28,8 @@
 * [x] Ensure all scoring paths remain deterministic across platforms:
   * [x] Audit hash usage and iteration order in `dfps_mapping` (e.g., `HashSet` -> order-independent usage) and confirm determinism of `VectorRankerMock`.
   * [x] Add `--deterministic` flag to CLI that asserts stable results vs a prior `eval_results.json`.
-* [ ] Add a property test in `dfps_test_suite`:
-  * [ ] Given the same input NDJSON, `run_eval` output bytes are identical across two runs.
+* [x] Add a property test in `dfps_test_suite`:
+  * [x] Given the same input NDJSON, `run_eval` output bytes are identical across two runs.
 
 **Acceptance:** CI job fails if a second run (same commit) produces a different `eval_results.json`.
 
@@ -43,8 +43,8 @@
   * [x] Per-system confusion/coverage tables.
   * [x] Distribution of `MappingResult.reason` for `NoMatch` rows.
 * [x] Add `--top-k N` to CLI to compute top‑k metrics (engine currently mirrors top‑1; warning emitted).
-* [ ] Optional (under `eval-advanced` feature):
-  * [ ] Bootstrap CIs for precision/recall/F1 using simple resampling.
+* [x] Optional (under `eval-advanced` feature):
+  * [x] Bootstrap CIs for precision/recall/F1 using simple resampling.
 
 **Acceptance:** `eval_results.json` contains `topk` and `coverage` fields; test asserts that `NoMatch` reasons include `missing_system_or_code` on the unknown-code fixture.
 

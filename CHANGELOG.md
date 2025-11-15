@@ -31,6 +31,7 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-022 – “EVAL-PLAT-06 – Eval harness migration” (`dfps_eval::run_eval_with_mapper` owns the harness + streaming NDJSON reader; `dfps_mapping::eval` now exposes a deprecated shim, and CLI/API/test suites call the new surface).
 - EVAL-022 – “EVAL-PLAT-07 – Dataset manifests & licensing” (all corpora ship with `<dataset>.manifest.json`; `dfps_eval::load_dataset_with_manifest` validates SHA-256 + row counts, `pet_ct_extended.ndjson` joins the catalog, and CLI runs warn when manifest checksums drift).
 - EVAL-022 – “EVAL-PLAT-08/09 – Determinism & top-k coverage” (`EvalSummary` adds coverage/top-k and per-system confusion; CLI gains `--deterministic` guard and `--top-k` flag; runbook updated for fingerprint-based stability checks).
+- EVAL-022 – “EVAL-PLAT-08 – Stability test” (dfps_test_suite adds a deterministic eval property asserting identical bytes across runs; optional `eval-advanced` feature includes bootstrap CIs).
 
 ---
 
