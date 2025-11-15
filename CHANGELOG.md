@@ -32,6 +32,8 @@ Format follows [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) and [Sem
 - EVAL-022 – “EVAL-PLAT-07 – Dataset manifests & licensing” (all corpora ship with `<dataset>.manifest.json`; `dfps_eval::load_dataset_with_manifest` validates SHA-256 + row counts, `pet_ct_extended.ndjson` joins the catalog, and CLI runs warn when manifest checksums drift).
 - EVAL-022 – “EVAL-PLAT-08/09 – Determinism & top-k coverage” (`EvalSummary` adds coverage/top-k and per-system confusion; CLI gains `--deterministic` guard and `--top-k` flag; runbook updated for fingerprint-based stability checks).
 - EVAL-022 – “EVAL-PLAT-08 – Stability test” (dfps_test_suite adds a deterministic eval property asserting identical bytes across runs; optional `eval-advanced` feature includes bootstrap CIs).
+- EVAL-022 – “EVAL-PLAT-10/11/12 – CLI thresholds, eval API, and frontend” (`eval_mapping` enforces min_top1 + allowed NoMatch reasons and uploads artifacts in CI; `dfps_api` exposes dataset/run/latest endpoints with cached summaries; frontend `/eval` page adds dataset picker + HTMX fragment with metrics and NoMatch reasons).
+- EVAL-022 – “EVAL-PLAT-13/14 – Performance benches & reporting artifacts” (streaming eval reader + Criterion benches, CLI chunking, baseline compare flag, and `pet_ct_small.baseline.json` for delta reporting).
 
 ---
 

@@ -1,7 +1,7 @@
 epics:
   EVAL-012:
-    introduced_in: Unreleased
-    last_updated_in: Unreleased
+    introduced_in: v0.1.0
+    last_updated_in: v0.1.0
   EVAL-022:
-    introduced_in: Unreleased
-    last_updated_in: Unreleased
+    introduced_in: v0.1.0
+    last_updated_in: v0.1.0

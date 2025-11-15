@@ -12,9 +12,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - name: Run eval harness
+      - name: Run eval harness (pet_ct_small)
         run: |
           cargo run -p dfps_cli --bin eval_mapping -- \
-            --dataset gold_pet_ct_small \
+            --dataset pet_ct_small \
             --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json \
-            --out-dir target/eval/gold_pet_ct_small
+            --out-dir target/eval/pet_ct_small
+      - name: Upload eval artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: eval-pet-ct-small
+          path: |
+            target/eval/pet_ct_small/eval_summary.json
+            target/eval/pet_ct_small/eval_results.ndjson

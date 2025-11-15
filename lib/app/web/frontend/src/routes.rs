@@ -8,8 +8,8 @@ use crate::{
     client::{BackendClient, ClientError},
     state::AppState,
     view_model::{
-        AlertKind, AlertMessage, DEFAULT_EVAL_DATASET, HealthOverview, MappingResultsView,
-        PageContext,
+        AlertKind, AlertMessage, DEFAULT_EVAL_DATASET, EvalContext, HealthOverview,
+        MappingResultsView, PageContext,
     },
     views,
 };
@@ -22,7 +22,9 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
         .service(web::resource("/docs").route(web::get().to(docs_redirect)))
         .service(web::resource("/map/paste").route(web::post().to(map_from_paste)))
         .service(web::resource("/map/upload").route(web::post().to(map_from_upload)))
-        .service(web::resource("/eval/report").route(web::get().to(eval_report)));
+        .service(web::resource("/eval/report").route(web::get().to(eval_report)))
+        .service(web::resource("/eval").route(web::get().to(eval_page)))
+        .service(web::resource("/eval/run").route(web::post().to(eval_run)));
 }
 
 async fn index(state: web::Data<AppState>) -> Result<HttpResponse> {
@@ -136,6 +138,10 @@ async fn handle_mapping(
 
 async fn build_base_context(client: &BackendClient) -> PageContext {
     let mut ctx = PageContext::default();
+    ctx.datasets = client.eval_datasets().await.unwrap_or_default();
+    if let Some(first) = ctx.datasets.first() {
+        ctx.selected_eval_dataset = first.name.clone();
+    }
     match client.health().await {
         Ok(resp) => {
             let status = resp.status;
@@ -155,10 +161,15 @@ async fn build_base_context(client: &BackendClient) -> PageContext {
         }
     }
     ctx.metrics = client.metrics_summary().await.ok();
-    match build_eval_report_fragment(client, DEFAULT_EVAL_DATASET).await {
+    let selected_dataset = ctx
+        .datasets
+        .first()
+        .map(|m| m.name.as_str())
+        .unwrap_or(DEFAULT_EVAL_DATASET);
+    match build_eval_report_fragment(client, selected_dataset).await {
         Ok(html) => {
             ctx.eval_report_html = Some(html);
-            ctx.selected_eval_dataset = DEFAULT_EVAL_DATASET.to_string();
+            ctx.selected_eval_dataset = selected_dataset.to_string();
         }
         Err(err) => {
             ctx.eval_panel_error = Some(err);
@@ -167,9 +178,40 @@ async fn build_base_context(client: &BackendClient) -> PageContext {
     ctx
 }
 
+async fn eval_page(state: web::Data<AppState>) -> Result<HttpResponse> {
+    let mut ctx = PageContext::default();
+    ctx.datasets = state.client.eval_datasets().await.unwrap_or_default();
+    let selected = ctx
+        .datasets
+        .first()
+        .map(|m| m.name.clone())
+        .unwrap_or_else(|| DEFAULT_EVAL_DATASET.to_string());
+    ctx.selected_eval_dataset = selected.clone();
+    if let Ok(run) = state.client.eval_run(&selected, 1).await {
+        ctx.eval = Some(EvalContext {
+            dataset: selected.clone(),
+            summary: run.summary,
+        });
+    }
+    Ok(HttpResponse::Ok()
+        .content_type("text/html; charset=utf-8")
+        .body(views::render_eval_page(&ctx)))
+}
+
 #[derive(Deserialize)]
 struct EvalReportQuery {
     dataset: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct EvalRunForm {
+    dataset: String,
+    #[serde(default = "default_top_k")]
+    top_k: usize,
+}
+
+fn default_top_k() -> usize {
+    1
 }
 
 async fn eval_report(
@@ -188,6 +230,21 @@ async fn eval_report(
         Err(err) => Ok(HttpResponse::InternalServerError()
             .content_type("text/plain; charset=utf-8")
             .body(format!("Eval report error: {err}"))),
+    }
+}
+
+async fn eval_run(
+    state: web::Data<AppState>,
+    form: web::Form<EvalRunForm>,
+) -> Result<HttpResponse> {
+    let dataset = form.dataset.clone();
+    match state.client.eval_run(&dataset, form.top_k).await {
+        Ok(run) => Ok(HttpResponse::Ok()
+            .content_type("text/html; charset=utf-8")
+            .body(views::render_eval_fragment(&run))),
+        Err(err) => Ok(HttpResponse::InternalServerError()
+            .content_type("text/plain; charset=utf-8")
+            .body(format!("Eval run error: {err}"))),
     }
 }
 

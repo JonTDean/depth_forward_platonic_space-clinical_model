@@ -2,10 +2,11 @@ use dfps_core::{
     mapping::{DimNCITConcept, MappingResult},
     staging::{StgServiceRequestFlat, StgSrCodeExploded},
 };
-use dfps_eval::EvalSummary;
+use dfps_eval::{DatasetManifest, EvalSummary};
 use dfps_observability::PipelineMetrics;
 use reqwest::{Client, Response, StatusCode};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
+use serde_json::json;
 use thiserror::Error;
 
 use crate::config::AppConfig;
@@ -71,6 +72,29 @@ impl BackendClient {
         Self::handle_json(response).await
     }
 
+    pub async fn eval_datasets(&self) -> Result<Vec<DatasetManifest>, ClientError> {
+        let response = self
+            .client
+            .get(self.endpoint("/api/eval/datasets"))
+            .send()
+            .await?;
+        Self::handle_json(response).await
+    }
+
+    pub async fn eval_run(
+        &self,
+        dataset: &str,
+        top_k: usize,
+    ) -> Result<EvalRunResponse, ClientError> {
+        let response = self
+            .client
+            .post(self.endpoint("/api/eval/run"))
+            .json(&serde_json::json!({ "dataset": dataset, "top_k": top_k }))
+            .send()
+            .await?;
+        Self::handle_json(response).await
+    }
+
     async fn handle_json<T>(response: Response) -> Result<T, ClientError>
     where
         T: DeserializeOwned,
@@ -112,4 +136,11 @@ pub struct MapBundlesResponse {
     pub exploded_codes: Vec<StgSrCodeExploded>,
     pub mapping_results: Vec<MappingResult>,
     pub dim_concepts: Vec<DimNCITConcept>,
+}
+
+#[derive(Debug, Clone, Deserialize, Serialize)]
+pub struct EvalRunResponse {
+    pub dataset: String,
+    pub manifest: Option<DatasetManifest>,
+    pub summary: EvalSummary,
 }

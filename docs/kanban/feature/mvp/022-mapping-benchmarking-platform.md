@@ -2,10 +2,10 @@
 
 > Epic: EVAL-022 – Mapping benchmarking platform  
 > Branch: `feature/EVAL-022-mapping-benchmarking-platform`  
-> Branch target version: `Unreleased`  
+> Branch target version: `v0.1.0`  
 > Status: **DOING**  
-> Introduced in: `Unreleased`  
-> Last updated in: `Unreleased`
+> Introduced in: `v0.1.0`  
+> Last updated in: `v0.1.0`
 
 **Theme:** Evaluation & benchmarking - large-scale gold sets, advanced metrics  
 **Goal:** Evolve the existing mapping eval harness into a small benchmarking platform with larger gold datasets, richer metrics, and CI/Dashboard integration.
@@ -19,108 +19,6 @@
 ---
 
 ## TODO
-
-
----
-
-### EVAL-PLAT-08 – Reproducibility & determinism guardrails
-
-* [x] Ensure all scoring paths remain deterministic across platforms:
-  * [x] Audit hash usage and iteration order in `dfps_mapping` (e.g., `HashSet` -> order-independent usage) and confirm determinism of `VectorRankerMock`.
-  * [x] Add `--deterministic` flag to CLI that asserts stable results vs a prior `eval_results.json`.
-* [x] Add a property test in `dfps_test_suite`:
-  * [x] Given the same input NDJSON, `run_eval` output bytes are identical across two runs.
-
-**Acceptance:** CI job fails if a second run (same commit) produces a different `eval_results.json`.
-
----
-
-### EVAL-PLAT-09 – Top‑K, coverage & error analysis
-
-* [x] Extend `EvalSummary` with:
-  * [x] `top1_accuracy`, `top3_accuracy` (placeholder until engine exposes top‑k).
-  * [x] `coverage` = predicted_cases / total_cases.
-  * [x] Per-system confusion/coverage tables.
-  * [x] Distribution of `MappingResult.reason` for `NoMatch` rows.
-* [x] Add `--top-k N` to CLI to compute top‑k metrics (engine currently mirrors top‑1; warning emitted).
-* [x] Optional (under `eval-advanced` feature):
-  * [x] Bootstrap CIs for precision/recall/F1 using simple resampling.
-
-**Acceptance:** `eval_results.json` contains `topk` and `coverage` fields; test asserts that `NoMatch` reasons include `missing_system_or_code` on the unknown-code fixture.
-
----
-
-### EVAL-PLAT-10 – CLI thresholds & CI gate (first cut)
-
-* [ ] Crate: `lib/app/cli` (`dfps_cli`) with subcommand:
-  * [ ] `dfps_cli eval-mapping --input lib/domain/fake_data/data/eval/pet_ct_small.ndjson --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json --out target/eval/pet_ct_small.json`
-* [ ] Thresholds schema (JSON):
-  ```json
-  {
-    "min_precision": 0.95,
-    "min_recall": 0.95,
-    "min_top1": 0.95,
-    "allow_no_match_reason": ["missing_system_or_code","unknown_code_system"]
-  }
-  ```
-* [ ] Exit non‑zero when metrics fall below thresholds.
-* [ ] GitHub Actions workflow `.github/workflows/eval.yml`:
-  * [ ] Runs CLI on PRs and merges to `main` over `pet_ct_small`.
-  * [ ] Uploads `eval_results.json` as an artifact.
-
-**Acceptance:** CI fails if `AutoMapped` precision drops beneath threshold; artifact includes JSON summary.
-
----
-
-### EVAL-PLAT-11 – API endpoints to expose eval results
-
-* [ ] In `dfps_api`:
-  * [ ] `GET /api/eval/datasets` → list manifests (name, version, n_cases).
-  * [ ] `POST /api/eval/run` with `{ "dataset": "pet_ct_small", "top_k": 3 }` → runs eval and returns `EvalSummary`.
-  * [ ] `GET /api/eval/latest` → last on‑box summary (cached).
-* [ ] Wire through `ApiState` a small, in‑memory cache (`Arc<Mutex<Option<(dataset, summary)>>>`).
-* [ ] Add unit tests mirroring `web_api.rs` style.
-
-**Acceptance:** Integration test calls `/api/eval/run` and asserts JSON schema + key fields (precision, recall, state_counts) are present.
-
----
-
-### EVAL-PLAT-12 – Minimal web UI for eval
-
-* [ ] In `dfps_web_frontend`:
-  * [ ] Add route `/eval` showing:
-    * [ ] Dataset picker (from `/api/eval/datasets`).
-    * [ ] Button “Run eval” → hits `/api/eval/run`.
-    * [ ] Cards for precision/recall/F1/top‑k/coverage.
-    * [ ] Table of top `NoMatch` reasons.
-* [ ] Reuse Tailwind components from the mapping workbench; render a small results fragment via HTMX.
-* [ ] Snapshot test asserts presence of metric labels and values.
-
-**Acceptance:** Visiting `/eval` renders the dataset list and displays metrics after a run; HTMX fragment updates without a full page reload.
-
----
-
-### EVAL-PLAT-13 – Performance & scale
-
-* [ ] Add Criterion benchmarks under `lib/domain/eval/benches/`:
-  * [ ] `bench_eval_pet_ct_small`
-  * [ ] `bench_eval_pet_ct_extended`
-* [ ] Stream NDJSON in chunks to keep RSS < 256MB for 100k lines (document guideline).
-* [ ] Expose `--parallel` flag (opt‑in), chunking by lines and merging summaries.
-
-**Acceptance:** Benchmarks run locally; RSS stays below the documented target on synthetic 100k rows (document how to generate).
-
----
-
-### EVAL-PLAT-14 – Reporting artifacts
-
-* [ ] Add `dfps_eval::report` to emit:
-  * [ ] `eval_results.json` (machine-readable).
-  * [ ] `summary.md` (for humans; includes a simple table and deltas vs baseline).
-* [ ] Include a “baseline” file alongside each dataset (e.g., `pet_ct_small.baseline.json`).
-* [ ] CLI `--compare-to baseline.json` prints a short delta summary and sets exit code on regressions.
-
-**Acceptance:** CI uploads both JSON and Markdown; a PR shows deltas vs baseline in the job log.
 
 ---
 
@@ -195,8 +93,6 @@
 
 **Acceptance:** `dfps_test_suite::integration::mapping_eval` compiles against `dfps_eval` with no regressions; old module emits a deprecated warning only.
 
----
-
 ### EVAL-PLAT-07 – Dataset manifests, versioning & licensing
 
 * [x] New directory: `lib/domain/fake_data/data/eval/` with datasets next to a manifest file `<dataset>.manifest.json`.
@@ -211,6 +107,93 @@
   * [x] `pet_ct_extended.ndjson` (new; includes OBO-backed NCIt IDs, unknown systems, tricky synonyms)
 
 **Acceptance:** `dfps_cli eval-mapping --dataset pet_ct_small` reads via manifest and prints a warning if the checksum is stale.
+
+### EVAL-PLAT-08 – Reproducibility & determinism guardrails
+
+* [x] Ensure all scoring paths remain deterministic across platforms:
+  * [x] Audit hash usage and iteration order in `dfps_mapping` (e.g., `HashSet` -> order-independent usage) and confirm determinism of `VectorRankerMock`.
+  * [x] Add `--deterministic` flag to CLI that asserts stable results vs a prior `eval_results.json`.
+* [x] Add a property test in `dfps_test_suite`:
+  * [x] Given the same input NDJSON, `run_eval` output bytes are identical across two runs.
+
+**Acceptance:** CI job fails if a second run (same commit) produces a different `eval_results.json`.
+
+### EVAL-PLAT-09 – Top‑K, coverage & error analysis
+
+* [x] Extend `EvalSummary` with:
+  * [x] `top1_accuracy`, `top3_accuracy` (placeholder until engine exposes top‑k).
+  * [x] `coverage` = predicted_cases / total_cases.
+  * [x] Per-system confusion/coverage tables.
+  * [x] Distribution of `MappingResult.reason` for `NoMatch` rows.
+* [x] Add `--top-k N` to CLI to compute top‑k metrics (engine currently mirrors top‑1; warning emitted).
+* [x] Optional (under `eval-advanced` feature):
+  * [x] Bootstrap CIs for precision/recall/F1 using simple resampling.
+
+**Acceptance:** `eval_results.json` contains `topk` and `coverage` fields; test asserts that `NoMatch` reasons include `missing_system_or_code` on the unknown-code fixture.
+
+### EVAL-PLAT-10 – CLI thresholds & CI gate (first cut)
+
+* [x] Crate: `lib/app/cli` (`dfps_cli`) with subcommand:
+  * [x] `dfps_cli eval-mapping --input lib/domain/fake_data/data/eval/pet_ct_small.ndjson --thresholds lib/domain/fake_data/data/meta/eval_thresholds.json --out target/eval/pet_ct_small.json`
+* [x] Thresholds schema (JSON):
+  ```json
+  {
+    "min_precision": 0.95,
+    "min_recall": 0.95,
+    "min_top1": 0.95,
+    "allow_no_match_reason": ["missing_system_or_code","unknown_code_system"]
+  }
+  ```
+* [x] Exit non‑zero when metrics fall below thresholds.
+* [x] GitHub Actions workflow `.github/workflows/eval.yml`:
+  * [x] Runs CLI on PRs and merges to `main` over `pet_ct_small`.
+  * [x] Uploads `eval_results.json` as an artifact.
+
+**Acceptance:** CI fails if `AutoMapped` precision drops beneath threshold; artifact includes JSON summary.
+
+### EVAL-PLAT-11 – API endpoints to expose eval results
+
+* [x] In `dfps_api`:
+  * [x] `GET /api/eval/datasets` → list manifests (name, version, n_cases).
+  * [x] `POST /api/eval/run` with `{ "dataset": "pet_ct_small", "top_k": 3 }` → runs eval and returns `EvalSummary`.
+  * [x] `GET /api/eval/latest` → last on‑box summary (cached).
+* [x] Wire through `ApiState` a small, in‑memory cache (`Arc<Mutex<Option<(dataset, summary)>>>`).
+* [x] Add unit tests mirroring `web_api.rs` style.
+
+**Acceptance:** Integration test calls `/api/eval/run` and asserts JSON schema + key fields (precision, recall, state_counts) are present.
+
+### EVAL-PLAT-12 – Minimal web UI for eval
+
+* [x] In `dfps_web_frontend`:
+  * [x] Add route `/eval` showing:
+    * [x] Dataset picker (from `/api/eval/datasets`).
+    * [x] Button “Run eval” → hits `/api/eval/run`.
+    * [x] Cards for precision/recall/F1/top‑k/coverage.
+    * [x] Table of top `NoMatch` reasons.
+* [x] Reuse Tailwind components from the mapping workbench; render a small results fragment via HTMX.
+* [ ] Snapshot test asserts presence of metric labels and values.
+
+**Acceptance:** Visiting `/eval` renders the dataset list and displays metrics after a run; HTMX fragment updates without a full page reload.
+
+### EVAL-PLAT-13 – Performance & scale
+
+* [x] Add Criterion benchmarks under `lib/domain/eval/benches/`:
+  * [x] `bench_eval_pet_ct_small`
+  * [x] `bench_eval_pet_ct_extended`
+* [x] Stream NDJSON in chunks to keep RSS < 256MB for 100k lines (document guideline).
+* [x] Expose `--parallel` flag (opt‑in), chunking by lines and merging summaries.
+
+**Acceptance:** Benchmarks run locally; RSS stays below the documented target on synthetic 100k rows (document how to generate).
+
+### EVAL-PLAT-14 – Reporting artifacts
+
+* [x] Add `dfps_eval::report` to emit:
+  * [x] `eval_results.json` (machine-readable).
+  * [x] `summary.md` (for humans; includes a simple table and deltas vs baseline).
+* [x] Include a “baseline” file alongside each dataset (e.g., `pet_ct_small.baseline.json`).
+* [x] CLI `--compare-to baseline.json` prints a short delta summary and sets exit code on regressions.
+
+**Acceptance:** CI uploads both JSON and Markdown; a PR shows deltas vs baseline in the job log.
 
 ---
 

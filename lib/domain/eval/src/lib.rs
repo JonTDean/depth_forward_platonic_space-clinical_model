@@ -21,6 +21,8 @@ pub const DEFAULT_DATA_ROOT: &str = "lib/domain/fake_data/data/eval";
 pub mod io;
 pub mod report;
 
+pub const DEFAULT_CHUNK_SIZE: usize = 1_000;
+
 #[cfg(all(test, feature = "eval-advanced"))]
 mod advanced_tests {
     use super::*;
@@ -178,6 +180,40 @@ pub fn load_dataset_with_manifest(name: &str) -> Result<DatasetLoadOutcome, Data
 
 pub fn load_dataset(name: &str) -> Result<Vec<EvalCase>, DatasetError> {
     load_dataset_with_manifest(name).map(|outcome| outcome.cases)
+}
+
+pub fn list_manifests() -> Result<Vec<DatasetManifest>, DatasetError> {
+    let mut manifests = Vec::new();
+    let root = dataset_root();
+    let entries = std::fs::read_dir(&root).map_err(|source| DatasetError::Io {
+        source,
+        path: root.clone(),
+    })?;
+    for entry in entries {
+        let entry = entry.map_err(|source| DatasetError::Io {
+            source,
+            path: root.clone(),
+        })?;
+        let path = entry.path();
+        if let Some(name) = path.file_name().and_then(|f| f.to_str()) {
+            if name.ends_with(".manifest.json") {
+                let file = File::open(&path).map_err(|source| DatasetError::Io {
+                    source,
+                    path: path.clone(),
+                })?;
+                let manifest: DatasetManifest =
+                    serde_json::from_reader(file).map_err(|source| {
+                        DatasetError::ManifestParse {
+                            path: path.clone(),
+                            source,
+                        }
+                    })?;
+                manifests.push(manifest);
+            }
+        }
+    }
+    manifests.sort_by(|a, b| a.name.cmp(&b.name));
+    Ok(manifests)
 }
 
 fn load_manifest(name: &str) -> Result<DatasetManifest, DatasetError> {
@@ -465,6 +501,151 @@ where
     assemble_summary(cases, mappings)
 }
 
+/// Stream an NDJSON dataset in chunks to keep memory bounded while producing a combined summary.
+pub fn run_eval_streaming_with_mapper<R, F>(
+    reader: R,
+    mut mapper: F,
+    chunk_size: usize,
+) -> Result<EvalSummary, DatasetError>
+where
+    R: BufRead,
+    F: FnMut(Vec<StgSrCodeExploded>) -> Vec<MappingResult>,
+{
+    let mut stream = crate::io::EvalCaseStream::new(reader);
+    let mut aggregated = EvalSummary::default();
+    loop {
+        let mut chunk = Vec::with_capacity(chunk_size);
+        while chunk.len() < chunk_size {
+            match stream.next_case()? {
+                Some(case) => chunk.push(case),
+                None => break,
+            }
+        }
+        if chunk.is_empty() {
+            break;
+        }
+        let summary = run_eval_with_mapper(&chunk, |rows| mapper(rows));
+        aggregate_summaries(&mut aggregated, summary);
+    }
+    Ok(aggregated)
+}
+
+/// Merge a chunk summary into an aggregate summary (recomputes derived metrics).
+pub fn aggregate_summaries(base: &mut EvalSummary, chunk: EvalSummary) {
+    base.total_cases += chunk.total_cases;
+    base.predicted_cases += chunk.predicted_cases;
+    base.correct += chunk.correct;
+    base.incorrect += chunk.incorrect;
+    base.auto_mapped_total += chunk.auto_mapped_total;
+    base.auto_mapped_correct += chunk.auto_mapped_correct;
+
+    for (state, count) in chunk.state_counts {
+        *base.state_counts.entry(state).or_default() += count;
+    }
+    for (reason, count) in chunk.reason_counts {
+        *base.reason_counts.entry(reason).or_default() += count;
+    }
+    for (system, mut metrics) in chunk.by_system {
+        let entry = base
+            .by_system
+            .entry(system)
+            .or_insert_with(StratifiedMetrics::new);
+        entry.total_cases += metrics.total_cases;
+        entry.predicted_cases += metrics.predicted_cases;
+        entry.correct += metrics.correct;
+        metrics.finalize();
+    }
+    for (tier, mut metrics) in chunk.by_license_tier {
+        let entry = base
+            .by_license_tier
+            .entry(tier)
+            .or_insert_with(StratifiedMetrics::new);
+        entry.total_cases += metrics.total_cases;
+        entry.predicted_cases += metrics.predicted_cases;
+        entry.correct += metrics.correct;
+        metrics.finalize();
+    }
+
+    let mut bucket_map: BTreeMap<String, (usize, usize, Option<f32>, Option<f32>)> = base
+        .score_buckets
+        .iter()
+        .map(|bucket| {
+            (
+                bucket.bucket.clone(),
+                (
+                    bucket.total,
+                    bucket.correct,
+                    bucket.lower_bound,
+                    bucket.upper_bound,
+                ),
+            )
+        })
+        .collect();
+    for bucket in chunk.score_buckets {
+        let entry = bucket_map.entry(bucket.bucket.clone()).or_insert((
+            0,
+            0,
+            bucket.lower_bound,
+            bucket.upper_bound,
+        ));
+        entry.0 += bucket.total;
+        entry.1 += bucket.correct;
+    }
+    base.score_buckets = bucket_map
+        .into_iter()
+        .map(|(bucket, (total, correct, lower, upper))| ScoreBucket {
+            bucket,
+            lower_bound: lower,
+            upper_bound: upper,
+            total,
+            correct,
+            accuracy: if total > 0 {
+                correct as f32 / total as f32
+            } else {
+                0.0
+            },
+        })
+        .collect();
+
+    for (system, confusion) in chunk.system_confusion {
+        let entry = base.system_confusion.entry(system).or_default();
+        entry.total_cases += confusion.total_cases;
+        entry.predicted_cases += confusion.predicted_cases;
+        entry.correct += confusion.correct;
+        entry.auto_mapped += confusion.auto_mapped;
+        entry.needs_review += confusion.needs_review;
+        entry.no_match += confusion.no_match;
+    }
+    base.system_confusion = finalize_confusion(base.system_confusion.clone());
+
+    base.results.extend(chunk.results);
+
+    let (precision, recall, f1) =
+        compute_metrics(base.correct, base.predicted_cases, base.total_cases);
+    base.precision = precision;
+    base.recall = recall;
+    base.f1 = f1;
+    base.accuracy = if base.total_cases > 0 {
+        base.correct as f32 / base.total_cases as f32
+    } else {
+        0.0
+    };
+    base.coverage = if base.total_cases > 0 {
+        base.predicted_cases as f32 / base.total_cases as f32
+    } else {
+        0.0
+    };
+    base.top1_accuracy = base.precision;
+    base.top3_accuracy = base.precision;
+    base.auto_mapped_precision = if base.auto_mapped_total > 0 {
+        base.auto_mapped_correct as f32 / base.auto_mapped_total as f32
+    } else {
+        0.0
+    };
+    base.by_system = finalize_stratified(base.by_system.clone());
+    base.by_license_tier = finalize_stratified(base.by_license_tier.clone());
+    base.advanced = None;
+}
 fn assemble_summary(cases: &[EvalCase], mappings: Vec<MappingResult>) -> EvalSummary {
     let mut summary = EvalSummary {
         total_cases: cases.len(),

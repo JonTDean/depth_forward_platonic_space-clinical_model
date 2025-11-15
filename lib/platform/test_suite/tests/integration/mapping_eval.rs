@@ -47,7 +47,11 @@ fn eval_summary_flags_no_match_cases() {
     cases.push(custom_no_match_case());
 
     let summary = eval_with_pipeline(&cases);
-    let auto_mapped = summary.state_counts.get("auto_mapped").copied().unwrap_or(0);
+    let auto_mapped = summary
+        .state_counts
+        .get("auto_mapped")
+        .copied()
+        .unwrap_or(0);
     assert_eq!(auto_mapped, cases.len() - 1);
     assert_eq!(
         summary.state_counts.get("no_match"),
@@ -101,5 +105,34 @@ fn eval_summary_is_deterministic() {
 
     let serialized1 = to_vec(&first).expect("serialize summary");
     let serialized2 = to_vec(&second).expect("serialize summary");
-    assert_eq!(serialized1, serialized2, "serialized summaries should match");
+    assert_eq!(
+        serialized1, serialized2,
+        "serialized summaries should match"
+    );
+}
+
+#[test]
+fn run_eval_outputs_ndjson_stable() {
+    init_environment();
+    let cases = fixtures::eval_pet_ct_small_cases();
+
+    let capture = |cases: &[EvalCase]| {
+        let summary = eval_with_pipeline(cases);
+        let fingerprint = dfps_eval::fingerprint_summary(&summary);
+        let mut buffer = Vec::new();
+        for result in &summary.results {
+            serde_json::to_writer(&mut buffer, result).expect("serialize eval result");
+            buffer.push(b'\n');
+        }
+        (fingerprint, buffer)
+    };
+
+    let (fp1, bytes1) = capture(&cases);
+    let (fp2, bytes2) = capture(&cases);
+
+    assert_eq!(fp1, fp2, "summary fingerprint should be stable");
+    assert_eq!(
+        bytes1, bytes2,
+        "eval_results NDJSON should be byte-for-byte stable"
+    );
 }

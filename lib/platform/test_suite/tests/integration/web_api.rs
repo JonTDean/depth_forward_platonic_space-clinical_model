@@ -42,6 +42,12 @@ struct EvalSummaryBody {
     total_cases: usize,
 }
 
+#[derive(Deserialize)]
+struct EvalRunBody {
+    dataset: String,
+    summary: EvalSummaryBody,
+}
+
 fn ensure_eval_data_root() {
     static INIT: Once = Once::new();
     INIT.call_once(|| {
@@ -239,4 +245,40 @@ async fn eval_summary_endpoint_returns_metrics() {
     let (status, body): (StatusCode, EvalSummaryBody) = send_json(&app, request).await;
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body.total_cases, 3);
+}
+
+#[tokio::test]
+async fn eval_datasets_and_run_endpoints_work() {
+    let app = app();
+
+    let datasets_request = Request::builder()
+        .method("GET")
+        .uri("/api/eval/datasets")
+        .body(Body::empty())
+        .expect("datasets request");
+    let (status, manifests): (StatusCode, Vec<dfps_eval::DatasetManifest>) =
+        send_json(&app, datasets_request).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(!manifests.is_empty(), "manifests should not be empty");
+
+    let body = serde_json::json!({ "dataset": "bronze_pet_ct_small", "top_k": 1 });
+    let run_request = Request::builder()
+        .method("POST")
+        .uri("/api/eval/run")
+        .header("content-type", "application/json")
+        .body(Body::from(body.to_string()))
+        .expect("run request");
+    let (run_status, run_body): (StatusCode, EvalRunBody) = send_json(&app, run_request).await;
+    assert_eq!(run_status, StatusCode::OK);
+    assert_eq!(run_body.dataset, "bronze_pet_ct_small");
+    assert!(run_body.summary.total_cases >= 1);
+
+    let latest_request = Request::builder()
+        .method("GET")
+        .uri("/api/eval/latest")
+        .body(Body::empty())
+        .expect("latest request");
+    let (latest_status, latest): (StatusCode, EvalRunBody) = send_json(&app, latest_request).await;
+    assert_eq!(latest_status, StatusCode::OK);
+    assert_eq!(latest.dataset, "bronze_pet_ct_small");
 }

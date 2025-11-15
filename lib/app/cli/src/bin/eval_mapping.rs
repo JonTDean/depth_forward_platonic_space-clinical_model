@@ -1,10 +1,10 @@
 use std::fs::{File, create_dir_all};
-use std::io::{BufRead, BufReader, Write};
+use std::io::{BufReader, Write};
 use std::path::{Path, PathBuf};
 
 use clap::Parser;
 use dfps_configuration::load_env;
-use dfps_eval::{self, AdvancedStats, EvalCase, StratifiedMetrics};
+use dfps_eval::{self, AdvancedStats, StratifiedMetrics};
 use dfps_mapping::map_staging_codes;
 use serde::{Deserialize, Serialize};
 
@@ -20,6 +20,9 @@ struct Args {
     /// Named dataset under DFPS_EVAL_DATA_ROOT (e.g., pet_ct_small)
     #[arg(long, value_name = "NAME", conflicts_with = "input")]
     dataset: Option<String>,
+    /// Stream chunk size when reading NDJSON
+    #[arg(long, value_name = "N", default_value_t = dfps_eval::DEFAULT_CHUNK_SIZE as u32)]
+    chunk_size: u32,
     /// Directory for machine-readable artifacts (summary/results)
     #[arg(long, value_name = "DIR")]
     out_dir: Option<PathBuf>,
@@ -35,6 +38,9 @@ struct Args {
     /// Compare against a deterministic fingerprint file (sha256). Fails if mismatched.
     #[arg(long, value_name = "PATH")]
     deterministic: Option<PathBuf>,
+    /// Compare current metrics against a baseline summary JSON (EvalSummary). Exit non-zero on regression.
+    #[arg(long, value_name = "PATH")]
+    compare_to: Option<PathBuf>,
     /// Desired top-k (placeholder until multi-candidate surfaces). Default: 1.
     #[arg(long, value_name = "N", default_value_t = 1)]
     top_k: usize,
@@ -77,28 +83,42 @@ struct ThresholdConfig {
     min_accuracy: Option<f32>,
     min_auto_precision: Option<f32>,
     min_coverage: Option<f32>,
+    min_top1: Option<f32>,
+    allow_no_match_reason: Option<Vec<String>>,
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     load_env("app.cli").map_err(|err| format!("dfps_cli env error: {err}"))?;
     let args = Args::parse();
 
-    let cases = read_cases(&args)?;
-    if cases.is_empty() {
-        eprintln!(
-            "warning: no EvalCase rows detected in {}; summary will be zeroed",
-            args.dataset
-                .as_deref()
-                .map(|name| format!("dataset {name}"))
-                .unwrap_or_else(|| args
-                    .input
-                    .as_ref()
-                    .map(|p| p.display().to_string())
-                    .unwrap())
-        );
-    }
-
-    let summary = dfps_eval::run_eval_with_mapper(&cases, |rows| map_staging_codes(rows).0);
+    let chunk_size = args.chunk_size as usize;
+    let summary = if let Some(name) = &args.dataset {
+        let outcome = dfps_eval::load_dataset_with_manifest(name)
+            .map_err(|err| format!("failed to load dataset {name}: {err}"))?;
+        if !outcome.checksum_ok {
+            eprintln!(
+                "warning: dataset {name} checksum mismatch (expected {}, actual {})",
+                outcome.manifest.sha256, outcome.computed_sha256
+            );
+        }
+        let file = File::open(dfps_eval::dataset_path(name))?;
+        let reader = BufReader::new(file);
+        dfps_eval::run_eval_streaming_with_mapper(
+            reader,
+            |rows| map_staging_codes(rows).0,
+            chunk_size,
+        )?
+    } else if let Some(path) = &args.input {
+        let file = File::open(path)?;
+        let reader = BufReader::new(file);
+        dfps_eval::run_eval_streaming_with_mapper(
+            reader,
+            |rows| map_staging_codes(rows).0,
+            chunk_size,
+        )?
+    } else {
+        return Err("either --input or --dataset must be provided".into());
+    };
     let summary_view = SummaryView {
         total_cases: summary.total_cases,
         predicted_cases: summary.predicted_cases,
@@ -164,6 +184,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             .map_err(|msg| format!("{msg} (thresholds file: {})", path.display()))?;
     }
 
+    if let Some(path) = &args.compare_to {
+        let baseline = std::fs::read_to_string(path)?;
+        let baseline: dfps_eval::report::BaselineSnapshot = serde_json::from_str(&baseline)
+            .map_err(|err| format!("failed to parse baseline {}: {err}", path.display()))?;
+        ensure_not_regressed(&summary, &baseline.summary)
+            .map_err(|msg| format!("regression vs baseline {}: {msg}", path.display()))?;
+    }
+
     if let Some(path) = &args.deterministic {
         let fingerprint = dfps_eval::fingerprint_summary(&summary);
         if path.exists() {
@@ -186,36 +214,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
-}
-
-fn read_cases(args: &Args) -> Result<Vec<EvalCase>, Box<dyn std::error::Error>> {
-    if let Some(name) = &args.dataset {
-        let outcome = dfps_eval::load_dataset_with_manifest(name)
-            .map_err(|err| format!("failed to load dataset {name}: {err}"))?;
-        if !outcome.checksum_ok {
-            eprintln!(
-                "warning: dataset {name} checksum mismatch (expected {}, actual {})",
-                outcome.manifest.sha256, outcome.computed_sha256
-            );
-        }
-        return Ok(outcome.cases);
-    } else if let Some(path) = &args.input {
-        let file = File::open(path)?;
-        let reader = BufReader::new(file);
-        let mut cases = Vec::new();
-        for line in reader.lines() {
-            let line = line?;
-            let trimmed = line.trim();
-            if trimmed.is_empty() {
-                continue;
-            }
-            let case: EvalCase = serde_json::from_str(trimmed)?;
-            cases.push(case);
-        }
-        Ok(cases)
-    } else {
-        Err("either --input or --dataset must be provided".into())
-    }
 }
 
 fn enforce_thresholds(
@@ -269,6 +267,69 @@ fn enforce_thresholds(
                 summary.auto_mapped_precision, min
             ));
         }
+    }
+    if let Some(min) = cfg.min_top1 {
+        if summary.top1_accuracy < min {
+            return Err(format!(
+                "top-1 accuracy {} fell below configured minimum {}",
+                summary.top1_accuracy, min
+            ));
+        }
+    }
+    if let Some(allowed) = &cfg.allow_no_match_reason {
+        let allowed: std::collections::HashSet<_> = allowed.iter().map(|s| s.as_str()).collect();
+        for result in &summary.results {
+            if result.mapping.state == dfps_core::mapping::MappingState::NoMatch {
+                let reason = result
+                    .mapping
+                    .reason
+                    .as_deref()
+                    .unwrap_or("missing_system_or_code");
+                if !allowed.contains(reason) {
+                    return Err(format!(
+                        "no_match reason '{reason}' not in allowlist {:?}",
+                        allowed
+                    ));
+                }
+            }
+        }
+    }
+    Ok(())
+}
+
+fn ensure_not_regressed(
+    current: &dfps_eval::EvalSummary,
+    baseline: &dfps_eval::EvalSummary,
+) -> Result<(), String> {
+    if current.precision < baseline.precision {
+        return Err(format!(
+            "precision {:.3} < baseline {:.3}",
+            current.precision, baseline.precision
+        ));
+    }
+    if current.recall < baseline.recall {
+        return Err(format!(
+            "recall {:.3} < baseline {:.3}",
+            current.recall, baseline.recall
+        ));
+    }
+    if current.f1 < baseline.f1 {
+        return Err(format!(
+            "f1 {:.3} < baseline {:.3}",
+            current.f1, baseline.f1
+        ));
+    }
+    if current.accuracy < baseline.accuracy {
+        return Err(format!(
+            "accuracy {:.3} < baseline {:.3}",
+            current.accuracy, baseline.accuracy
+        ));
+    }
+    if current.auto_mapped_precision < baseline.auto_mapped_precision {
+        return Err(format!(
+            "auto-mapped precision {:.3} < baseline {:.3}",
+            current.auto_mapped_precision, baseline.auto_mapped_precision
+        ));
     }
     Ok(())
 }
