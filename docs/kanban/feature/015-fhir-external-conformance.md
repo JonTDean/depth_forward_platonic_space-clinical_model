@@ -20,53 +20,19 @@
 
 ## TODO
 
-### FHIR-CONF-03 – Blending internal & external validation
-
-- [x] Extend `ValidationMode` with new variants:
-
-  - `ExternalPreferred`, `ExternalStrict`.
-
-- [x] Update `validate_bundle` to:
-
-  - [x] Optionally call `validate_bundle_external` and merge results:
-
-    - External `OperationOutcome` issues mapped into `ValidationIssue` with a new `RequirementRef` variant (e.g., `RExternal`), or tagged via a `source` field.
-    - Ensure that IDs/requirements from `ingestion-requirements.md` remain stable.
-
-  - [x] In `ExternalStrict` mode, treat any `OperationOutcomeIssue` with severity `error` or `fatal` as blocking.
-
-- [x] Provide helpers:
-
-  - `validate_bundle_with_external(bundle, mode) -> ValidationReport`.
-
-### FHIR-CONF-04 – CLI & developer ergonomics
-
-- [x] Add a new CLI in `dfps_cli`:
-
-  - `validate-fhir`:
-
-    - [x] Reads Bundle JSON/NDJSON from stdin or file.
-    - [x] Calls `validate_bundle_with_external`.
-    - [x] Emits NDJSON `ValidationIssue` rows plus a summary line (counts by severity and source).
-
-- [x] Update `docs/system-design/clinical/fhir/index.md` with:
-
-  - [x] A “Validation (external)” subsection.
-  - [x] Example `dfps_cli validate-fhir` commands.
-
 ### FHIR-CONF-05 – Tests & mocks
 
-- [ ] Add a test-only mock FHIR validator server in `dfps_test_suite`:
+- [x] Add a test-only mock FHIR validator server in `dfps_test_suite`:
 
-  - [ ] Provides `/fhir/$validate` that returns canned `OperationOutcome` fixtures for:
+  - [x] Provides `/fhir/$validate` that returns canned `OperationOutcome` fixtures for:
 
     - Missing subject, invalid status, etc.
     - Valid bundles.
 
-- [ ] Write integration tests:
+- [x] Write integration tests:
 
-  - [ ] Validate that external issues are merged with internal `validate_bundle` results.
-  - [ ] Ensure that `ExternalStrict` mode blocks ingestion for failing bundles but allows pass-through when `ExternalPreferred` is used.
+  - [x] Validate that external issues are merged with internal `validate_bundle` results.
+  - [x] Ensure that `ExternalStrict` mode blocks ingestion for failing bundles but allows pass-through when `ExternalPreferred` is used.
 
 ---
 
@@ -103,6 +69,40 @@
     - `DFPS_FHIR_VALIDATOR_PROFILE` (default profile URL).
 
 - [x] Add `.env.domain.fhir_validation.dev/example` documenting these keys.
+
+### FHIR-CONF-03 – Blending internal & external validation
+
+- [x] Extend `ValidationMode` with new variants:
+
+  - `ExternalPreferred`, `ExternalStrict`.
+
+- [x] Update `validate_bundle` to:
+
+  - [x] Optionally call `validate_bundle_external` and merge results:
+
+    - External `OperationOutcome` issues mapped into `ValidationIssue` with a new `RequirementRef` variant (e.g., `RExternal`), or tagged via a `source` field.
+    - Ensure that IDs/requirements from `ingestion-requirements.md` remain stable.
+
+  - [x] In `ExternalStrict` mode, treat any `OperationOutcomeIssue` with severity `error` or `fatal` as blocking.
+
+- [x] Provide helpers:
+
+  - `validate_bundle_with_external(bundle, mode) -> ValidationReport`.
+
+### FHIR-CONF-04 – CLI & developer ergonomics
+
+- [x] Add a new CLI in `dfps_cli`:
+
+  - `validate-fhir`:
+
+    - [x] Reads Bundle JSON/NDJSON from stdin or file.
+    - [x] Calls `validate_bundle_with_external`.
+    - [x] Emits NDJSON `ValidationIssue` rows plus a summary line (counts by severity and source).
+
+- [x] Update `docs/system-design/clinical/fhir/index.md` with:
+
+  - [x] A “Validation (external)” subsection.
+  - [x] Example `dfps_cli validate-fhir` commands.
 
 ---
 

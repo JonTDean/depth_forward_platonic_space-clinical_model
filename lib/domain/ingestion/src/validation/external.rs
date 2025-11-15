@@ -17,6 +17,7 @@ pub struct OperationOutcomeIssue {
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct OperationOutcome {
+    #[serde(default, alias = "issue")]
     pub issues: Vec<OperationOutcomeIssue>,
 }
 

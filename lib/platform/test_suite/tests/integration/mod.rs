@@ -1,4 +1,5 @@
 mod datamart;
+mod external_validation;
 mod fhir_ingest;
 mod mapping;
 mod regression;
